@@ -1,0 +1,8 @@
+package-lock.json
+node_modules/*
+server/*
+favicon/*
+bundlethree.js
+bundle.js
+.vscode/launch.json
+design/*
