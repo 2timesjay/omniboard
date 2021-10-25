@@ -6,3 +6,4 @@ bundlethree.js
 bundle.js
 .vscode/launch.json
 design/*
+dist/*

@@ -1,0 +1,23 @@
+{
+  "name": "omniboard",
+  "version": "0.0.0",
+  "dependencies": {
+    "tape": "^5.3.1",
+    "tsify": "^5.0.4"
+  },
+  "description": "tsc nain.ts\r node main.ts",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2timesjay/omniboard.git"
+  },
+  "author": "Jacob Jensen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/2timesjay/omniboard/issues"
+  },
+  "homepage": "https://github.com/2timesjay/omniboard#readme"
+}
