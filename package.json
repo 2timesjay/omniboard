@@ -19,5 +19,10 @@
   "bugs": {
     "url": "https://github.com/2timesjay/omniboard/issues"
   },
-  "homepage": "https://github.com/2timesjay/omniboard#readme"
+  "homepage": "https://github.com/2timesjay/omniboard#readme",
+  "devDependencies": {
+    "gulp": "^4.0.0",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "typescript": "^4.4.4"
+  }
 }
