@@ -4,7 +4,7 @@ type ContextStack = (Selectable | Array<Selectable>);
 
 // Hole here: Increment has no state, so a bfs must 
 // specify a fixed depth or globally control stopping.
-type Increment = (ContextStack) => Array<Selectable>;
+type Increment = (stack: ContextStack) => Array<Selectable>;
 
 type Options = Array<Selectable>;
 
@@ -54,7 +54,7 @@ interface InputAcquisition {
     acquireInputs: (acquisition_sequence: Array<OptionsGenerator>) => ContextStack;
 };
 
-type EffectGenerator = (ContextStack) => Effect
+type EffectGenerator = (stack: ContextStack) => Effect
 
 // Time Stuff: Likely to be refactored.
 
@@ -67,6 +67,16 @@ type Timeline = Array<[TimePoint, Phase]>;
 // Space Stuff
 
 interface Location {};
+
+interface DiscreteLocation extends Location {};
+
+interface GridLocation extends DiscreteLocation {};
+
+interface Space {};
+
+interface DiscreteSpace extends Space {};
+
+interface GridSpace extends Space {};
 
 type Neighborhood = Array<Location>;
 
