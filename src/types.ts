@@ -66,36 +66,19 @@ type Timeline = Array<[TimePoint, Phase]>;
 
 // Space Stuff
 
-interface Location {};
+interface AbstractLocation {};
 
-interface DiscreteLocation extends Location {};
+interface AbstractDiscreteLocation extends AbstractLocation {};
 
-export interface GridLocation extends DiscreteLocation {};
+export interface AbstractGridLocation extends AbstractDiscreteLocation {};
 
-interface Space {};
+interface AbstractSpace {};
 
-interface DiscreteSpace extends Space {};
+interface AbstractDiscreteSpace extends AbstractSpace {};
 
-export interface GridSpace extends Space {};
+export interface AbstractGridSpace extends AbstractSpace {};
 
-export type Neighborhood = Array<Location>;
-
-export enum RelativeCoordinateOperator {
-    BASE,
-    REPEAT,
-    CONCAT,
-    OR,
-}
-
-export interface RelativeCoordinate {
-    root: RelativeCoordinateOperator;
-    value: number[];
-    children: Array<RelativeCoordinate>;
-};
-
-export type RelativeNeighborhood = Array<RelativeCoordinate>
-
-export declare function getNeighborhood(rel_ne: RelativeNeighborhood, loc: GridLocation): Neighborhood;
+// export declare function getNeighborhood(rel_ne: RelativeNeighborhood, loc: GridLocation): Neighborhood;
 
 // Card Stuff
 
