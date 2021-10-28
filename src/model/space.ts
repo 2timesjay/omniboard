@@ -1,6 +1,7 @@
 // types = require("./types.ts");
 // import {Neighborhood} from "./types"
 
+
 enum RelativeCoordinateOperator {
     BASE,
     REPEAT,
@@ -22,7 +23,7 @@ type Neighborhood = Array<ILocation>;
 
 interface IDiscreteLocation extends ILocation {}
 
-class GridLocation implements IDiscreteLocation {
+export class GridLocation implements IDiscreteLocation {
     x: number;
     y: number;
     z: number;
@@ -51,3 +52,8 @@ class GridSpace {
         return Array<GridLocation>();
     }
 }
+
+// module.exports = {
+//     GridLocation: GridLocation,
+//     GridSpace: GridSpace, 
+// };
