@@ -4,14 +4,18 @@
 
 enum RelativeCoordinateOperator {
     BASE,
-    REPEAT,
-    CONCAT,
+    // REPEAT,
+    // CONCAT,
     OR,
 }
 
 class RelativeCoordinate {
-    root: RelativeCoordinateOperator;
-    value: number[];
+    type: RelativeCoordinateOperator;
+    value: {
+        x: number | null; 
+        y: number | null; 
+        z: number | null;
+    };
     children: Array<RelativeCoordinate>;
 };
 
@@ -44,16 +48,45 @@ export class GridLocation implements IDiscreteLocation {
 }
 
 class GridSpace {
-    locs: GridLocation[][] // | GridLocation[][][] // use ndarrays? https://github.com/scijs/ndarray
+    h: number;
+    w: number;
+    locs: GridLocation[][]; // | GridLocation[][][] // use ndarrays? https://github.com/scijs/ndarray
 
+    constructor(h: number, w: number){
+        this.locs = [];
+        for (var x = 0; x < h; x++){
+            var row = [];
+            for (var y = 0; y < w; y++){
+                row.push(new GridLocation(x, y));
+            }
+            this.locs.push(row);
+        }
+        this.h = h;
+        this.w = w;
+    }
 
+    get(x: number, y: number) {
+        if ((x >= 0 && x < this.h) && (y >= 0 && y < this.w)) {
+            return this.locs[x][y];
+        }
+    }
 
-    getNeighborhood(rel_ne: RelativeNeighborhood, loc: GridLocation): Neighborhood {
+    getRelativeCoordinate(loc: GridLocation, rel_co: RelativeCoordinate): Neighborhood {
+        var nh = new Array<GridLocation>();
+        if (rel_co.type == RelativeCoordinateOperator.BASE) {
+            var ne = this.get(loc.x + rel_co.value.x, loc.y + rel_co.value.y)
+            nh.push(ne)
+        } else if (rel_co.type == RelativeCoordinateOperator.OR) {
+            rel_co.children.flatMap(
+                (child) => {
+                    this.getRelativeCoordinate(loc, child);
+                }
+            )
+        }
+        return nh;
+    }
+
+    getNeighborhood(loc: GridLocation, rel_ne: RelativeNeighborhood): Neighborhood {
         return Array<GridLocation>();
     }
 }
-
-// module.exports = {
-//     GridLocation: GridLocation,
-//     GridSpace: GridSpace, 
-// };
