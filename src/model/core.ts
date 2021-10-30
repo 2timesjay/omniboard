@@ -1,5 +1,3 @@
-import { IScriptSnapshot } from "typescript";
-
 export interface ISelectable {}
 
 type Options = Array<ISelectable>;
@@ -32,7 +30,7 @@ export class Stack<T> {
         return this.parent;
     }
 
-    as_array(): Array<T> {
+    to_array(): Array<T> {
         var arr = Array<T>();
         var value = this.value;
         arr.push(value);
@@ -52,6 +50,16 @@ export class Tree<T> extends Stack<T> {
     children: Array<Tree<T>> | null;
     depth: number;
 
+    static from_stack<U>(stack: Stack<U>): Tree<U> {
+        var tree = new Tree<U>(stack.value);
+        var tree_root = tree;
+        while (stack.parent) {
+            stack = stack.parent;
+            tree_root = tree_root.add_parent(stack.parent.value);
+        }
+        return tree;
+    }
+
     constructor(value: T, parent?: Tree<T>, children?: Array<Tree<T>>){
         super(value, parent);
         if (children) {
@@ -59,6 +67,13 @@ export class Tree<T> extends Stack<T> {
         } else {
             this.children = null;
         }
+    }
+
+    add_parent(parent: T): Tree<T> {
+        var parent_tree = new Tree<T>(parent, this);
+        this.parent = parent_tree;
+        parent_tree.children = [this];
+        return parent_tree;
     }
 
     add_child(child: T): Tree<T> {
@@ -90,18 +105,18 @@ export class Tree<T> extends Stack<T> {
     }
 }
 
-type IncrementFn = (stack: Stack<ISelectable>) => Options;
+export type IncrementFn = (stack: Stack<ISelectable>) => Options;
 
-type TerminationFn = (stack: Stack<ISelectable>) => boolean;
+export type TerminationFn = (stack: Stack<ISelectable>) => boolean;
 
 export function bfs(
-    root: ISelectable, 
+    root_stack: Stack<ISelectable>, 
     increment_fn: IncrementFn, 
     termination_fn: TerminationFn
 ): Tree<ISelectable> {
-    var preview_map = new Tree<ISelectable>(root); 
+    var preview_tree = Tree.from_stack<ISelectable>(root_stack); 
     var explored = new Set<ISelectable>();
-    var to_explore = new Array<Tree<ISelectable>>(preview_map);
+    var to_explore = new Array<Tree<ISelectable>>(preview_tree);
     while (to_explore.length > 0) {
         var exploring = to_explore.shift();
         if (!termination_fn(exploring)){
@@ -118,5 +133,5 @@ export function bfs(
         }
         explored.add(exploring.value);
     }
-    return preview_map;
+    return preview_tree;
 }

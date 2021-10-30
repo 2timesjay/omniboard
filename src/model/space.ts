@@ -9,6 +9,7 @@ enum RelativeCoordinateOperator {
     OR,
 }
 
+// Replace with class-based approach. Operators and subclassing.
 class RelativeCoordinate {
     type: RelativeCoordinateOperator;
     value: {
@@ -27,12 +28,16 @@ type Neighborhood = Array<ILocation>;
 
 interface IDiscreteLocation extends ILocation {}
 
+interface ILocationAttributes {}
+
 export class GridLocation implements IDiscreteLocation {
     x: number;
     y: number;
     z: number;
 
     dim: number;
+
+    attrs: ILocationAttributes;
 
     constructor(x: number, y: number, z?: number){
         this.x = x;
@@ -68,6 +73,8 @@ class GridSpace {
     get(x: number, y: number) {
         if ((x >= 0 && x < this.h) && (y >= 0 && y < this.w)) {
             return this.locs[x][y];
+        } else {
+            return null;
         }
     }
 
@@ -87,6 +94,6 @@ class GridSpace {
     }
 
     getNeighborhood(loc: GridLocation, rel_ne: RelativeNeighborhood): Neighborhood {
-        return Array<GridLocation>();
+        return rel_ne.flatMap((rel_co) => this.getRelativeCoordinate(loc, rel_co));
     }
 }
