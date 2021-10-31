@@ -5,15 +5,29 @@ import {
     IncrementFn, 
     TerminationFn, 
     bfs
-} from "../model/core";
+} from "./core";
+
+import {
+    InputRequest
+} from "./input";
 
 class State {};
 
-type Effect = (state: State) => State;
+// Implement as Callable for now
+// https://www.typescriptlang.org/docs/handbook/2/functions.html#call-signatures
+type Effect = {
+    description: string;
+    pre_effect: Observer;
+    post_effect: Observer;
+    (state: State): State;
+};
+
+type Observer = {
+    description: string;
+    (effect: Effect, state: State): Array<Effect>;
+};
 
 type DigestFn = (selection: Array<ISelectable>) => Array<Effect>;
-
-type InputRequest = (preview_tree: Tree<ISelectable>) => Promise<Stack<ISelectable>>;
 
 class Action {
     // Class managing combination of input acquisition and effect generation.

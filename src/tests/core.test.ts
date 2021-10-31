@@ -30,10 +30,12 @@ test("Tree Test", (t) => {
 })
 
 test("BFS test", (t) => {
+    // move caching into SelectableNumber class definition?
     var numbers = new Array<SelectableNumber>();
     for (var i = 0; i < 100; i++) {
         numbers.push(new SelectableNumber(i));
     }
+    
     var root_stack = new Stack<SelectableNumber>(new SelectableNumber(3));
     var increment_fn = (nums: Stack<SelectableNumber>): Array<SelectableNumber> => {
         var options = Array<SelectableNumber>();
