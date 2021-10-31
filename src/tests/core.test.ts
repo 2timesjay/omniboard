@@ -1,6 +1,5 @@
 import * as test from "tape";
 import {bfs, ISelectable, Stack, Tree} from "../model/core";
-import {InputRequest} from "../model/input";
 
 class SelectableNumber implements ISelectable {
     value: number;
@@ -56,3 +55,4 @@ test("BFS test", (t) => {
     t.equal(map.size, 7); 
     t.end();
 })
+

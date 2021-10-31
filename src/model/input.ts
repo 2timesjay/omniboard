@@ -4,17 +4,9 @@ import {
     Tree,
 } from "./core";
 
+// Should this be Stack instead of Tree (and everywhere similar?)
+// Should this be a generator???
 export type InputRequest = (preview_map: Map<ISelectable, Tree<ISelectable>>) => Promise<Stack<ISelectable>>;
-
-// Suspicious function. TODO: Clean up.
-// Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
-function build_input_getter(input_getter: InputRequest): InputRequest {
-    return async function get_input(
-        preview_map: Map<ISelectable, Tree<ISelectable>>
-    ): Promise<Stack<ISelectable>> {
-        return input_getter(preview_map);
-    };
-}
 
 // Readline Input
 // See https://stackoverflow.com/questions/8128578/reading-value-from-console-interactively
@@ -39,3 +31,13 @@ export async function stdin_input_getter(
     });
     return null;
 };
+
+// Suspicious function. TODO: Clean up.
+// Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
+function build_input_getter(preview_map: Map<ISelectable, Tree<ISelectable>>, sequence: Array<ISelectable>): InputRequest {
+    return async function get_input(
+        preview_map: Map<ISelectable, Tree<ISelectable>>
+    ): Promise<Stack<ISelectable>> {
+        return input_getter(preview_map);
+    };
+}

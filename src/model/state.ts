@@ -11,25 +11,25 @@ import {
     InputRequest
 } from "./input";
 
-class State {};
+export interface IState {};
 
 // Implement as Callable for now
 // https://www.typescriptlang.org/docs/handbook/2/functions.html#call-signatures
-type Effect = {
+export type Effect = {
     description: string;
     pre_effect: Observer;
     post_effect: Observer;
-    (state: State): State;
+    (state: IState): IState;
 };
 
-type Observer = {
+export type Observer = {
     description: string;
-    (effect: Effect, state: State): Array<Effect>;
+    (effect: Effect, state: IState): Array<Effect>;
 };
 
-type DigestFn = (selection: Array<ISelectable>) => Array<Effect>;
+export type DigestFn = (selection: Array<ISelectable>) => Array<Effect>;
 
-class Action {
+export class Action {
     // Class managing combination of input acquisition and effect generation.
     increment_fn: IncrementFn;
     termination_fn: TerminationFn;
