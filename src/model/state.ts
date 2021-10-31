@@ -44,7 +44,7 @@ class Action {
     async acquire_input(base: Stack<ISelectable>, input_request: InputRequest): Promise<Stack<ISelectable>> {
         do {
             var preview_tree = bfs(base, this.increment_fn, this.termination_fn);
-            var input = await input_request(preview_tree);
+            var input = await input_request(preview_tree.to_map());
         } while(preview_tree.children);
         return input;
     }
