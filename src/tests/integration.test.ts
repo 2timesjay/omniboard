@@ -2,6 +2,7 @@ import * as test from "tape";
 import {bfs, ISelectable, Stack, Tree} from "../model/core";
 import {InputRequest} from "../model/input";
 import {Action, Effect, IState} from "../model/state";
+import {Awaited} from "../model/utilities";
 
 class SelectableNumber implements ISelectable {
     value: number;
@@ -24,20 +25,22 @@ class NumberState implements IState {
     }
 }
 
-type SelectionFn = (arr: Array<ISelectable>) => ISelectable
+type SelectionFn<T extends ISelectable> = (arr: Array<T>) => T
 
 function select_first<T>(arr: Array<T>): T {
     return arr[0];
 }
 
-function synthetic_input_getter(selection_fn: SelectionFn): InputRequest {
-    return async function get_input(
-        preview_map: Map<ISelectable, Tree<ISelectable>>
-    ): Promise<Stack<ISelectable>> {
+function synthetic_input_getter<T extends ISelectable>(selection_fn: SelectionFn<T>): InputRequest<T> {
+    return async function get_input( 
+        preview_map: Map<T, Tree<T>>
+    ): Promise<Stack<T>> {
         var arr = Array.from(preview_map.keys())
-        return preview_map.get(selection_fn(arr));
+        var selection = selection_fn(arr);
+        return preview_map.get(selection);
     };
 }
+
 
 test("Action/input test", (t) => {
     // move caching into SelectableNumber class definition?
@@ -68,7 +71,14 @@ test("Action/input test", (t) => {
         effect.post_effect = null;
         return [effect];
     }
+    // Either specify SelectableNumber as type of input getter OR cast within digest_fn
+    // TODO: Make casting option more robust
+    var select_first_input_getter = synthetic_input_getter<SelectableNumber>(select_first);
     var action = new Action(increment_fn, termination_fn, digest_fn);
+    var input_promise = action.acquire_input(root_stack, select_first_input_getter);
+    input_promise.then(
+        function(input) {var effect = digest_fn(input.to_array())}
+    );
     t.end();
 })
 

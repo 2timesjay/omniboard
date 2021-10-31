@@ -1,7 +1,5 @@
 export interface ISelectable {}
 
-type Options = Array<ISelectable>;
-
 export class Stack<T> {
     value: T;
     parent: Stack<T> | null;
@@ -105,18 +103,18 @@ export class Tree<T> extends Stack<T> {
     }
 }
 
-export type IncrementFn = (stack: Stack<ISelectable>) => Options;
+export type IncrementFn<T extends ISelectable> = (stack: Stack<T>) => Array<T>;
 
-export type TerminationFn = (stack: Stack<ISelectable>) => boolean;
+export type TerminationFn<T extends ISelectable> = (stack: Stack<T>) => boolean;
 
-export function bfs(
-    root_stack: Stack<ISelectable>, 
-    increment_fn: IncrementFn, 
-    termination_fn: TerminationFn
-): Tree<ISelectable> {
-    var preview_tree = Tree.from_stack<ISelectable>(root_stack); 
-    var explored = new Set<ISelectable>();
-    var to_explore = new Array<Tree<ISelectable>>(preview_tree);
+export function bfs<T extends ISelectable>(
+    root_stack: Stack<T>, 
+    increment_fn: IncrementFn<T>, 
+    termination_fn: TerminationFn<T>
+): Tree<T> {
+    var preview_tree = Tree.from_stack<T>(root_stack); 
+    var explored = new Set<T>();
+    var to_explore = new Array<Tree<T>>(preview_tree);
     while (to_explore.length > 0) {
         var exploring = to_explore.shift();
         if (!termination_fn(exploring)){

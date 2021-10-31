@@ -11,6 +11,8 @@ import {
     InputRequest
 } from "./input";
 
+import {Awaited} from "./utilities";
+
 export interface IState {};
 
 // Implement as Callable for now
@@ -27,21 +29,22 @@ export type Observer = {
     (effect: Effect, state: IState): Array<Effect>;
 };
 
-export type DigestFn = (selection: Array<ISelectable>) => Array<Effect>;
+export type DigestFn<T extends ISelectable> = (selection: Array<T>) => Array<Effect>;
 
-export class Action {
+// T is the type of input expected
+export class Action<T extends ISelectable> {
     // Class managing combination of input acquisition and effect generation.
-    increment_fn: IncrementFn;
-    termination_fn: TerminationFn;
-    digest_fn: DigestFn;
+    increment_fn: IncrementFn<T>;
+    termination_fn: TerminationFn<T>;
+    digest_fn: DigestFn<T>;
     
-    constructor(increment_fn: IncrementFn, termination_fn: TerminationFn, digest_fn: DigestFn) {
+    constructor(increment_fn: IncrementFn<T>, termination_fn: TerminationFn<T>, digest_fn: DigestFn<T>) {
         this.increment_fn = increment_fn;
         this.termination_fn = termination_fn;
         this.digest_fn = digest_fn;
     }
 
-    async acquire_input(base: Stack<ISelectable>, input_request: InputRequest): Promise<Stack<ISelectable>> {
+    async acquire_input(base: Stack<T>, input_request: InputRequest<T>): Promise<Stack<T>> {
         do {
             var preview_tree = bfs(base, this.increment_fn, this.termination_fn);
             var input = await input_request(preview_tree.to_map());
