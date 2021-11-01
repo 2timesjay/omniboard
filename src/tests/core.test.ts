@@ -25,14 +25,21 @@ test("Stack Test", (t) => {
 })
 
 test("Tree Test", (t) => {
+    // TODO: Improve
     var tree = new Tree<number>(1);
+    t.equal(tree.depth, 1)
+
+    var stack = new Stack<number>(1);
+    stack = stack.push(2);
+    stack = stack.push(3);
+    t.equal(Tree.from_stack(stack).depth, 3);
     t.end()
 })
 
 test("BFS test", (t) => {
     // move caching into SelectableNumber class definition?
     var numbers = new Array<SelectableNumber>();
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < 30; i++) {
         numbers.push(new SelectableNumber(i));
     }
     
@@ -49,7 +56,6 @@ test("BFS test", (t) => {
     }
     var tree = bfs(root_stack, increment_fn, termination_fn);
     var map = tree.to_map();
-    console.log(map);
     // fails because no customizable object equality in Map/Set.
     // Or works if caching moved outside bfs layer (which stinks)
     t.equal(map.size, 7); 

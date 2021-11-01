@@ -48,12 +48,12 @@ export class Tree<T> extends Stack<T> {
     children: Array<Tree<T>> | null;
     depth: number;
 
+    // TODO: Handles depth kind of hackily - improve.
     static from_stack<U>(stack: Stack<U>): Tree<U> {
         var tree = new Tree<U>(stack.value);
-        var tree_root = tree;
-        while (stack.parent) {
+        if (stack.parent) { 
+            tree.add_parent(Tree.from_stack(stack.parent));
             stack = stack.parent;
-            tree_root = tree_root.add_parent(stack.parent.value);
         }
         return tree;
     }
@@ -67,22 +67,23 @@ export class Tree<T> extends Stack<T> {
         }
     }
 
-    add_parent(parent: T): Tree<T> {
-        var parent_tree = new Tree<T>(parent, this);
-        this.parent = parent_tree;
-        parent_tree.children = [this];
-        return parent_tree;
+    add_parent(parent: Tree<T>): Tree<T> {
+        this.parent = parent;
+        this.depth = this.parent.depth + 1;
+        parent.add_child(this);
+        return parent;
     }
 
-    add_child(child: T): Tree<T> {
-        var child_tree = new Tree<T>(child, this);
+    add_child(child: Tree<T>): Tree<T> {
+        child.depth = this.depth + 1;
+        child.parent = this;
         if (this.children) {
-            this.children.push(child_tree);
+            this.children.push(child);
         }
         else {
-            this.children = new Array<Tree<T>>(child_tree);
+            this.children = new Array<Tree<T>>(child);
         }
-        return child_tree;
+        return child;
     }
 
     to_map(): Map<T, Tree<T>> {
@@ -112,7 +113,7 @@ export function bfs<T extends ISelectable>(
     increment_fn: IncrementFn<T>, 
     termination_fn: TerminationFn<T>
 ): Tree<T> {
-    var preview_tree = Tree.from_stack<T>(root_stack); 
+    var preview_tree = Tree.from_stack<T>(root_stack);
     var explored = new Set<T>();
     var to_explore = new Array<Tree<T>>(preview_tree);
     while (to_explore.length > 0) {
@@ -124,7 +125,7 @@ export function bfs<T extends ISelectable>(
             );
             filtered_candidates.forEach(
                 (candidate) => {
-                    var candidate_tree = exploring.add_child(candidate);
+                    var candidate_tree = exploring.add_child(new Tree(candidate));
                     to_explore.push(candidate_tree);
                 }
             )

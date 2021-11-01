@@ -17,19 +17,20 @@ export interface IState {};
 
 // Implement as Callable for now
 // https://www.typescriptlang.org/docs/handbook/2/functions.html#call-signatures
-export type Effect = {
+export type Effect<T extends IState> = {
     description: string;
-    pre_effect: Observer;
-    post_effect: Observer;
-    (state: IState): IState;
+    pre_effect: Observer<T>;
+    post_effect: Observer<T>;
+    (state: T): T;
 };
 
-export type Observer = {
+export type Observer<T extends IState> = {
     description: string;
-    (effect: Effect, state: IState): Array<Effect>;
+    (effect: Effect<T>, state: T): Array<Effect<T>>;
 };
 
-export type DigestFn<T extends ISelectable> = (selection: Array<T>) => Array<Effect>;
+// TODO: The `any` here is a big wacky. Could https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-types help?
+export type DigestFn<T extends ISelectable> = (selection: Array<T>) => Array<Effect<any>>;
 
 // T is the type of input expected
 export class Action<T extends ISelectable> {
@@ -45,8 +46,9 @@ export class Action<T extends ISelectable> {
     }
 
     async acquire_input(base: Stack<T>, input_request: InputRequest<T>): Promise<Stack<T>> {
+        var input = base
         do {
-            var preview_tree = bfs(base, this.increment_fn, this.termination_fn);
+            var preview_tree = bfs(input, this.increment_fn, this.termination_fn);
             var input = await input_request(preview_tree.to_map());
         } while(preview_tree.children);
         return input;

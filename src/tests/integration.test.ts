@@ -27,8 +27,8 @@ class NumberState implements IState {
 
 type SelectionFn<T extends ISelectable> = (arr: Array<T>) => T
 
-function select_first<T>(arr: Array<T>): T {
-    return arr[0];
+function select_last<T>(arr: Array<T>): T {
+    return arr[arr.length-1];
 }
 
 function synthetic_input_getter<T extends ISelectable>(selection_fn: SelectionFn<T>): InputRequest<T> {
@@ -45,7 +45,7 @@ function synthetic_input_getter<T extends ISelectable>(selection_fn: SelectionFn
 test("Action/input test", (t) => {
     // move caching into SelectableNumber class definition?
     var numbers = new Array<SelectableNumber>();
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < 30; i++) {
         numbers.push(new SelectableNumber(i));
     }
     
@@ -58,9 +58,9 @@ test("Action/input test", (t) => {
         return options;
     };
     var termination_fn = (nums: Stack<SelectableNumber>): boolean => {
-        return nums.depth > 3;
+        return nums.depth >= 4;
     }
-    var digest_fn = (nums: Array<SelectableNumber>): Array<Effect> => {
+    var digest_fn = (nums: Array<SelectableNumber>): Array<Effect<NumberState>> => {
         function effect(state: NumberState): NumberState {
             state.add(nums[0].value);
             return state;
@@ -73,13 +73,21 @@ test("Action/input test", (t) => {
     }
     // Either specify SelectableNumber as type of input getter OR cast within digest_fn
     // TODO: Make casting option more robust
-    var select_first_input_getter = synthetic_input_getter<SelectableNumber>(select_first);
+    var select_last_input_getter = synthetic_input_getter<SelectableNumber>(select_last);
     var action = new Action(increment_fn, termination_fn, digest_fn);
-    var input_promise = action.acquire_input(root_stack, select_first_input_getter);
-    input_promise.then(
-        function(input) {var effect = digest_fn(input.to_array())}
+    var input_promise = action.acquire_input(root_stack, select_last_input_getter);
+    var number_state = new NumberState(10);
+    var input = input_promise.then(
+        function(input) {
+            // console.log(input.to_array());
+            var effects = digest_fn(input.to_array())
+            t.equal(effects.length, 1);
+            var transformed_state = effects[0](number_state);
+            t.equal(transformed_state.value, 31);
+            // console.log(input_promise);
+            t.end();
+        }
     );
-    t.end();
 })
 
 

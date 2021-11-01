@@ -20,6 +20,7 @@
   "homepage": "https://github.com/2timesjay/omniboard#readme",
   "devDependencies": {
     "@types/tape": "^4.13.2",
-    "tape": "^5.3.1"
+    "tape": "^5.3.1",
+    "tape-promise": "^4.0.0"
   }
 }
