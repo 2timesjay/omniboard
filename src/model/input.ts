@@ -6,31 +6,48 @@ import {
 
 // Should this be Stack instead of Tree (and everywhere similar?)
 // Should this be a generator???
-export type InputRequest<T extends ISelectable> = (preview_map: Map<T, Tree<T>>) => Promise<Stack<T>>;
+export type InputRequest<T extends ISelectable> = (
+    preview_map: Map<T, Tree<T>>
+) => Promise<Stack<T>>;
 
-// Readline Input
-// See https://stackoverflow.com/questions/8128578/reading-value-from-console-interactively
-// And https://stackoverflow.com/questions/33858763/console-input-in-typescript/49055758 
-export async function stdin_input_getter(
-    preview_map: Map<ISelectable, Tree<ISelectable>>
-): Promise<Stack<ISelectable>> {
-    var stdin = process.openStdin();
+export type SelectionFn<T extends ISelectable> = (arr: Array<T>) => T
 
-    var options_map = new Map(
-        Array.from(preview_map.keys()).map(
-            (value: ISelectable, index: number) => {return [index, value];}
-        )
-    );
+export type CallbackSelectionFn<T extends ISelectable> = (
+    arr: Array<T>, callback: (value?: T | PromiseLike<T>) => void // Awaited in future?
+) => void;
 
-    stdin.addListener("data", function(d) {
-        // note:  d is an object, and when converted to a string it will
-        // end with a linefeed.  so we (rather crudely) account for that  
-        // with toString() and then trim() 
-        var choice = options_map.get(parseInt(d.toString()))
-        console.log("You chose: ", choice)
-    });
-    return null;
-};
+export function synthetic_input_getter<T extends ISelectable>(
+    selection_fn: SelectionFn<T>
+): InputRequest<T> {
+    return async function get_input( 
+        preview_map: Map<T, Tree<T>>
+    ): Promise<Stack<T>> {
+        var arr = Array.from(preview_map.keys())
+        var selection = selection_fn(arr);
+        return preview_map.get(selection);
+    };
+}
+
+export function async_input_getter<T extends ISelectable>(
+    selection_fn: CallbackSelectionFn<T>
+): InputRequest<T> {
+    return async function get_input( 
+        preview_map: Map<T, Tree<T>>
+    ): Promise<Stack<T>> {
+        var arr = Array.from(preview_map.keys())
+        // Manually specify type to remove errors
+        var selection_promise: Promise<T> = new Promise(
+            function(resolve, reject) {
+                selection_fn(arr, resolve)
+            }
+        );
+        return selection_promise.then(
+            function(selection) { 
+                return preview_map.get(selection); 
+            }
+        );
+    };
+}
 
 // Suspicious function. TODO: Clean up.
 // Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
@@ -41,3 +58,8 @@ export async function stdin_input_getter(
 //         return input_getter(preview_map);
 //     };
 // }
+
+
+// Readline Input
+// See https://stackoverflow.com/questions/8128578/reading-value-from-console-interactively
+// And https://stackoverflow.com/questions/33858763/console-input-in-typescript/49055758 

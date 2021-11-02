@@ -1,8 +1,6 @@
 import * as test from "tape";
 import {InputRequest} from "../model/input";
 
-
-
 // test("Stdin input test", (t) => {
 //     var stdin = process.openStdin();
 

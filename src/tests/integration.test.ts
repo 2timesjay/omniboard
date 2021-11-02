@@ -1,6 +1,6 @@
 import * as test from "tape";
 import {bfs, ISelectable, Stack, Tree} from "../model/core";
-import {InputRequest} from "../model/input";
+import {SelectionFn, synthetic_input_getter} from "../model/input";
 import {Action, Effect, IState} from "../model/state";
 import {Awaited} from "../model/utilities";
 
@@ -25,22 +25,9 @@ class NumberState implements IState {
     }
 }
 
-type SelectionFn<T extends ISelectable> = (arr: Array<T>) => T
-
 function select_last<T>(arr: Array<T>): T {
     return arr[arr.length-1];
 }
-
-function synthetic_input_getter<T extends ISelectable>(selection_fn: SelectionFn<T>): InputRequest<T> {
-    return async function get_input( 
-        preview_map: Map<T, Tree<T>>
-    ): Promise<Stack<T>> {
-        var arr = Array.from(preview_map.keys())
-        var selection = selection_fn(arr);
-        return preview_map.get(selection);
-    };
-}
-
 
 test("Action/input test", (t) => {
     // move caching into SelectableNumber class definition?
