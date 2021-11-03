@@ -4,6 +4,7 @@ import {
     Tree,
 } from "./core";
 import { Awaited } from "./utilities";
+// TODO: Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
 
 // Should this be Stack instead of Tree (and everywhere similar?)
 // Should this be a generator???
@@ -49,18 +50,3 @@ export function async_input_getter<T extends ISelectable>(
         );
     };
 }
-
-// Suspicious function. TODO: Clean up.
-// Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
-// function build_input_getter(preview_map: Map<ISelectable, Tree<ISelectable>>, sequence: Array<ISelectable>): InputRequest {
-//     return async function get_input(
-//         preview_map: Map<ISelectable, Tree<ISelectable>>
-//     ): Promise<Stack<ISelectable>> {
-//         return input_getter(preview_map);
-//     };
-// }
-
-
-// Readline Input
-// See https://stackoverflow.com/questions/8128578/reading-value-from-console-interactively
-// And https://stackoverflow.com/questions/33858763/console-input-in-typescript/49055758 
