@@ -4,7 +4,7 @@ import {SelectionFn, synthetic_input_getter} from "../model/input";
 import {Action, Effect, IState} from "../model/state";
 import {Awaited} from "../model/utilities";
 
-class SelectableNumber implements ISelectable {
+export class SelectableNumber implements ISelectable {
     value: number;
 
     constructor(value: number) {
@@ -29,7 +29,7 @@ function select_last<T>(arr: Array<T>): T {
     return arr[arr.length-1];
 }
 
-test("Action/input test", (t) => {
+test("Integration test", (t) => {
     // move caching into SelectableNumber class definition?
     var numbers = new Array<SelectableNumber>();
     for (var i = 0; i < 30; i++) {

@@ -3,6 +3,7 @@ import {
     Stack,
     Tree,
 } from "./core";
+import { Awaited } from "./utilities";
 
 // Should this be Stack instead of Tree (and everywhere similar?)
 // Should this be a generator???
@@ -13,7 +14,7 @@ export type InputRequest<T extends ISelectable> = (
 export type SelectionFn<T extends ISelectable> = (arr: Array<T>) => T
 
 export type CallbackSelectionFn<T extends ISelectable> = (
-    arr: Array<T>, callback: (value?: T | PromiseLike<T>) => void // Awaited in future?
+    arr: Array<T>, callback: Awaited<T> // Awaited from utilities. Replace in ts 4.5
 ) => void;
 
 export function synthetic_input_getter<T extends ISelectable>(
