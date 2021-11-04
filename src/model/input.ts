@@ -37,6 +37,8 @@ export function async_input_getter<T extends ISelectable>(
         preview_map: Map<T, Tree<T>>
     ): Promise<Stack<T>> {
         var arr = Array.from(preview_map.keys())
+        // TODO: "resolve" returns value, "reject" deselects
+        // TODO: selecting null parent of Stack head as CONFIRM signal?
         // Manually specify type to remove errors
         var selection_promise: Promise<T> = new Promise(
             function(resolve, reject) {
