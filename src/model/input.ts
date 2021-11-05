@@ -3,7 +3,7 @@ import {
     Stack,
     Tree,
 } from "./core";
-import { Awaited } from "./utilities";
+import { Awaited, Rejection } from "./utilities";
 // TODO: Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
 
 // Should this be Stack instead of Tree (and everywhere similar?)
@@ -12,10 +12,10 @@ export type InputRequest<T extends ISelectable> = (
     preview_map: Map<T, Tree<T>>
 ) => Promise<Stack<T>>;
 
-export type SelectionFn<T extends ISelectable> = (arr: Array<T>) => T
+export type SelectionFn<T extends ISelectable> = (options: Array<T>) => T
 
 export type CallbackSelectionFn<T extends ISelectable> = (
-    arr: Array<T>, callback: Awaited<T> // Awaited from utilities. Replace in ts 4.5
+    options: Array<T>, resolve: Awaited<T>, reject: Rejection // Awaited from utilities. Replace in ts 4.5
 ) => void;
 
 export function synthetic_input_getter<T extends ISelectable>(
@@ -42,7 +42,7 @@ export function async_input_getter<T extends ISelectable>(
         // Manually specify type to remove errors
         var selection_promise: Promise<T> = new Promise(
             function(resolve, reject) {
-                selection_fn(arr, resolve)
+                selection_fn(arr, resolve, reject)
             }
         );
         return selection_promise.then(

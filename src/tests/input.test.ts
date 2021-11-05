@@ -1,14 +1,18 @@
 import * as test from "tape";
 import { Stack, Tree } from "../model/core";
 import {InputRequest, CallbackSelectionFn, async_input_getter, SelectionFn} from "../model/input";
-import { Awaited } from "../model/utilities";
+import { Awaited, Rejection } from "../model/utilities";
 import {SelectableNumber} from "./integration.test"
 
 // TODO: Improve - maybe two callbacks, one for display one for selection?
 test("async_input_getter test", (t) => {
     var options = new Array<SelectableNumber>();
     var input_selector = () => {};
-    var callback_selection_fn = (arr: Array<SelectableNumber>, resolve: Awaited<SelectableNumber>) => {
+    var callback_selection_fn = (
+        options: Array<SelectableNumber>, 
+        resolve: Awaited<SelectableNumber>, 
+        reject: Rejection,
+    ) => {
         var sel = arr[0];
         input_selector = () => resolve(sel); //throw arr in a closure instead?
     };
