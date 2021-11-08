@@ -13,8 +13,8 @@ export function makeRect(
     y: number, 
     context: CanvasRenderingContext2D, 
     size: number, 
-    clr: string, 
-    lfa: number
+    clr?: string | null, 
+    lfa?: number | null
 ): void {
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;

@@ -13,7 +13,7 @@ test("async_input_getter test", (t) => {
         resolve: Awaited<SelectableNumber>, 
         reject: Rejection,
     ) => {
-        var sel = arr[0];
+        var sel = options[0];
         input_selector = () => resolve(sel); //throw arr in a closure instead?
     };
     var input_request = async_input_getter(callback_selection_fn)

@@ -37,6 +37,7 @@ export class GridLocation implements IDiscreteLocation {
 
     dim: number;
 
+    // TODO: Traversable
     attrs: ILocationAttributes;
 
     constructor(x: number, y: number, z?: number){
@@ -52,7 +53,7 @@ export class GridLocation implements IDiscreteLocation {
     };
 }
 
-class GridSpace {
+export class GridSpace {
     h: number;
     w: number;
     locs: GridLocation[][]; // | GridLocation[][][] // use ndarrays? https://github.com/scijs/ndarray
