@@ -28,7 +28,7 @@ export function getMousePos(canvasDom: HTMLElement, mouseEvent: MouseEvent): Pos
 //     // On any click that does not trigger an option clickListener, reject
 // }
 
-type DisplayHitListener<T extends ISelectable> = (e: MouseEvent) => T
+export type DisplayHitListener<T extends ISelectable> = (e: MouseEvent) => T
 
 export class SelectionBroker<T extends ISelectable> {
     resolve: Awaited<T>;

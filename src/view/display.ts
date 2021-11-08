@@ -16,7 +16,7 @@ export enum DisplayState {
 
 const size: number = 100;
 
-class AbstractDisplay {
+export class AbstractDisplay {
     selectable: ISelectable;
     state: DisplayState;
 
