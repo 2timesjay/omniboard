@@ -64,7 +64,6 @@ export class AbstractDisplay {
         let context = canvas.getContext("2d");
         let self = this;
         let trigger = function (e: MouseEvent): ISelectable | null {
-            // console.log("Expended? ",e.expended);
             if (e.type == "click") {
                 let mousePos = getMousePos(canvas, e);
                 if (self.isHit(mousePos)) {
@@ -131,7 +130,7 @@ export class GridLocationDisplay extends AbstractDisplay {
     }
 
     previewDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'grey');
+        this.render(context, 'yellow');
     }
 
     queueDisplay(context: CanvasRenderingContext2D) {

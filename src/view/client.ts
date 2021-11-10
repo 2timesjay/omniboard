@@ -22,6 +22,33 @@ for (let grid_row of grid_space.locs) {
         var grid_display = new GridLocationDisplay(grid_loc);
         display_map.set(grid_loc, grid_display);
         loc_listeners.push(grid_display.createClickListener(context.canvas));
+        loc_listeners.push(grid_display.createPreviewListener(context.canvas))
         grid_display.display(context);
     }
 }
+
+var addListeners = function(
+    context: CanvasRenderingContext2D, 
+    triggerList: Array<DisplayHitListener<ISelectable>>
+) {
+    context.canvas.onmousemove = function (event) {
+        triggerList.map(t => t(event))
+        for (let grid_row of grid_space.locs) {
+            for (let grid_loc of grid_row) {
+                var grid_display = display_map.get(grid_loc);
+                grid_display.display(context);
+            }
+        }
+    }
+    context.canvas.onclick = function (event) {
+        triggerList.forEach(t => t(event));
+        for (let grid_row of grid_space.locs) {
+            for (let grid_loc of grid_row) {
+                var grid_display = display_map.get(grid_loc);
+                grid_display.display(context);
+            }
+        }
+    }
+}
+
+addListeners(context, loc_listeners)
