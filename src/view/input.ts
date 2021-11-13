@@ -33,11 +33,16 @@ export type DisplayHitListener<T extends ISelectable> = (e: MouseEvent) => T
 export class SelectionBroker<T extends ISelectable> {
     resolve: Awaited<T>;
     reject: Rejection;
-    // Organize more efficiently
+    // Organize more efficiently; by input type?
     listeners: Array<DisplayHitListener<T>>;
 
     constructor(listeners: Array<DisplayHitListener<T>>){
         this.listeners = listeners;
+    }
+
+    setPromiseHandlers(resolve: Awaited<T>, reject: Rejection){
+        this.resolve = resolve;
+        this.reject = reject;
     }
 
     onclick(e: MouseEvent) { 

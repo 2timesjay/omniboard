@@ -1,5 +1,5 @@
 import * as test from "tape";
-import {GridLocation} from "../model/space";
+import {GridLocation} from "../space";
 
 test("GridLocation Test", (t) => {
     var grid_loc = new GridLocation(1, 2);

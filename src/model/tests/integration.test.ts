@@ -1,29 +1,9 @@
 import * as test from "tape";
-import {bfs, ISelectable, Stack, Tree} from "../model/core";
-import {SelectionFn, synthetic_input_getter} from "../model/input";
-import {Action, Effect, IState} from "../model/state";
-import {Awaited} from "../model/utilities";
-
-export class SelectableNumber implements ISelectable {
-    value: number;
-
-    constructor(value: number) {
-        this.value = value;
-    }
-}
-
-class NumberState implements IState {
-    value: number;
-    
-    constructor(value: number){
-        this.value = value;
-    }
-
-    // Should this mutate or return new State?
-    add(add_value: number) {
-        this.value = this.value + add_value;
-    }
-}
+import { NumberState, SelectableNumber } from "../../tests/utilities";
+import {bfs, ISelectable, Stack, Tree} from "../core";
+import {SelectionFn, synthetic_input_getter} from "../input";
+import {Action, Effect, IState} from "../state";
+import {Awaited} from "../utilities";
 
 function select_last<T>(arr: Array<T>): T {
     return arr[arr.length-1];

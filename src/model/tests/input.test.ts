@@ -1,8 +1,8 @@
 import * as test from "tape";
-import { Stack, Tree } from "../model/core";
-import {InputRequest, CallbackSelectionFn, async_input_getter, SelectionFn} from "../model/input";
-import { Awaited, Rejection } from "../model/utilities";
-import {SelectableNumber} from "./integration.test"
+import { SelectableNumber } from "../../tests/utilities";
+import { Stack, Tree } from "../core";
+import {InputRequest, CallbackSelectionFn, async_input_getter, SelectionFn} from "../input";
+import { Awaited, Rejection } from "../utilities";
 
 // TODO: Improve - maybe two callbacks, one for display one for selection?
 test("async_input_getter test", (t) => {

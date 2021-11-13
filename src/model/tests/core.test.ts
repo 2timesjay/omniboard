@@ -1,5 +1,5 @@
 import * as test from "tape";
-import {bfs, ISelectable, Stack, Tree} from "../model/core";
+import {bfs, ISelectable, Stack, Tree} from "../core";
 
 class SelectableNumber implements ISelectable {
     value: number;
