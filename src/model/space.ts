@@ -4,9 +4,10 @@
 
 enum RelativeCoordinateOperator {
     BASE,
+    OR,
     // REPEAT,
     // CONCAT,
-    OR,
+    // CONDITIONAL,
 }
 
 // Replace with class-based approach. Operators and subclassing.
@@ -18,9 +19,29 @@ class RelativeCoordinate {
         z: number | null;
     };
     children: Array<RelativeCoordinate>;
+
+    constructor(
+        x: number, 
+        y: number, 
+        z?: number | null, 
+        type?: RelativeCoordinateOperator | null, 
+        children?: Array<RelativeCoordinate> | null
+    ) {
+        this.value = {x: x, y: y, z: z};
+        this.type = this.type ? type : RelativeCoordinateOperator.BASE;
+        this.children = this.children ? children : [];
+    }
 };
 
-type RelativeNeighborhood = Array<RelativeCoordinate>
+type RelativeNeighborhood = Array<RelativeCoordinate>;
+
+// RelativeNeighborhood
+export const GRID_ADJACENCY = [
+    new RelativeCoordinate(0, 1),
+    new RelativeCoordinate(1, 0),
+    new RelativeCoordinate(0, -1),
+    new RelativeCoordinate(-1, 0),
+]
 
 interface ILocation {}
 
@@ -96,5 +117,9 @@ export class GridSpace {
 
     getNeighborhood(loc: GridLocation, rel_ne: RelativeNeighborhood): Neighborhood {
         return rel_ne.flatMap((rel_co) => this.getRelativeCoordinate(loc, rel_co));
+    }
+
+    getGridNeighborhood(loc: GridLocation): Neighborhood {
+        return this.getNeighborhood(loc, GRID_ADJACENCY);
     }
 }
