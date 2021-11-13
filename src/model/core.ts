@@ -86,6 +86,7 @@ export class Tree<T> extends Stack<T> {
         return child;
     }
 
+    // TODO: Alias type as PreviewMap<T>
     to_map(): Map<T, Tree<T>> {
         if (this.children) {
             var map = new Map<T, Tree<T>>()

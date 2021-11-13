@@ -16,11 +16,11 @@ export enum DisplayState {
 
 const size: number = 100;
 
-export class AbstractDisplay {
-    selectable: ISelectable;
+export class AbstractDisplay<T extends ISelectable> {
+    selectable: T;
     state: DisplayState;
 
-    constructor(selectable: ISelectable) {
+    constructor(selectable: T) {
         this.selectable = selectable;
         this.state = DisplayState.Neutral;
     }
@@ -63,7 +63,7 @@ export class AbstractDisplay {
         // Select by click - clicks off this element de-select.
         let context = canvas.getContext("2d");
         let self = this;
-        let trigger = function (e: MouseEvent): ISelectable | null {
+        let trigger = function (e: MouseEvent): T | null {
             if (e.type == "click") {
                 let mousePos = getMousePos(canvas, e);
                 if (self.isHit(mousePos)) {
@@ -82,7 +82,7 @@ export class AbstractDisplay {
         // Preview if not selected.
         let context = canvas.getContext("2d");
         let self = this;
-        let trigger = function (e: MouseEvent): ISelectable | null {
+        let trigger = function (e: MouseEvent): T | null {
             if (e.type == "mousemove" && !(self.state == DisplayState.Select)) {
                 let mousePos = getMousePos(canvas, e);
                 if (self.isHit(mousePos)) {
@@ -100,7 +100,7 @@ export class AbstractDisplay {
 }
 
 
-export class GridLocationDisplay extends AbstractDisplay {
+export class GridLocationDisplay extends AbstractDisplay<GridLocation> {
     selectable: GridLocation;
     xOffset: number;
     yOffset: number;
@@ -153,7 +153,7 @@ export class GridLocationDisplay extends AbstractDisplay {
 }
 
 
-export class UnitDisplay extends AbstractDisplay {
+export class UnitDisplay extends AbstractDisplay<Unit> {
     selectable: Unit;
     xOffset: number;
     yOffset: number;

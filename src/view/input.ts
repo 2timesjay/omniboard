@@ -1,5 +1,9 @@
-import { ISelectable } from "../model/core";
+import { ISelectable, Tree } from "../model/core";
+import { CallbackSelectionFn, PreviewMap } from "../model/input";
 import { Awaited, Rejection } from "../model/utilities";
+import { AbstractDisplay, DisplayState } from "./display";
+
+export type DisplayMap<T> = Map<T, AbstractDisplay<T>>;
 
 // TODO: Consistent Style
 export interface Position {
@@ -15,20 +19,11 @@ export function getMousePos(canvasDom: HTMLElement, mouseEvent: MouseEvent): Pos
     };
 }
 
-// TODO: Remove if SelectionBroker sufficient?
-// // export type CallbackSelectionFn<T extends ISelectable> = (
-// //     arr: Array<T>, resolve: Awaited<T>, reject: Rejection // Awaited from utilities. Replace in ts 4.5
-// // ) => void;
-// export async function DisplayAndAcquire<T extends ISelectable>(
-//     options: Array<T>, resolve: Awaited<T>, reject: Rejection
-// ) {
-//     // Set all options to selectable.
-//     // await clickListener for one of those options to trigger.
-//     // On clickListener triggering, resolve.
-//     // On any click that does not trigger an option clickListener, reject
-// }
-
 export type DisplayHitListener<T extends ISelectable> = (e: MouseEvent) => T
+
+export function setUpOptions(options: Array<AbstractDisplay<ISelectable>>) {
+    options.forEach((o) => o.state = DisplayState.Option);
+}
 
 export class SelectionBroker<T extends ISelectable> {
     resolve: Awaited<T>;
@@ -36,7 +31,13 @@ export class SelectionBroker<T extends ISelectable> {
     // Organize more efficiently; by input type?
     listeners: Array<DisplayHitListener<T>>;
 
-    constructor(listeners: Array<DisplayHitListener<T>>){
+    constructor(listeners?: Array<DisplayHitListener<T>>){
+        if (listeners){
+            this.setListeners(listeners);            
+        }
+    }
+
+    setListeners(listeners: Array<DisplayHitListener<T>>) {
         this.listeners = listeners;
     }
 
@@ -45,24 +46,46 @@ export class SelectionBroker<T extends ISelectable> {
         this.reject = reject;
     }
 
+    // TODO: Requirement that all listeners trigger in order to 'de-select' is too complex.
     onclick(e: MouseEvent) { 
+        var nohits = false;
         for (let listener of this.listeners) {
             var selection = listener(e);
-            if (selection) { // find first valid selection
+            if (selection && !nohits) {
                 this.resolve(selection); 
-                return;
+                nohits = true;
             }
         }
-        this.reject();
+        if (nohits) {
+            this.reject();
+        }
     }
     
     onmousemove(e: MouseEvent) { 
+        var nohits = false;
         for (let listener of this.listeners) {
             var selection = listener(e);
-            if (selection) { // find first valid selection
+            if (selection && !nohits) {
                 this.resolve(selection); 
-                return;
+                nohits = true;
             }
         }
+        if (nohits) {
+            this.reject();
+        }
+    }
+}
+
+// CallbackSelectionFn
+export function setup_selection_broker<T extends ISelectable>(
+    selection_broker: SelectionBroker<T>, display_map: DisplayMap<T>, canvas: HTMLCanvasElement
+): CallbackSelectionFn<T> {
+    return (options: Array<T>, resolve: Awaited<T>, reject:Rejection) => {
+        var displays = options.map((o) => display_map.get(o));
+        // TODO: These aren't really listeners. onClick?
+        var listeners = displays.map((d) => d.createClickListener(canvas));
+        setUpOptions(displays);
+        selection_broker.setListeners(listeners);
+        selection_broker.setPromiseHandlers(resolve, reject);
     }
 }

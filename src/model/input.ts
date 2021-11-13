@@ -6,10 +6,12 @@ import {
 import { Awaited, Rejection } from "./utilities";
 // TODO: Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
 
+export type PreviewMap<T> = Map<T, Tree<T>>;
+
 // Should this be Stack instead of Tree (and everywhere similar?)
 // Should this be a generator???
 export type InputRequest<T extends ISelectable> = (
-    preview_map: Map<T, Tree<T>>
+    preview_map: PreviewMap<T>
 ) => Promise<Stack<T>>;
 
 export type SelectionFn<T extends ISelectable> = (options: Array<T>) => T
