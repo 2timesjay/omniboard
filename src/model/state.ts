@@ -50,6 +50,7 @@ export class Action<T extends ISelectable> {
     }
 
     async acquire_input(base: Stack<T>, input_request: InputRequest<T>): Promise<Stack<T>> {
+        // Async but fully encapsulated. Never exposes intermediate input.
         var input = base
         do {
             var preview_tree = bfs(input, this.increment_fn, this.termination_fn);
@@ -58,13 +59,34 @@ export class Action<T extends ISelectable> {
         return input;
     }
 
-    // TODO: Handle both cases where intermediate input is required and where it isn't
     async * acquire_input_gen(base: Stack<T>, input_request: InputRequest<T>) {
+        // Handlescases where intermediate input is required by yielding it.
         var input = base;
+        var preview_tree = bfs(input, this.increment_fn, this.termination_fn);
         do {
             var preview_tree = bfs(input, this.increment_fn, this.termination_fn);
-            var input = await input_request(preview_tree.to_map());
-            yield input;
+            var input_resp = await input_request(preview_tree.to_map());
+            // TODO: Currently treats "null" response as special flag to pop.
+            if (!input_resp) {
+                if (input.parent) {
+                    input = input.pop();
+                    console.log("reject")
+                    preview_tree = bfs(input, this.increment_fn, this.termination_fn);                        
+                } else {
+                    console.log("ignore reject");
+                }
+                yield input;
+            } else if (input_resp.value == input.value){
+                console.log("repeat");
+                yield input;
+                break;
+            } else {
+                console.log("choice");
+                input = input_resp;
+                yield input;
+            }
+            console.log(input);
         } while(preview_tree.children);
+        console.log("acquire_input_gen over")
     }
 };

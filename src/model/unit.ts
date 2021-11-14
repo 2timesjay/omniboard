@@ -3,7 +3,9 @@ import { GridLocation } from "./space";
 import { Action } from "./state";
 
 
-export const BASIC_ACTIONS = new Array<Action<ISelectable>>();
+export const BASIC_ACTIONS = new Array<Action<ISelectable>>(
+    
+);
 
 export class Unit implements ISelectable {
     team: number;

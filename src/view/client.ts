@@ -92,13 +92,25 @@ var action = new Action(increment_fn, termination_fn, digest_fn);
 var input_gen = action.acquire_input_gen(root_stack, input_request);
 // TODO: Further Improve DisplayState handling (need "filter" or state machine for states).
 (async function () {
+    var prev_stack;
     for await (var input of input_gen) {
         console.log("input promise result: ", input);
         var stack = input;
+        // Erase old selection_state;
+        if(prev_stack) {
+            do {
+                var loc = prev_stack.value;
+                var display = display_map.get(loc);
+                display.selection_state = DisplayState.Neutral;
+                prev_stack = prev_stack.parent;
+            } while(prev_stack);
+        }
+        prev_stack = stack;
+        // Add new selection_state;
         do {
             var loc = stack.value;
             var display = display_map.get(loc);
-            display.state = DisplayState.Queue;
+            display.selection_state = DisplayState.Queue;
             stack = stack.parent;
         } while(stack);
         refreshDisplay(grid_space, display_map);

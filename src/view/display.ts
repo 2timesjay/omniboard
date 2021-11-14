@@ -19,23 +19,27 @@ const size: number = 100;
 export class AbstractDisplay<T extends ISelectable> {
     selectable: T;
     state: DisplayState;
+    selection_state: DisplayState
 
     constructor(selectable: T) {
         this.selectable = selectable;
         this.state = DisplayState.Neutral;
+        this.selection_state = DisplayState.Neutral;
     }
 
     display(context: CanvasRenderingContext2D) {
         if (this.state == DisplayState.Select) {
             this.selectDisplay(context);
-        } else if (this.state == DisplayState.Queue) {
-            this.queueDisplay(context);
         } else if (this.state == DisplayState.Preview) {
             this.previewDisplay(context);
         } else if (this.state == DisplayState.Option) {
             this.optionDisplay(context);
         } else {
             this.neutralDisplay(context);
+        }
+
+        if (this.selection_state == DisplayState.Queue) {
+            this.queueDisplay(context);
         }
     }
 
@@ -121,6 +125,10 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> {
         makeRect(this.xOffset, this.yOffset, context, this.size, clr);
     }
 
+    alt_render(context: CanvasRenderingContext2D, clr: string) {
+        makeCircle(this.xOffset, this.yOffset, context, this.size, clr);
+    }
+
     neutralDisplay(context: CanvasRenderingContext2D) {
         this.render(context, 'lightgrey');
     }
@@ -134,7 +142,7 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> {
     }
 
     queueDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'lightred');
+        this.alt_render(context, 'indianred');
     }
 
     selectDisplay(context: CanvasRenderingContext2D) {
@@ -163,8 +171,8 @@ export class UnitDisplay extends AbstractDisplay<Unit> {
 
     constructor(unit: Unit) {
         super(unit);
-        this.xOffset = this.selectable.x * size + 0.2 * size;
-        this.yOffset = this.selectable.y * size + 0.2 * size;
+        this.xOffset = this.selectable.loc.x * size + 0.2 * size;
+        this.yOffset = this.selectable.loc.y * size + 0.2 * size;
         this.size = size * 0.6;
         this.width = size * 0.6;
         this.height = size * 0.6;
@@ -172,6 +180,10 @@ export class UnitDisplay extends AbstractDisplay<Unit> {
 
     render(context: CanvasRenderingContext2D, clr: string) {
         makeRect(this.xOffset, this.yOffset, context, this.size, clr);
+    }
+
+    alt_render(context: CanvasRenderingContext2D, clr: string) {
+        makeCircle(this.xOffset, this.yOffset, context, this.size, clr);
     }
 
     neutralDisplay(context: CanvasRenderingContext2D) {
@@ -187,7 +199,7 @@ export class UnitDisplay extends AbstractDisplay<Unit> {
     }
 
     queueDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'lightred');
+        this.alt_render(context, 'indianred');
     }
 
     selectDisplay(context: CanvasRenderingContext2D) {

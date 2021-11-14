@@ -34,14 +34,14 @@ export function makeCircle(
     y: number, 
     context: CanvasRenderingContext2D, 
     size: number, 
-    clr: string, 
-    lfa: number
+    clr?: string | null, 
+    lfa?: number | null
 ): void {
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
-    var centerX = x;
-    var centerY = y;
-    var radius = size;
+    var centerX = x + size/2.0;
+    var centerY = y + size/2.0;
+    var radius = size/2.0;
 
     context.globalAlpha = alpha;
     context.beginPath();

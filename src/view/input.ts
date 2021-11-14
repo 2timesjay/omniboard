@@ -48,12 +48,12 @@ export class SelectionBroker<T extends ISelectable> {
 
     // TODO: Requirement that all listeners trigger in order to 'de-select' is too complex.
     onclick(e: MouseEvent) { 
-        var nohits = false;
+        var nohits = true;
         for (let listener of this.listeners) {
             var selection = listener(e);
-            if (selection && !nohits) {
+            if (selection && nohits) {
                 this.resolve(selection); 
-                nohits = true;
+                nohits = false;
             }
         }
         if (nohits) {
@@ -63,12 +63,12 @@ export class SelectionBroker<T extends ISelectable> {
     
     onmousemove(e: MouseEvent) {
         // TODO: Clean up: No Selection on Mousemove 
-        var nohits = false;
+        var nohits = true;
         for (let listener of this.listeners) {
             var selection = listener(e);
-            // if (selection && !nohits) {
+            // if (selection && nohits) {
             //     this.resolve(selection); 
-            //     nohits = true;
+            //     nohits = false;
             // }
         }
         // if (nohits) {
@@ -82,7 +82,7 @@ export function setup_selection_broker<T extends ISelectable>(
     selection_broker: SelectionBroker<T>, display_map: DisplayMap<T>, canvas: HTMLCanvasElement
 ): CallbackSelectionFn<T> {
     console.log("regenerating selection broker");
-    return (options: Array<T>, resolve: Awaited<T>, reject:Rejection) => {
+    return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
         var displays = options.map((o) => display_map.get(o));
         // TODO: These aren't really listeners. onClick?
         var click_listeners = displays.map(

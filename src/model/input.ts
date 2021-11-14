@@ -51,6 +51,10 @@ export function async_input_getter<T extends ISelectable>(
             function(selection) { 
                 return preview_map.get(selection); 
             }
+        ).catch(
+            function() {
+                return null;
+            }
         );
     };
 }
