@@ -61,18 +61,19 @@ export class SelectionBroker<T extends ISelectable> {
         }
     }
     
-    onmousemove(e: MouseEvent) { 
+    onmousemove(e: MouseEvent) {
+        // TODO: Clean up: No Selection on Mousemove 
         var nohits = false;
         for (let listener of this.listeners) {
             var selection = listener(e);
-            if (selection && !nohits) {
-                this.resolve(selection); 
-                nohits = true;
-            }
+            // if (selection && !nohits) {
+            //     this.resolve(selection); 
+            //     nohits = true;
+            // }
         }
-        if (nohits) {
-            this.reject();
-        }
+        // if (nohits) {
+        //     this.reject();
+        // }
     }
 }
 
@@ -80,12 +81,19 @@ export class SelectionBroker<T extends ISelectable> {
 export function setup_selection_broker<T extends ISelectable>(
     selection_broker: SelectionBroker<T>, display_map: DisplayMap<T>, canvas: HTMLCanvasElement
 ): CallbackSelectionFn<T> {
+    console.log("regenerating selection broker");
     return (options: Array<T>, resolve: Awaited<T>, reject:Rejection) => {
         var displays = options.map((o) => display_map.get(o));
         // TODO: These aren't really listeners. onClick?
-        var listeners = displays.map((d) => d.createClickListener(canvas));
+        var click_listeners = displays.map(
+            (d) => d.createClickListener(canvas)
+        );
+        var mousemove_listeners =  displays.map(
+            (d) => d.createPreviewListener(canvas)
+        );
+        // var mousemove_listeners: Array<DisplayHitListener<T>> = [];
         setUpOptions(displays);
-        selection_broker.setListeners(listeners);
+        selection_broker.setListeners([...click_listeners, ...mousemove_listeners]);
         selection_broker.setPromiseHandlers(resolve, reject);
     }
 }

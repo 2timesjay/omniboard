@@ -2,7 +2,7 @@
 import { makeCanvas, makeCircle, makeRect } from "./rendering";
 import { DisplayHitListener, DisplayMap, getMousePos, SelectionBroker, setup_selection_broker } from "./input";
 import { GridLocation, GridSpace } from "../model/space";
-import { AbstractDisplay, GridLocationDisplay } from "./display";
+import { AbstractDisplay, DisplayState, GridLocationDisplay } from "./display";
 import { ISelectable, Stack } from "../model/core";
 import { async_input_getter } from "../model/input";
 import { Action, BoardState, Effect } from "../model/state";
@@ -87,7 +87,20 @@ var digest_fn = (nums: Array<GridLocation>): Array<Effect<BoardState>> => {
     effect.post_effect = null;
     return [effect];
 }
-// TODO: Kind of works? But queued state not handled properly. Need to improve DisplayState handling
 var root_stack = new Stack<GridLocation>(grid_space.get(0, 0));
 var action = new Action(increment_fn, termination_fn, digest_fn);
-var input_promise = action.acquire_input(root_stack, input_request);
+var input_gen = action.acquire_input_gen(root_stack, input_request);
+// TODO: Further Improve DisplayState handling (need "filter" or state machine for states).
+(async function () {
+    for await (var input of input_gen) {
+        console.log("input promise result: ", input);
+        var stack = input;
+        do {
+            var loc = stack.value;
+            var display = display_map.get(loc);
+            display.state = DisplayState.Queue;
+            stack = stack.parent;
+        } while(stack);
+        refreshDisplay(grid_space, display_map);
+    }
+})();

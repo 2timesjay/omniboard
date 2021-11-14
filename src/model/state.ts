@@ -57,4 +57,14 @@ export class Action<T extends ISelectable> {
         } while(preview_tree.children);
         return input;
     }
+
+    // TODO: Handle both cases where intermediate input is required and where it isn't
+    async * acquire_input_gen(base: Stack<T>, input_request: InputRequest<T>) {
+        var input = base;
+        do {
+            var preview_tree = bfs(input, this.increment_fn, this.termination_fn);
+            var input = await input_request(preview_tree.to_map());
+            yield input;
+        } while(preview_tree.children);
+    }
 };

@@ -70,7 +70,7 @@ export class AbstractDisplay<T extends ISelectable> {
                     self.state = DisplayState.Select;
                     return self.selectable;
                 } else {
-                    self.state = DisplayState.Option;
+                    self.state = DisplayState.Neutral;
                     return null;
                 }
             }
