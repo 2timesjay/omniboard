@@ -134,7 +134,7 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> {
     }
 
     queueDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'orange');
+        this.render(context, 'lightred');
     }
 
     selectDisplay(context: CanvasRenderingContext2D) {
@@ -175,7 +175,7 @@ export class UnitDisplay extends AbstractDisplay<Unit> {
     }
 
     neutralDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, this.selectable.team == 0 ? 'orangered' : 'lightblue');
+        this.render(context, this.selectable.team == 0 ? 'orange' : 'blue');
     }
 
     optionDisplay(context: CanvasRenderingContext2D) {
@@ -183,11 +183,11 @@ export class UnitDisplay extends AbstractDisplay<Unit> {
     }
 
     previewDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'grey');
+        this.render(context, 'yellow');
     }
 
     queueDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'orange');
+        this.render(context, 'lightred');
     }
 
     selectDisplay(context: CanvasRenderingContext2D) {
