@@ -18,8 +18,12 @@ test("GridLocation Test", (t) => {
 
 test("GridSpace test", (t) => {
     var grid_space = new GridSpace(4, 4);
-    var grid_loc = grid_space.locs[2][3];
+    var grid_loc = grid_space.get(2, 3);
+    t.equal(grid_loc, grid_space.locs[2][3]);
     t.equal(grid_loc.x, 2);
     t.equal(grid_loc.y, 3);
+    var neighbors = grid_space.getGridNeighborhood(grid_loc);
+    t.equal(neighbors.length, 3);
+    console.log(neighbors);
     t.end();
 })

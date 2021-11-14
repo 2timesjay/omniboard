@@ -3,9 +3,9 @@ import { makeCanvas, makeCircle, makeRect } from "./rendering";
 import { DisplayHitListener, DisplayMap, getMousePos, SelectionBroker, setup_selection_broker } from "./input";
 import { GridLocation, GridSpace } from "../model/space";
 import { AbstractDisplay, GridLocationDisplay } from "./display";
-import { ISelectable } from "../model/core";
+import { ISelectable, Stack } from "../model/core";
 import { async_input_getter } from "../model/input";
-import { Action } from "../model/state";
+import { Action, BoardState, Effect } from "../model/state";
 
 /* Generic setup */
 const k = 4;
@@ -70,26 +70,24 @@ var callback_selection_fn = setup_selection_broker(selection_broker, display_map
 var input_request = async_input_getter(callback_selection_fn);
 
 // TODO: Change below to free-standing move input
-// var increment_fn = (grid: Stack<GridLocation>): Array<GridLocation> => {
-//     var options = Array<SelectableNumber>();
-//     var current_num = nums.value.value;
-//     options.push(numbers[current_num+3]);
-//     options.push(numbers[current_num+6]);
-//     return options;
-// };
-// var termination_fn = (nums: Stack<SelectableNumber>): boolean => {
-//     return nums.depth >= 4;
-// }
-// var digest_fn = (nums: Array<SelectableNumber>): Array<Effect<NumberState>> => {
-//     function effect(state: NumberState): NumberState {
-//         state.add(nums[0].value);
-//         return state;
-//     };
-//     // Reconsider callable.
-//     effect.description = null;
-//     effect.pre_effect = null;
-//     effect.post_effect = null;
-//     return [effect];
-// }
-// var action = new Action(increment_fn, termination_fn, digest_fn);
-// var input_promise = action.acquire_input(root_stack, input_request);
+var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
+    var options = grid_space.getGridNeighborhood(loc_stack.value);
+    return options;
+};
+var termination_fn = (loc_stack: Stack<GridLocation>): boolean => {
+    return loc_stack.depth >= 4;
+}
+var digest_fn = (nums: Array<GridLocation>): Array<Effect<BoardState>> => {
+    function effect(state: BoardState): BoardState {
+        return state;
+    };
+    // Reconsider callable.
+    effect.description = null;
+    effect.pre_effect = null;
+    effect.post_effect = null;
+    return [effect];
+}
+// TODO: Kind of works? But queued state not handled properly. Need to improve DisplayState handling
+var root_stack = new Stack<GridLocation>(grid_space.get(0, 0));
+var action = new Action(increment_fn, termination_fn, digest_fn);
+var input_promise = action.acquire_input(root_stack, input_request);

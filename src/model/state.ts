@@ -32,6 +32,10 @@ export type Observer<T extends IState> = {
 // TODO: The `any` here is a big wacky. Could https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-types help?
 export type DigestFn<T extends ISelectable> = (selection: Array<T>) => Array<Effect<any>>;
 
+export class BoardState implements IState {
+    
+}
+
 // T is the type of input expected
 export class Action<T extends ISelectable> {
     // Class managing combination of input acquisition and effect generation.

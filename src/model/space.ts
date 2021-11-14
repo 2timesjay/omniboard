@@ -1,7 +1,3 @@
-// types = require("./types.ts");
-// import {Neighborhood} from "./types"
-
-
 enum RelativeCoordinateOperator {
     BASE,
     OR,
@@ -44,8 +40,6 @@ export const GRID_ADJACENCY = [
 ]
 
 interface ILocation {}
-
-type Neighborhood = Array<ILocation>;
 
 interface IDiscreteLocation extends ILocation {}
 
@@ -100,11 +94,13 @@ export class GridSpace {
         }
     }
 
-    getRelativeCoordinate(loc: GridLocation, rel_co: RelativeCoordinate): Neighborhood {
+    getRelativeCoordinate(loc: GridLocation, rel_co: RelativeCoordinate): Array<GridLocation> {
         var nh = new Array<GridLocation>();
         if (rel_co.type == RelativeCoordinateOperator.BASE) {
             var ne = this.get(loc.x + rel_co.value.x, loc.y + rel_co.value.y)
-            nh.push(ne)
+            if (ne) {
+                nh.push(ne);
+            }
         } else if (rel_co.type == RelativeCoordinateOperator.OR) {
             rel_co.children.flatMap(
                 (child) => {
@@ -115,11 +111,11 @@ export class GridSpace {
         return nh;
     }
 
-    getNeighborhood(loc: GridLocation, rel_ne: RelativeNeighborhood): Neighborhood {
+    getNeighborhood(loc: GridLocation, rel_ne: RelativeNeighborhood): Array<GridLocation> {
         return rel_ne.flatMap((rel_co) => this.getRelativeCoordinate(loc, rel_co));
     }
 
-    getGridNeighborhood(loc: GridLocation): Neighborhood {
+    getGridNeighborhood(loc: GridLocation): Array<GridLocation> {
         return this.getNeighborhood(loc, GRID_ADJACENCY);
     }
 }
