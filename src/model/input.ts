@@ -16,6 +16,7 @@ export type InputRequest<T extends ISelectable> = (
 
 export type SelectionFn<T extends ISelectable> = (options: Array<T>) => T
 
+// TODO: Pass preview_map directly instead of just options.
 export type CallbackSelectionFn<T extends ISelectable> = (
     options: Array<T>, resolve: Awaited<T>, reject: Rejection // Awaited from utilities. Replace in ts 4.5
 ) => void;

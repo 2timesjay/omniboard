@@ -66,8 +66,8 @@ function addCanvasListeners(
 addCanvasListeners(context, grid_space, display_map);
 
 
-var callback_selection_fn = setup_selection_broker(selection_broker, display_map, canvas);
-var input_request = async_input_getter(callback_selection_fn);
+var brokered_selection_fn = setup_selection_broker(selection_broker, display_map, canvas);
+var input_request = async_input_getter(brokered_selection_fn);
 
 // TODO: Change below to free-standing move input
 var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
