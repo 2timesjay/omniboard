@@ -86,7 +86,7 @@ export class GridSpace {
         this.w = w;
     }
 
-    get(x: number, y: number) {
+    get(x: number, y: number): GridLocation | null {
         if ((x >= 0 && x < this.h) && (y >= 0 && y < this.w)) {
             return this.locs[x][y];
         } else {

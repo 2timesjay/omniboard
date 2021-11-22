@@ -59,3 +59,19 @@ export function async_input_getter<T extends ISelectable>(
         );
     };
 }
+
+export function flat_tree_helper<T extends ISelectable>(options: Array<T>) {
+    var tree = new Tree(null);
+    for (var option of options){
+        tree.add_child(new Tree(option));
+    }
+    return tree;
+}
+
+// TODO: Does "null" root cause problems? Probably
+export async function acquire_flat_input<T extends ISelectable>(options: Array<T>, input_request: InputRequest<T>): Promise<Stack<T>> {
+    // Single-element input acquisition
+    var preview_tree = flat_tree_helper<T>(options);
+    var input = await input_request(preview_tree.to_map());
+    return input;
+}

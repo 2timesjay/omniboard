@@ -10,6 +10,8 @@ import {
 import {
     InputRequest
 } from "./input";
+import { GridSpace } from "./space";
+import { Unit } from "./unit";
 
 import {Awaited} from "./utilities";
 
@@ -33,11 +35,12 @@ export type Observer<T extends IState> = {
 export type DigestFn<T extends ISelectable> = (selection: Array<T>) => Array<Effect<any>>;
 
 export class BoardState implements IState {
-    
+    grid: GridSpace;
+    units: Array<Unit>;
 }
 
 // T is the type of input expected
-export class Action<T extends ISelectable> {
+export class Action<T extends ISelectable> implements ISelectable {
     // Class managing combination of input acquisition and effect generation.
     increment_fn: IncrementFn<T>;
     termination_fn: TerminationFn<T>;
@@ -59,8 +62,12 @@ export class Action<T extends ISelectable> {
         return input;
     }
 
+    get_options(input: Stack<T>){
+        return bfs(input, this.increment_fn, this.termination_fn);
+    }
+
     async * acquire_input_gen(base: Stack<T>, input_request: InputRequest<T>) {
-        // Handlescases where intermediate input is required by yielding it.
+        // Handles cases where intermediate input is required by yielding it.
         var input = base;
         var preview_tree = bfs(input, this.increment_fn, this.termination_fn);
         do {
@@ -71,7 +78,7 @@ export class Action<T extends ISelectable> {
                 if (input.parent) {
                     input = input.pop();
                     console.log("reject")
-                    preview_tree = bfs(input, this.increment_fn, this.termination_fn);                        
+                    preview_tree = this.get_options(input);                        
                 } else {
                     console.log("ignore reject");
                 }
