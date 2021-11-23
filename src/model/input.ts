@@ -3,8 +3,9 @@ import {
     Stack,
     Tree,
 } from "./core";
+import { TacticsPhase } from "./phase";
 import { GridLocation } from "./space";
-import { Action } from "./state";
+import { Action, BoardState} from "./state";
 import { Unit } from "./unit";
 import { Awaited, Rejection } from "./utilities";
 // TODO: Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
@@ -75,17 +76,28 @@ export function flat_tree_helper<T extends ISelectable>(options: Array<T>) {
 }
 
 // TODO: Does "null" root cause problems? Probably
-export async function acquire_flat_input<T extends ISelectable>(options: Array<T>, input_request: InputRequest<T>): Promise<Stack<T>> {
+export async function acquire_flat_input<T extends ISelectable>(options: Array<T>, input_request: InputRequest<T>): Promise<InputSelection<T>> {
     // Single-element input acquisition
     var preview_tree = flat_tree_helper<T>(options);
     var input = await input_request(preview_tree.to_map());
     return input;
 }
 
-export function input_bridge(phase: Phase, input_brokers: Array<InputRequest<ISelectable>>) {
-}
-
 // --- Tactics ---
+
+// TODO: I have typed too many damn things.
+type TacticsSelectable = Unit | GridLocation | Action<TacticsSelectable>
+
+export async function tactics_input_bridge(phase: TacticsPhase, state: BoardState, input_brokers: Array<InputRequest<TacticsSelectable>>) {
+    var [unit_broker, action_broker, location_broker] = input_brokers;
+    var phase_runner = phase.run_phase(state, 0);
+    var input_options = phase_runner.next().value;
+    while(input_options){
+        // @ts-ignore input_options potentially overbroad (ISelectable) here?
+        var input_selection = await tactics_input_wrangler(input_options, unit_broker, action_broker, location_broker);
+        input_options = phase_runner.next(input_selection).value;
+    }
+}
 
 function isInputOptionsUnit(o: any): o is InputOptions<Unit> {
     return (!!o.value && o.value instanceof Unit) || o instanceof Unit
@@ -97,8 +109,6 @@ function isInputOptionsAction(o: any): o is InputOptions<Action<TacticsSelectabl
 function isInputOptionsGridLocation(o: any): o is InputOptions<GridLocation> {
     return (!!o.value && o.value instanceof GridLocation) || o instanceof GridLocation
 } 
-
-type TacticsSelectable = Unit | GridLocation | Action<TacticsSelectable>
 
 export async function tactics_input_wrangler(
     input_options: InputOptions<TacticsSelectable>, 
