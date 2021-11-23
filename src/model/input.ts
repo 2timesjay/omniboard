@@ -83,26 +83,34 @@ export async function acquire_flat_input<T extends ISelectable>(options: Array<T
 }
 
 export function input_bridge(phase: Phase, input_brokers: Array<InputRequest<ISelectable>>) {
-
 }
 
 // --- Tactics ---
 
-function isUnit(ts: any) 
+function isInputOptionsUnit(o: any): o is InputOptions<Unit> {
+    return (!!o.value && o.value instanceof Unit) || o instanceof Unit
+} 
+// TODO: Have to take "TacticsSelectable" on faith - should this be part of Action?
+function isInputOptionsAction(o: any): o is InputOptions<Action<TacticsSelectable>> {
+    return (!!o.value && o.value instanceof Action) || o instanceof Action
+} 
+function isInputOptionsGridLocation(o: any): o is InputOptions<GridLocation> {
+    return (!!o.value && o.value instanceof GridLocation) || o instanceof GridLocation
+} 
 
 type TacticsSelectable = Unit | GridLocation | Action<TacticsSelectable>
 
-export function tactics_input_handler(
+export async function tactics_input_wrangler(
     input_options: InputOptions<TacticsSelectable>, 
     unit_broker: InputRequest<Unit>,
     action_broker: InputRequest<Action<TacticsSelectable>>,
     location_broker: InputRequest<GridLocation>,
 ) {
-    if (input_options instanceof Unit) {
-
-    } else if (input_options instanceof GridLocation) {
-        
-    } else {
-        
+    if (isInputOptionsUnit(input_options)) {
+        return unit_broker(input_options);
+    } else if (isInputOptionsAction(input_options)) {
+        return action_broker(input_options);
+    } else if (isInputOptionsGridLocation(input_options)) {
+        return location_broker(input_options);
     }
 }
