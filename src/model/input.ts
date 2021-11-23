@@ -3,16 +3,22 @@ import {
     Stack,
     Tree,
 } from "./core";
+import { GridLocation } from "./space";
+import { Action } from "./state";
+import { Unit } from "./unit";
 import { Awaited, Rejection } from "./utilities";
 // TODO: Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
 
 export type PreviewMap<T> = Map<T, Tree<T>>;
 
+export type InputOptions<T> = PreviewMap<T> | Array<T>;
+export type InputSelection<T> = Stack<T> | T;
+
 // Should this be Stack instead of Tree (and everywhere similar?)
 // Should this be a generator???
 export type InputRequest<T extends ISelectable> = (
-    preview_map: PreviewMap<T>
-) => Promise<Stack<T>>;
+    input_options: InputOptions<T>
+) => Promise<InputSelection<T>>;
 
 export type SelectionFn<T extends ISelectable> = (options: Array<T>) => T
 
@@ -74,4 +80,29 @@ export async function acquire_flat_input<T extends ISelectable>(options: Array<T
     var preview_tree = flat_tree_helper<T>(options);
     var input = await input_request(preview_tree.to_map());
     return input;
+}
+
+export function input_bridge(phase: Phase, input_brokers: Array<InputRequest<ISelectable>>) {
+
+}
+
+// --- Tactics ---
+
+function isUnit(ts: any) 
+
+type TacticsSelectable = Unit | GridLocation | Action<TacticsSelectable>
+
+export function tactics_input_handler(
+    input_options: InputOptions<TacticsSelectable>, 
+    unit_broker: InputRequest<Unit>,
+    action_broker: InputRequest<Action<TacticsSelectable>>,
+    location_broker: InputRequest<GridLocation>,
+) {
+    if (input_options instanceof Unit) {
+
+    } else if (input_options instanceof GridLocation) {
+        
+    } else {
+        
+    }
 }

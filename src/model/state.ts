@@ -8,7 +8,7 @@ import {
 } from "./core";
 
 import {
-    InputRequest
+    InputRequest, PreviewMap
 } from "./input";
 import { GridSpace } from "./space";
 import { Unit } from "./unit";
@@ -52,48 +52,43 @@ export class Action<T extends ISelectable> implements ISelectable {
         this.digest_fn = digest_fn;
     }
 
-    async acquire_input(base: Stack<T>, input_request: InputRequest<T>): Promise<Stack<T>> {
-        // Async but fully encapsulated. Never exposes intermediate input.
-        var input = base
-        do {
-            var preview_tree = bfs(input, this.increment_fn, this.termination_fn);
-            var input = await input_request(preview_tree.to_map());
-        } while(preview_tree.children);
-        return input;
-    }
-
     get_options(input: Stack<T>){
         return bfs(input, this.increment_fn, this.termination_fn);
     }
 
-    async * acquire_input_gen(base: Stack<T>, input_request: InputRequest<T>) {
+    * input_option_generator(
+        base: Stack<T>
+    ): Generator<PreviewMap<T>, Stack<T>, Stack<T>> {
         // Handles cases where intermediate input is required by yielding it.
+        // Coroutine case.
         var input = base;
-        var preview_tree = bfs(input, this.increment_fn, this.termination_fn);
+        var preview_tree = this.get_options(input);
         do {
-            var preview_tree = bfs(input, this.increment_fn, this.termination_fn);
-            var input_resp = await input_request(preview_tree.to_map());
+            var preview_map = this.get_options(input).to_map();
+            var input_resp = yield preview_map;
             // TODO: Currently treats "null" response as special flag to pop.
             if (!input_resp) {
                 if (input.parent) {
                     input = input.pop();
                     console.log("reject")
-                    preview_tree = this.get_options(input);                        
+                    preview_map = this.get_options(input).to_map();                        
                 } else {
                     console.log("ignore reject");
                 }
-                yield input;
+                input_resp = yield preview_map;
             } else if (input_resp.value == input.value){
                 console.log("repeat");
-                yield input;
+                input_resp = yield preview_map;
                 break;
             } else {
                 console.log("choice");
                 input = input_resp;
-                yield input;
+                // preview_map = this.get_options(input).to_map(); 
+                // input_resp = yield preview_map;
             }
             console.log(input);
         } while(preview_tree.children);
         console.log("acquire_input_gen over")
+        return input;
     }
 };
