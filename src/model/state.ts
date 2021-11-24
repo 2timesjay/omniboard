@@ -56,16 +56,17 @@ export class Action<T extends ISelectable> implements ISelectable {
         return bfs(input, this.increment_fn, this.termination_fn);
     }
 
+    // TODO: Cleanup
     * input_option_generator(
         base: Stack<T>
-    ): Generator<PreviewMap<T>, Stack<T>, Stack<T>> {
+    ): Generator<PreviewMap<T>, Array<Effect<BoardState>>, Stack<T>> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
         var input = base;
-        var preview_tree = this.get_options(input);
+        var preview_map = this.get_options(input).to_map();
+        var input_resp = yield preview_map;
         do {
-            var preview_map = this.get_options(input).to_map();
-            var input_resp = yield preview_map;
+            console.log("click");
             // TODO: Currently treats "null" response as special flag to pop.
             if (!input_resp) {
                 if (input.parent) {
@@ -78,17 +79,17 @@ export class Action<T extends ISelectable> implements ISelectable {
                 input_resp = yield preview_map;
             } else if (input_resp.value == input.value){
                 console.log("repeat");
-                input_resp = yield preview_map;
+                // input_resp = yield preview_map;
                 break;
             } else {
                 console.log("choice");
                 input = input_resp;
-                // preview_map = this.get_options(input).to_map(); 
-                // input_resp = yield preview_map;
+                preview_map = this.get_options(input).to_map(); 
+                input_resp = yield preview_map;
             }
-            console.log(input);
-        } while(preview_tree.children);
-        console.log("acquire_input_gen over")
-        return input;
+            // console.log(input);
+        } while(true);
+        console.log("input_option_generation over");
+        return this.digest_fn(input.to_array());
     }
 };

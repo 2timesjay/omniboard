@@ -1,7 +1,7 @@
 import * as test from "tape";
 import { NumberState, SelectableNumber } from "../../tests/utilities";
 import {bfs, ISelectable, Stack, Tree} from "../core";
-import {SelectionFn, synthetic_input_getter} from "../input";
+import {InputSelection, SelectionFn, synthetic_input_getter} from "../input";
 import {Action, Effect, IState} from "../state";
 import {Awaited} from "../utilities";
 
@@ -40,21 +40,36 @@ test("Integration test", (t) => {
     }
     // Either specify SelectableNumber as type of input getter OR cast within digest_fn
     // TODO: Make casting option more robust
+    // TODO: A lot simpler to test with synchronous input_getter. Needed for AI?
     var select_last_input_getter = synthetic_input_getter<SelectableNumber>(select_last);
     var action = new Action(increment_fn, termination_fn, digest_fn);
-    var input_promise = action.acquire_input(root_stack, select_last_input_getter);
+    var input_option_generator = action.input_option_generator(root_stack);
     var number_state = new NumberState(10);
-    var input = input_promise.then(
-        function(input) {
-            // console.log(input.to_array());
-            var effects = digest_fn(input.to_array())
+    var options = input_option_generator.next().value;
+    var selection: InputSelection<SelectableNumber> = null;
+    var process_options = function(
+        sel: InputSelection<SelectableNumber>
+    ): Promise<InputSelection<SelectableNumber>> {
+        selection = sel;
+        // @ts-ignore InputSelection of course
+        options = input_option_generator.next(sel).value;
+        // @ts-ignore Board State
+        return select_last_input_getter(options);
+    }
+    // TODO: This whole test is questionable.
+    // @ts-ignore Board State
+    select_last_input_getter(options)
+        .then(process_options) // 1 or 2 work; 3 repeats doesn't.
+        .then((sel) => {
+            t.notEqual(sel, null);
+            // @ts-ignore InputSelection
+            var effects = action.digest_fn(selection.to_array());
             t.equal(effects.length, 1);
             var transformed_state = effects[0](number_state);
             t.equal(transformed_state.value, 31);
             // console.log(input_promise);
             t.end();
-        }
-    );
+        });
 })
 
 

@@ -88,13 +88,13 @@ export async function acquire_flat_input<T extends ISelectable>(options: Array<T
 // TODO: I have typed too many damn things.
 type TacticsSelectable = Unit | GridLocation | Action<TacticsSelectable>
 
-export async function tactics_input_bridge(phase: TacticsPhase, state: BoardState, input_brokers: Array<InputRequest<TacticsSelectable>>) {
-    var [unit_broker, action_broker, location_broker] = input_brokers;
+export async function tactics_input_bridge(phase: TacticsPhase, state: BoardState, input_requests: Array<InputRequest<TacticsSelectable>>) {
+    var [unit_request, action_request, location_request] = input_requests;
     var phase_runner = phase.run_phase(state, 0);
     var input_options = phase_runner.next().value;
     while(input_options){
         // @ts-ignore input_options potentially overbroad (ISelectable) here?
-        var input_selection = await tactics_input_wrangler(input_options, unit_broker, action_broker, location_broker);
+        var input_selection = await tactics_input_wrangler(input_options, unit_request, action_request, location_request);
         input_options = phase_runner.next(input_selection).value;
     }
 }
@@ -112,15 +112,15 @@ function isInputOptionsGridLocation(o: any): o is InputOptions<GridLocation> {
 
 export async function tactics_input_wrangler(
     input_options: InputOptions<TacticsSelectable>, 
-    unit_broker: InputRequest<Unit>,
-    action_broker: InputRequest<Action<TacticsSelectable>>,
-    location_broker: InputRequest<GridLocation>,
+    unit_request: InputRequest<Unit>,
+    action_request: InputRequest<Action<TacticsSelectable>>,
+    location_request: InputRequest<GridLocation>,
 ) {
     if (isInputOptionsUnit(input_options)) {
-        return unit_broker(input_options);
+        return unit_request(input_options);
     } else if (isInputOptionsAction(input_options)) {
-        return action_broker(input_options);
+        return action_request(input_options);
     } else if (isInputOptionsGridLocation(input_options)) {
-        return location_broker(input_options);
+        return location_request(input_options);
     }
 }
