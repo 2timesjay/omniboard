@@ -1,27 +1,32 @@
-import { ISelectable } from "./core";
-import { GridLocation } from "./space";
-import { Action } from "./state";
+import { ISelectable, Stack } from "./core";
+import { GridLocation, GridSpace } from "./space";
+import { Action, BoardState, Effect } from "./state";
 
 
-export const BASIC_ACTIONS = new Array<Action<ISelectable>>(
-    // var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
-    //     var options = grid_space.getGridNeighborhood(loc_stack.value);
-    //     return options;
-    // };
-    // var termination_fn = (loc_stack: Stack<GridLocation>): boolean => {
-    //     return loc_stack.depth >= 4;
-    // }
-    // var digest_fn = (nums: Array<GridLocation>): Array<Effect<BoardState>> => {
-    //     function effect(state: BoardState): BoardState {
-    //         return state;
-    //     };
-    //     // Reconsider callable.
-    //     effect.description = null;
-    //     effect.pre_effect = null;
-    //     effect.post_effect = null;
-    //     return [effect];
-    // }
-);
+export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, grid_space: GridSpace){
+    var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
+        var options = grid_space.getGridNeighborhood(loc_stack.value);
+        return options;
+    };
+    var termination_fn = (loc_stack: Stack<GridLocation>): boolean => {
+        return loc_stack.depth >= 4;
+    }
+    var digest_fn = (locs: Array<GridLocation>): Array<Effect<BoardState>> => {
+        function effect_constructor(loc: GridLocation){
+            function effect(state: BoardState): BoardState {
+                unit.setLoc(loc);
+                return state;
+            };
+            // TODO: Reconsider Effect as callable.
+            effect.description = "move unit";
+            effect.pre_effect = null;
+            effect.post_effect = null;
+            return effect;
+        }
+        return locs.map(effect_constructor)
+    }
+    return [new Action(increment_fn, termination_fn, digest_fn)]
+} 
 
 export class Unit implements ISelectable {
     team: number;

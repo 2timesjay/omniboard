@@ -3,10 +3,6 @@ import {
     Stack,
     Tree,
 } from "./core";
-import { TacticsPhase } from "./phase";
-import { GridLocation } from "./space";
-import { Action, BoardState} from "./state";
-import { Unit } from "./unit";
 import { Awaited, Rejection } from "./utilities";
 // TODO: Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
 
@@ -81,46 +77,4 @@ export async function acquire_flat_input<T extends ISelectable>(options: Array<T
     var preview_tree = flat_tree_helper<T>(options);
     var input = await input_request(preview_tree.to_map());
     return input;
-}
-
-// --- Tactics ---
-
-// TODO: I have typed too many damn things.
-type TacticsSelectable = Unit | GridLocation | Action<TacticsSelectable>
-
-export async function tactics_input_bridge(phase: TacticsPhase, state: BoardState, input_requests: Array<InputRequest<TacticsSelectable>>) {
-    var [unit_request, action_request, location_request] = input_requests;
-    var phase_runner = phase.run_phase(state, 0);
-    var input_options = phase_runner.next().value;
-    while(input_options){
-        // @ts-ignore input_options potentially overbroad (ISelectable) here?
-        var input_selection = await tactics_input_wrangler(input_options, unit_request, action_request, location_request);
-        input_options = phase_runner.next(input_selection).value;
-    }
-}
-
-function isInputOptionsUnit(o: any): o is InputOptions<Unit> {
-    return (!!o.value && o.value instanceof Unit) || o instanceof Unit
-} 
-// TODO: Have to take "TacticsSelectable" on faith - should this be part of Action?
-function isInputOptionsAction(o: any): o is InputOptions<Action<TacticsSelectable>> {
-    return (!!o.value && o.value instanceof Action) || o instanceof Action
-} 
-function isInputOptionsGridLocation(o: any): o is InputOptions<GridLocation> {
-    return (!!o.value && o.value instanceof GridLocation) || o instanceof GridLocation
-} 
-
-export async function tactics_input_wrangler(
-    input_options: InputOptions<TacticsSelectable>, 
-    unit_request: InputRequest<Unit>,
-    action_request: InputRequest<Action<TacticsSelectable>>,
-    location_request: InputRequest<GridLocation>,
-) {
-    if (isInputOptionsUnit(input_options)) {
-        return unit_request(input_options);
-    } else if (isInputOptionsAction(input_options)) {
-        return action_request(input_options);
-    } else if (isInputOptionsGridLocation(input_options)) {
-        return location_request(input_options);
-    }
 }

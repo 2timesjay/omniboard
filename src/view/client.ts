@@ -1,13 +1,13 @@
 /* Imports */
-import { makeCanvas, makeCircle, makeRect } from "./rendering";
-import { DisplayHitListener, DisplayMap, getMousePos, SelectionBroker, setup_selection_broker } from "./input";
+import { makeCanvas } from "./rendering";
+import { DisplayHitListener, DisplayMap, SelectionBroker, setup_selection_broker } from "./input";
 import { GridLocation, GridSpace } from "../model/space";
-import { AbstractDisplay, DisplayState, GridLocationDisplay } from "./display";
+import { AbstractDisplay, GridLocationDisplay } from "./display";
 import { ISelectable, Stack } from "../model/core";
-import { async_input_getter, InputOptions, InputRequest, InputSelection } from "../model/input";
+import { async_input_getter } from "../model/input";
 import { Action, BoardState, Effect } from "../model/state";
-import { IPhase } from "../model/phase";
-import { isConstructorDeclaration } from "typescript";
+import { refreshDisplay } from "../game/shared";
+import { PathOnlyDisplayHander, PathOnlyPhase, path_only_input_bridge } from "../game/path_only";
 
 /* Generic setup */
 const k = 4;
@@ -41,15 +41,6 @@ var selection_broker = new SelectionBroker<ISelectable>(loc_listeners);
 // TODO: Error with unset handlers - dummies for now.
 selection_broker.setPromiseHandlers(()=>{}, ()=>{});
 
-function refreshDisplay(grid_space: GridSpace, display_map: DisplayMap<ISelectable>){
-    for (let grid_row of grid_space.locs) {
-        for (let grid_loc of grid_row) {
-            var grid_display = display_map.get(grid_loc);
-            grid_display.display(context);
-        }
-    }
-}
-
 function addCanvasListeners(
     context: CanvasRenderingContext2D, 
     grid_space: GridSpace, 
@@ -57,11 +48,11 @@ function addCanvasListeners(
 ) {
     context.canvas.onclick = function (event) {
         selection_broker.onclick(event);
-        refreshDisplay(grid_space, display_map);
+        refreshDisplay(context, grid_space, display_map);
     }
     context.canvas.onmousemove = function (event) {
         selection_broker.onmousemove(event);
-        refreshDisplay(grid_space, display_map);
+        refreshDisplay(context, grid_space, display_map);
     }
 }
 
@@ -92,85 +83,6 @@ var root_stack = new Stack<GridLocation>(grid_space.get(0, 0));
 var action = new Action(increment_fn, termination_fn, digest_fn);
 
 // --- Phase-based ---
-// TODO: 1 major error
-// call to `to_array` on undefined in `run_subphase` on return call.
-// Occurs on click after a "repeat" click at any point in sequence.
-export class PathOnlyPhase implements IPhase {
-    * run_phase(
-        action: Action<ISelectable>, root_stack: Stack<ISelectable>
-    ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
-        var effects = yield *this.run_subphase(action, root_stack);
-    }
-
-    * run_subphase (
-        action: Action<ISelectable>, root_stack: Stack<ISelectable>
-    ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
-        // @ts-ignore Expects Stack - here and other places InputSelection was a reach.
-        var effects = yield *action.input_option_generator(root_stack);
-        return effects;
-    }
-}
-
-class PathOnlyDisplayHander {
-    display_map: DisplayMap<ISelectable>;
-    prev_selection: Stack<ISelectable>;
-
-    constructor(display_map: DisplayMap<ISelectable>){
-        this.display_map = display_map;
-        this.prev_selection = null;
-    }
-
-    on_selection(selection: Stack<ISelectable>) {
-        // TODO: Queue State Clearing is incorrect.
-        // Erase old selection_state;
-        var prev_selection = this.prev_selection;
-        if (prev_selection) {
-            do {
-                var loc = prev_selection.value;
-                var display = this.display_map.get(loc);
-                display.selection_state = DisplayState.Neutral;
-                prev_selection = prev_selection.parent;
-            } while(prev_selection);
-        }
-        // pop or ignore pop signal if prev selection too shallow;
-        // TODO: Super-pop - pop back to actual prev selection instead decrement.
-        if (selection) {
-            this.prev_selection = selection;
-        } else if (this.prev_selection.depth > 1) {
-            selection = this.prev_selection.pop();
-        } else {
-            selection = this.prev_selection;
-        }
-        do {
-            var loc = selection.value;
-            var display = this.display_map.get(loc);
-            display.selection_state = DisplayState.Queue;
-            selection = selection.parent;
-        } while(selection);
-        refreshDisplay(grid_space, this.display_map);
-    }
-}
-
-// TODO: I have typed too many damn things.
-export async function path_only_input_bridge(
-    phase: PathOnlyPhase, 
-    action: Action<ISelectable>, 
-    root_stack: Stack<ISelectable>, 
-    input_requests: Array<InputRequest<ISelectable>>, 
-    display_handler: PathOnlyDisplayHander,
-) {
-    var [location_request] = input_requests;
-    var phase_runner = phase.run_phase(action, root_stack);
-    var input_options = phase_runner.next().value;
-    display_handler.on_selection(root_stack);
-    while(input_options){
-        var input_selection = await location_request(input_options);
-        // @ts-ignore input_options potentially overbroad (ISelectable) here?
-        display_handler.on_selection(input_selection);
-        input_options = phase_runner.next(input_selection).value;
-    }
-}
-
 var pop = new PathOnlyPhase();
-var display_handler = new PathOnlyDisplayHander(display_map);
+var display_handler = new PathOnlyDisplayHander(context, grid_space, display_map);
 path_only_input_bridge(pop, action, root_stack, [input_request], display_handler)
