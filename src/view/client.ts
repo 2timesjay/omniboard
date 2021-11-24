@@ -105,7 +105,6 @@ export class PathOnlyPhase implements IPhase {
     * run_subphase (
         action: Action<ISelectable>, root_stack: Stack<ISelectable>
     ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
-        // TODO: Weird to "smuggle" final stack selection via final return. Evaluate effect in Action?
         // @ts-ignore Expects Stack - here and other places InputSelection was a reach.
         var effects = yield *action.input_option_generator(root_stack);
         return effects;
@@ -124,26 +123,30 @@ class PathOnlyDisplayHander {
     on_selection(selection: Stack<ISelectable>) {
         // TODO: Queue State Clearing is incorrect.
         // Erase old selection_state;
-        if(this.prev_selection){
+        var prev_selection = this.prev_selection;
+        if (prev_selection) {
             do {
-                console.log(this.prev_selection.value)
-                var loc = this.prev_selection.value;
+                var loc = prev_selection.value;
                 var display = this.display_map.get(loc);
                 display.selection_state = DisplayState.Neutral;
-                this.prev_selection = this.prev_selection.parent;
-            } while(this.prev_selection);
+                prev_selection = prev_selection.parent;
+            } while(prev_selection);
         }
-        // Add new selection_state;
+        // pop or ignore pop signal if prev selection too shallow;
+        // TODO: Super-pop - pop back to actual prev selection instead decrement.
         if (selection) {
-            do {
-                console.log("sel : ", selection)
-                var loc = selection.value;
-                var display = this.display_map.get(loc);
-                display.selection_state = DisplayState.Queue;
-                selection = selection.parent;
-            } while(selection);
+            this.prev_selection = selection;
+        } else if (this.prev_selection.depth > 1) {
+            selection = this.prev_selection.pop();
+        } else {
+            selection = this.prev_selection;
         }
-        this.prev_selection = selection;
+        do {
+            var loc = selection.value;
+            var display = this.display_map.get(loc);
+            display.selection_state = DisplayState.Queue;
+            selection = selection.parent;
+        } while(selection);
         refreshDisplay(grid_space, this.display_map);
     }
 }
@@ -159,6 +162,7 @@ export async function path_only_input_bridge(
     var [location_request] = input_requests;
     var phase_runner = phase.run_phase(action, root_stack);
     var input_options = phase_runner.next().value;
+    display_handler.on_selection(root_stack);
     while(input_options){
         var input_selection = await location_request(input_options);
         // @ts-ignore input_options potentially overbroad (ISelectable) here?

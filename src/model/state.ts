@@ -66,7 +66,6 @@ export class Action<T extends ISelectable> implements ISelectable {
         var preview_map = this.get_options(input).to_map();
         var input_resp = yield preview_map;
         do {
-            console.log("click");
             // TODO: Currently treats "null" response as special flag to pop.
             if (!input_resp) {
                 if (input.parent) {

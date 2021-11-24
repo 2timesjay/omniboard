@@ -183,7 +183,7 @@ export class UnitDisplay extends AbstractDisplay<Unit> {
     }
 
     alt_render(context: CanvasRenderingContext2D, clr: string) {
-        makeCircle(this.xOffset, this.yOffset, context, this.size, clr);
+        makeCircle(this.xOffset, this.yOffset, context, this.size*.6, clr);
     }
 
     neutralDisplay(context: CanvasRenderingContext2D) {
