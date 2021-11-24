@@ -30,6 +30,7 @@ export class PathOnlyDisplayHander {
     prev_selection: Stack<ISelectable>;
 
     constructor(context: CanvasRenderingContext2D, grid_space: GridSpace, display_map: DisplayMap<ISelectable>){
+        this.context = context;
         this.display_map = display_map;
         this.grid_space = grid_space;
         this.prev_selection = null;
