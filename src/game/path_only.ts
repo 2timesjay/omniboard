@@ -63,7 +63,7 @@ export class PathOnlyDisplayHander {
             display.selection_state = DisplayState.Queue;
             selection = selection.parent;
         } while(selection);
-        refreshDisplay(this.context, this.grid_space, this.display_map);
+        refreshDisplay(this.context, this.display_map, this.grid_space);
     }
 }
 

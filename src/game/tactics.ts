@@ -1,9 +1,12 @@
 import { ISelectable, Stack } from "../model/core";
 import { InputOptions, InputRequest, InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
-import { GridLocation } from "../model/space";
+import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, Effect, Action } from "../model/state";
 import { Unit } from "../model/unit";
+import { DisplayState } from "../view/display";
+import { DisplayMap } from "../view/input";
+import { refreshDisplay } from "./shared";
 
 
 function is_available(selectable: ISelectable): boolean {
@@ -49,8 +52,51 @@ export class TacticsPhase implements IPhase {
     }
 }
 
+export class TacticsDisplayHander {
+    context: CanvasRenderingContext2D;
+    display_map: DisplayMap<ISelectable>;
+    grid_space: GridSpace;
+    units: Array<Unit>;
+    prev_selection: Stack<ISelectable>;
 
-// --- Tactics ---
+    constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, board_state: BoardState){
+        this.context = context;
+        this.display_map = display_map;
+        this.grid_space = board_state.grid;
+        this.units = board_state.units;
+        this.prev_selection = null;
+    }
+
+    on_selection(selection: Stack<ISelectable>) {
+        // TODO: Queue State Clearing is incorrect.
+        // Erase old selection_state;
+        var prev_selection = this.prev_selection;
+        if (prev_selection) {
+            do {
+                var loc = prev_selection.value;
+                var display = this.display_map.get(loc);
+                display.selection_state = DisplayState.Neutral;
+                prev_selection = prev_selection.parent;
+            } while(prev_selection);
+        }
+        // pop or ignore pop signal if prev selection too shallow;
+        // TODO: Super-pop - pop back to actual prev selection instead decrement.
+        if (selection) {
+            this.prev_selection = selection;
+        } else if (this.prev_selection.depth > 1) {
+            selection = this.prev_selection.pop();
+        } else {
+            selection = this.prev_selection;
+        }
+        do {
+            var loc = selection.value;
+            var display = this.display_map.get(loc);
+            display.selection_state = DisplayState.Queue;
+            selection = selection.parent;
+        } while(selection);
+        refreshDisplay(this.context, this.display_map, this.grid_space, this.units);
+    }
+}
 
 // TODO: I have typed too many damn things.
 type TacticsSelectable = Unit | GridLocation | Action<TacticsSelectable>

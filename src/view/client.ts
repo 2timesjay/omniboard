@@ -8,6 +8,8 @@ import { async_input_getter } from "../model/input";
 import { Action, BoardState, Effect } from "../model/state";
 import { refreshDisplay } from "../game/shared";
 import { PathOnlyDisplayHander, PathOnlyPhase, path_only_input_bridge } from "../game/path_only";
+import { TacticsDisplayHander, TacticsPhase, tactics_input_bridge } from "../game/tactics";
+import { CONSTRUCT_BASIC_ACTIONS, Unit } from "../model/unit";
 
 /* Generic setup */
 const k = 4;
@@ -43,21 +45,19 @@ selection_broker.setPromiseHandlers(()=>{}, ()=>{});
 
 function addCanvasListeners(
     context: CanvasRenderingContext2D, 
-    grid_space: GridSpace, 
     display_map: DisplayMap<ISelectable>,
+    grid_space: GridSpace, 
+    unit?: Array<Unit> | null,
 ) {
     context.canvas.onclick = function (event) {
         selection_broker.onclick(event);
-        refreshDisplay(context, grid_space, display_map);
+        refreshDisplay(context, display_map, grid_space);
     }
     context.canvas.onmousemove = function (event) {
         selection_broker.onmousemove(event);
-        refreshDisplay(context, grid_space, display_map);
+        refreshDisplay(context, display_map, grid_space);
     }
 }
-
-addCanvasListeners(context, grid_space, display_map);
-
 
 var brokered_selection_fn = setup_selection_broker(selection_broker, display_map, canvas);
 var input_request = async_input_getter(brokered_selection_fn);
@@ -79,10 +79,23 @@ var digest_fn = (nums: Array<GridLocation>): Array<Effect<BoardState>> => {
     effect.post_effect = null;
     return [effect];
 }
+
+// // --- Path-only ---
 var root_stack = new Stack<GridLocation>(grid_space.get(0, 0));
 var action = new Action(increment_fn, termination_fn, digest_fn);
+// addCanvasListeners(context, display_map, grid_space);
+// var pop = new PathOnlyPhase();
+// var display_handler = new PathOnlyDisplayHander(context, grid_space, display_map);
+// path_only_input_bridge(pop, action, root_stack, [input_request], display_handler);
 
-// --- Phase-based ---
-var pop = new PathOnlyPhase();
-var display_handler = new PathOnlyDisplayHander(context, grid_space, display_map);
-path_only_input_bridge(pop, action, root_stack, [input_request], display_handler)
+// Tactics
+var unit = new Unit(0);
+unit.setActions(CONSTRUCT_BASIC_ACTIONS(unit, grid_space));
+var board_state = new BoardState();
+board_state.grid = grid_space;
+board_state.units = units;
+var units = [unit];
+addCanvasListeners(context, display_map, grid_space, units);
+var pop = new TacticsPhase();
+var display_handler = new TacticsDisplayHander(context, display_map, board_state);
+// tactics_input_bridge(pop, action, root_stack, [input_request], display_handler);

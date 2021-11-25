@@ -5,6 +5,7 @@ import { getMousePos, Position } from "./input";
 import { Awaited } from "../model/utilities";
 import { GridLocation } from "../model/space";
 import { Unit } from "../model/unit";
+import { Action } from "../model/state";
 
 export enum DisplayState {
     Neutral,
@@ -200,6 +201,72 @@ export class UnitDisplay extends AbstractDisplay<Unit> {
 
     queueDisplay(context: CanvasRenderingContext2D) {
         this.alt_render(context, 'indianred');
+    }
+
+    selectDisplay(context: CanvasRenderingContext2D) {
+        this.render(context, 'red');
+    }
+
+    isHit(mousePos: Position): boolean {
+        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
+            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+}
+
+// TOOD: Elaborate or make into interface
+interface IMenuable {// Action<ISelectable>
+    parent: ISelectable;
+    index: number;
+    text: string;
+}
+
+
+class MenuElementDisplay extends AbstractDisplay<IMenuable> {
+    selectable: IMenuable;
+    xOffset: number;
+    yOffset: number;
+    size: number;
+    width: number;
+    height: number;
+    
+    constructor(action: IMenuable) {
+        super(action);
+        this.size = size * 0.8
+    }
+
+    // get xOffset() {
+    //     return this.selectable.unit.display.xOffset;
+    // }
+
+    // get yOffset() {
+    //     return this.selectable.unit.display.yOffset + this.size * this.action.index;
+    // }
+
+
+    render(context: CanvasRenderingContext2D, clr: string) {
+        context.fillStyle = clr;
+        context.font = 0.8 * this.size + "px Trebuchet MS";
+        context.fillText(this.selectable.text, this.xOffset, this.yOffset);
+    }
+
+    neutralDisplay(context: CanvasRenderingContext2D) {
+    }
+
+    optionDisplay(context: CanvasRenderingContext2D) {
+        this.render(context, 'grey');
+    }
+
+    previewDisplay(context: CanvasRenderingContext2D) {
+        this.render(context, 'yellow');
+    }
+
+    queueDisplay(context: CanvasRenderingContext2D) {
+        this.render(context, 'indianred');
     }
 
     selectDisplay(context: CanvasRenderingContext2D) {
