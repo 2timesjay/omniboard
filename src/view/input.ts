@@ -81,7 +81,7 @@ export class SelectionBroker<T extends ISelectable> {
 export function setup_selection_broker<T extends ISelectable>(
     selection_broker: SelectionBroker<T>, display_map: DisplayMap<T>, canvas: HTMLCanvasElement
 ): CallbackSelectionFn<T> {
-    console.log("regenerating selection broker");
+    console.log("generating selection broker");
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
         var displays = options.map((o) => display_map.get(o));
         // TODO: These aren't really listeners. onClick?
@@ -91,7 +91,6 @@ export function setup_selection_broker<T extends ISelectable>(
         var mousemove_listeners =  displays.map(
             (d) => d.createPreviewListener(canvas)
         );
-        // var mousemove_listeners: Array<DisplayHitListener<T>> = [];
         setUpOptions(displays);
         selection_broker.setListeners([...click_listeners, ...mousemove_listeners]);
         selection_broker.setPromiseHandlers(resolve, reject);

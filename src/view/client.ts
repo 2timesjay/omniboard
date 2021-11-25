@@ -2,9 +2,9 @@
 import { makeCanvas } from "./rendering";
 import { DisplayHitListener, DisplayMap, SelectionBroker, setup_selection_broker } from "./input";
 import { GridLocation, GridSpace } from "../model/space";
-import { AbstractDisplay, GridLocationDisplay } from "./display";
+import { AbstractDisplay, GridLocationDisplay, UnitDisplay } from "./display";
 import { ISelectable, Stack } from "../model/core";
-import { async_input_getter } from "../model/input";
+import { async_input_getter, InputRequest } from "../model/input";
 import { Action, BoardState, Effect } from "../model/state";
 import { refreshDisplay } from "../game/shared";
 import { PathOnlyDisplayHander, PathOnlyPhase, path_only_input_bridge } from "../game/path_only";
@@ -41,7 +41,9 @@ for (let grid_row of grid_space.locs) {
 
 var selection_broker = new SelectionBroker<ISelectable>(loc_listeners);
 // TODO: Error with unset handlers - dummies for now.
-selection_broker.setPromiseHandlers(()=>{}, ()=>{});
+selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
+var brokered_selection_fn = setup_selection_broker(selection_broker, display_map, canvas);
+var input_request = async_input_getter(brokered_selection_fn);
 
 function addCanvasListeners(
     context: CanvasRenderingContext2D, 
@@ -51,38 +53,34 @@ function addCanvasListeners(
 ) {
     context.canvas.onclick = function (event) {
         selection_broker.onclick(event);
-        refreshDisplay(context, display_map, grid_space);
+        refreshDisplay(context, display_map, grid_space, unit);
     }
     context.canvas.onmousemove = function (event) {
         selection_broker.onmousemove(event);
-        refreshDisplay(context, display_map, grid_space);
+        refreshDisplay(context, display_map, grid_space, unit);
     }
 }
 
-var brokered_selection_fn = setup_selection_broker(selection_broker, display_map, canvas);
-var input_request = async_input_getter(brokered_selection_fn);
-
-var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
-    var options = grid_space.getGridNeighborhood(loc_stack.value);
-    return options;
-};
-var termination_fn = (loc_stack: Stack<GridLocation>): boolean => {
-    return loc_stack.depth >= 4;
-}
-var digest_fn = (nums: Array<GridLocation>): Array<Effect<BoardState>> => {
-    function effect(state: BoardState): BoardState {
-        return state;
-    };
-    // Reconsider callable.
-    effect.description = null;
-    effect.pre_effect = null;
-    effect.post_effect = null;
-    return [effect];
-}
-
 // // --- Path-only ---
-var root_stack = new Stack<GridLocation>(grid_space.get(0, 0));
-var action = new Action(increment_fn, termination_fn, digest_fn);
+// var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
+//     var options = grid_space.getGridNeighborhood(loc_stack.value);
+//     return options;
+// };
+// var termination_fn = (loc_stack: Stack<GridLocation>): boolean => {
+//     return loc_stack.depth >= 4;
+// }
+// var digest_fn = (nums: Array<GridLocation>): Array<Effect<BoardState>> => {
+//     function effect(state: BoardState): BoardState {
+//         return state;
+//     };
+//     // Reconsider callable.
+//     effect.description = null;
+//     effect.pre_effect = null;
+//     effect.post_effect = null;
+//     return [effect];
+// }
+// var root_stack = new Stack<GridLocation>(grid_space.get(0, 0));
+// var action = new Action(increment_fn, termination_fn, digest_fn);
 // addCanvasListeners(context, display_map, grid_space);
 // var pop = new PathOnlyPhase();
 // var display_handler = new PathOnlyDisplayHander(context, grid_space, display_map);
@@ -90,12 +88,53 @@ var action = new Action(increment_fn, termination_fn, digest_fn);
 
 // Tactics
 var unit = new Unit(0);
+unit.setLoc(grid_space.get(0, 0));
 unit.setActions(CONSTRUCT_BASIC_ACTIONS(unit, grid_space));
+var units = [unit]
+var unit_listeners = new Array<DisplayHitListener<ISelectable>>();
+for (let unit of units) {
+    let unit_display = new UnitDisplay(unit);
+    display_map.set(unit, unit_display);
+    unit_display.display(context);
+}
+for (let unit of units) {
+    let unit_display = display_map.get(unit);
+    unit_listeners.push(unit_display.createPreviewListener(context.canvas));
+    unit_listeners.push(unit_display.createClickListener(context.canvas));
+}
+
+var unit_selection_broker = new SelectionBroker<ISelectable>(unit_listeners);
+// TODO: Error with unset handlers - dummies for now.
+unit_selection_broker.setPromiseHandlers(()=>{console.log("ures")}, ()=>{console.log("urej")});
+var unit_brokered_selection_fn = setup_selection_broker(unit_selection_broker, display_map, canvas);
+// @ts-ignore
+var unit_request: InputRequest<Unit> = async_input_getter(unit_brokered_selection_fn);
+// @ts-ignore
+var location_request: InputRequest<GridLocation> = input_request
+
+// TODO: Before this will work must rework canvas onclick -> display onclick connection
 var board_state = new BoardState();
 board_state.grid = grid_space;
 board_state.units = units;
 var units = [unit];
-addCanvasListeners(context, display_map, grid_space, units);
-var pop = new TacticsPhase();
+function addUnitCanvasListeners(
+    context: CanvasRenderingContext2D, 
+    display_map: DisplayMap<ISelectable>,
+    grid_space: GridSpace, 
+    unit?: Array<Unit> | null,
+) {
+    context.canvas.onclick = function (event) {
+        console.log("click - unit listeners");
+        unit_selection_broker.onclick(event);
+        refreshDisplay(context, display_map, grid_space, unit);
+    }
+    context.canvas.onmousemove = function (event) {
+        unit_selection_broker.onmousemove(event);
+        refreshDisplay(context, display_map, grid_space, unit);
+    }
+}
+addUnitCanvasListeners(context, display_map, grid_space, units);
+// addCanvasListeners(context, display_map, grid_space, units);
+var tp = new TacticsPhase();
 var display_handler = new TacticsDisplayHander(context, display_map, board_state);
-// tactics_input_bridge(pop, action, root_stack, [input_request], display_handler);
+tactics_input_bridge(tp, board_state, [unit_request, null, location_request], display_handler);

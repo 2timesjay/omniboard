@@ -36,13 +36,20 @@ export function synthetic_input_getter<T extends ISelectable>(
     };
 }
 
+// AKA build_callback_input_getter
 export function async_input_getter<T extends ISelectable>(
     selection_fn: CallbackSelectionFn<T>
 ): InputRequest<T> {
     return async function get_input( 
         preview_map: Map<T, Tree<T>>
     ): Promise<Stack<T>> {
-        var arr = Array.from(preview_map.keys())
+        console.log("pm: ", preview_map)
+        // TODO: Fix Hack to handle Arr InputOptions
+        if (preview_map instanceof Array) {
+            var arr: Array<T> = preview_map
+        } else {
+            var arr = Array.from(preview_map.keys())
+        }
         // TODO: "resolve" returns value, "reject" deselects
         // TODO: selecting null parent of Stack head as CONFIRM signal?
         // Manually specify type to remove errors
@@ -53,10 +60,16 @@ export function async_input_getter<T extends ISelectable>(
         );
         return selection_promise.then(
             function(selection) { 
-                return preview_map.get(selection); 
+                console.log("aig_res: ", selection);
+                if (preview_map instanceof Array) {
+                    return selection;
+                } else {
+                    return preview_map.get(selection); 
+                }
             }
         ).catch(
             function() {
+                console.log("aig_rej");
                 return null;
             }
         );

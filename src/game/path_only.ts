@@ -52,17 +52,19 @@ export class PathOnlyDisplayHander {
         // TODO: Super-pop - pop back to actual prev selection instead decrement.
         if (selection) {
             this.prev_selection = selection;
-        } else if (this.prev_selection.depth > 1) {
+        } else if (this.prev_selection && this.prev_selection.depth > 1) {
             selection = this.prev_selection.pop();
         } else {
             selection = this.prev_selection;
         }
-        do {
-            var loc = selection.value;
-            var display = this.display_map.get(loc);
-            display.selection_state = DisplayState.Queue;
-            selection = selection.parent;
-        } while(selection);
+        if (selection) {
+            do {
+                var loc = selection.value;
+                var display = this.display_map.get(loc);
+                display.selection_state = DisplayState.Queue;
+                selection = selection.parent;
+            } while(selection);
+        }
         refreshDisplay(this.context, this.display_map, this.grid_space);
     }
 }

@@ -35,9 +35,9 @@ export class TacticsPhase implements IPhase {
         cur_team: number, 
     ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> { // InputRequest generator
         var unit_options = state.units.filter((u) => u.team == cur_team).filter(is_available);
-        // @ts-ignore
-        var unit_sel: Stack<Unit> = yield unit_options;
-        var unit = unit_sel.value; // TODO: Clunky with null root?
+        // @ts-ignore InputSelection T instead of Stack<T>
+        var unit_sel: Unit = yield unit_options;
+        var unit = unit_sel;
         var action_options = unit.actions.filter(is_available);
         // @ts-ignore
         // var action_sel: Stack<Action<GridLocation>> = yield action_options;
@@ -83,17 +83,19 @@ export class TacticsDisplayHander {
         // TODO: Super-pop - pop back to actual prev selection instead decrement.
         if (selection) {
             this.prev_selection = selection;
-        } else if (this.prev_selection.depth > 1) {
+        } else if (this.prev_selection && this.prev_selection.depth > 1) {
             selection = this.prev_selection.pop();
         } else {
             selection = this.prev_selection;
         }
-        do {
-            var loc = selection.value;
-            var display = this.display_map.get(loc);
-            display.selection_state = DisplayState.Queue;
-            selection = selection.parent;
-        } while(selection);
+        if (selection) {
+            do {
+                var loc = selection.value;
+                var display = this.display_map.get(loc);
+                display.selection_state = DisplayState.Queue;
+                selection = selection.parent;
+            } while(selection);
+        }
         refreshDisplay(this.context, this.display_map, this.grid_space, this.units);
     }
 }
@@ -101,39 +103,57 @@ export class TacticsDisplayHander {
 // TODO: I have typed too many damn things.
 type TacticsSelectable = Unit | GridLocation | Action<TacticsSelectable>
 
-export async function tactics_input_bridge(phase: TacticsPhase, state: BoardState, input_requests: Array<InputRequest<TacticsSelectable>>) {
+export async function tactics_input_bridge(
+    phase: TacticsPhase, 
+    state: BoardState, 
+    input_requests: Array<InputRequest<TacticsSelectable>>,
+    display_handler: TacticsDisplayHander,
+) {
     var [unit_request, action_request, location_request] = input_requests;
     var phase_runner = phase.run_phase(state, 0);
     var input_options = phase_runner.next().value;
+    display_handler.on_selection(null); // TODO: Handle "nothing" in on_selection
     while(input_options){
         // @ts-ignore input_options potentially overbroad (ISelectable) here?
-        var input_selection = await tactics_input_wrangler(input_options, unit_request, action_request, location_request);
+        var input_selection_promise = tactics_input_wrangler(input_options, unit_request, action_request, location_request);
+        console.log("isp: ", input_selection_promise);
+        var input_selection = await input_selection_promise;
         input_options = phase_runner.next(input_selection).value;
     }
 }
 
 function isInputOptionsUnit(o: any): o is InputOptions<Unit> {
-    return (!!o.value && o.value instanceof Unit) || o instanceof Unit
+    return o[0] instanceof Unit
 } 
 // TODO: Have to take "TacticsSelectable" on faith - should this be part of Action?
 function isInputOptionsAction(o: any): o is InputOptions<Action<TacticsSelectable>> {
-    return (!!o.value && o.value instanceof Action) || o instanceof Action
+    return o[0] instanceof Action
 } 
 function isInputOptionsGridLocation(o: any): o is InputOptions<GridLocation> {
-    return (!!o.value && o.value instanceof GridLocation) || o instanceof GridLocation
+    return o[0] instanceof GridLocation
 } 
 
-export async function tactics_input_wrangler(
+export function tactics_input_wrangler(
     input_options: InputOptions<TacticsSelectable>, 
     unit_request: InputRequest<Unit>,
     action_request: InputRequest<Action<TacticsSelectable>>,
     location_request: InputRequest<GridLocation>,
-) {
+): Promise<InputSelection<TacticsSelectable>> {
+    console.log("??? options: ", input_options)
+    var result: InputSelection<TacticsSelectable> = null;
     if (isInputOptionsUnit(input_options)) {
+        console.log("Unit options: ", input_options)
         return unit_request(input_options);
     } else if (isInputOptionsAction(input_options)) {
+        console.log("action options: ", input_options)
         return action_request(input_options);
     } else if (isInputOptionsGridLocation(input_options)) {
+        console.log("loc options: ", input_options)
+        return location_request(input_options);
+    } else {
+        console.log("unknown options Assume loc: ", input_options)
+        console.log("loc options: ", input_options)
+        // @ts-ignore
         return location_request(input_options);
     }
 }
