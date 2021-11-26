@@ -89,16 +89,6 @@ for (let unit of units) {
     unit_display.display(context);
 }
 
-var unit_selection_broker = new SelectionBroker<ISelectable>();
-// TODO: Error with unset handlers - dummies for now.
-unit_selection_broker.setPromiseHandlers(()=>{console.log("ures")}, ()=>{console.log("urej")});
-var unit_brokered_selection_fn = build_broker_callback(unit_selection_broker, display_map, canvas);
-// @ts-ignore
-var unit_request: InputRequest<Unit> = input_request
-// var unit_request: InputRequest<Unit> = async_input_getter(unit_brokered_selection_fn);
-// @ts-ignore
-var location_request: InputRequest<GridLocation> = input_request
-
 // TODO: Before this will work must rework canvas onclick -> display onclick connection
 var board_state = new BoardState();
 board_state.grid = grid_space;
@@ -108,4 +98,4 @@ addCanvasListeners(selection_broker, context, display_map, grid_space, units);
 // addCanvasListeners(unit_selection_broker, context, display_map, grid_space, units);
 var tp = new TacticsPhase();
 var display_handler = new TacticsDisplayHander(context, display_map, board_state);
-tactics_input_bridge(tp, board_state, [unit_request, null, location_request], display_handler);
+tactics_input_bridge(tp, board_state, input_request, display_handler);
