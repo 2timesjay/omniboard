@@ -19,7 +19,7 @@ export function getMousePos(canvasDom: HTMLElement, mouseEvent: MouseEvent): Pos
     };
 }
 
-export type DisplayHitListener<T extends ISelectable> = (e: MouseEvent) => T
+export type DisplayHitOnevent = (e: MouseEvent) => ISelectable | null;
 
 export function setUpOptions(options: Array<AbstractDisplay<ISelectable>>) {
     options.forEach((o) => o.state = DisplayState.Option);
@@ -29,16 +29,16 @@ export class SelectionBroker<T extends ISelectable> {
     resolve: Awaited<T>;
     reject: Rejection;
     // Organize more efficiently; by input type?
-    listeners: Array<DisplayHitListener<T>>;
+    onevents: Array<DisplayHitOnevent>;
 
-    constructor(listeners?: Array<DisplayHitListener<T>>){
-        if (listeners){
-            this.setListeners(listeners);            
+    constructor(onevents?: Array<DisplayHitOnevent>){
+        if (onevents){
+            this.setonevents(onevents);            
         }
     }
 
-    setListeners(listeners: Array<DisplayHitListener<T>>) {
-        this.listeners = listeners;
+    setonevents(onevents: Array<DisplayHitOnevent>) {
+        this.onevents = onevents;
     }
 
     setPromiseHandlers(resolve: Awaited<T>, reject: Rejection){
@@ -46,12 +46,14 @@ export class SelectionBroker<T extends ISelectable> {
         this.reject = reject;
     }
 
-    // TODO: Requirement that all listeners trigger in order to 'de-select' is too complex.
+    // TODO: Requirement that all onevents trigger in order to 'de-select' is too complex.
     onclick(e: MouseEvent) { 
+        // Fanout clicks to all onevents
         var nohits = true;
-        for (let listener of this.listeners) {
-            var selection = listener(e);
+        for (let onevent of this.onevents) {
+            var selection = onevent(e);
             if (selection && nohits) {
+                // @ts-ignore DisplayHitOnevent returns broad ISelectable. Need safe casting.
                 this.resolve(selection); 
                 nohits = false;
             }
@@ -62,37 +64,30 @@ export class SelectionBroker<T extends ISelectable> {
     }
     
     onmousemove(e: MouseEvent) {
-        // TODO: Clean up: No Selection on Mousemove 
+        // Fanout clicks to all onevents
         var nohits = true;
-        for (let listener of this.listeners) {
-            var selection = listener(e);
-            // if (selection && nohits) {
-            //     this.resolve(selection); 
-            //     nohits = false;
-            // }
+        for (let onevent of this.onevents) {
+            onevent(e); // Ignore Selection output.
         }
-        // if (nohits) {
-        //     this.reject();
-        // }
     }
 }
 
 // CallbackSelectionFn
-export function setup_selection_broker<T extends ISelectable>(
+export function build_broker_callback<T extends ISelectable>(
     selection_broker: SelectionBroker<T>, display_map: DisplayMap<T>, canvas: HTMLCanvasElement
 ): CallbackSelectionFn<T> {
-    console.log("generating selection broker");
+    // Sets selection_broker's fanout to onevents of instances of T in Options.
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
+        console.log("generating broker callback: ", options);
         var displays = options.map((o) => display_map.get(o));
-        // TODO: These aren't really listeners. onClick?
-        var click_listeners = displays.map(
-            (d) => d.createClickListener(canvas)
+        var onclicks = displays.map(
+            (d) => d.createOnclick(canvas)
         );
-        var mousemove_listeners =  displays.map(
-            (d) => d.createPreviewListener(canvas)
+        var onmousemoves =  displays.map(
+            (d) => d.createOnmousemove(canvas)
         );
         setUpOptions(displays);
-        selection_broker.setListeners([...click_listeners, ...mousemove_listeners]);
+        selection_broker.setonevents([...onclicks, ...onmousemoves]);
         selection_broker.setPromiseHandlers(resolve, reject);
     }
 }

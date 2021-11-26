@@ -64,7 +64,7 @@ export class AbstractDisplay<T extends ISelectable> {
         return false;
     }
 
-    createClickListener(canvas: HTMLCanvasElement) {
+    createOnclick(canvas: HTMLCanvasElement) {
         // Select by click - clicks off this element de-select.
         let context = canvas.getContext("2d");
         let self = this;
@@ -83,7 +83,7 @@ export class AbstractDisplay<T extends ISelectable> {
         return trigger;
     }
 
-    createPreviewListener(canvas: HTMLCanvasElement) {
+    createOnmousemove(canvas: HTMLCanvasElement) {
         // Preview if not selected.
         let context = canvas.getContext("2d");
         let self = this;
