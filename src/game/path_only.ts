@@ -36,6 +36,7 @@ export class PathOnlyDisplayHander {
         this.prev_selection = null;
     }
 
+    // TODO: Update to re-use TacticsDisplayHandler.on_selection.
     on_selection(selection: Stack<ISelectable>) {
         // TODO: Queue State Clearing is incorrect.
         // Erase old selection_state;
@@ -74,15 +75,14 @@ export async function path_only_input_bridge(
     phase: PathOnlyPhase, 
     action: Action<ISelectable>, 
     root_stack: Stack<ISelectable>, 
-    input_requests: Array<InputRequest<ISelectable>>, 
+    input_request: InputRequest<ISelectable>, 
     display_handler: PathOnlyDisplayHander,
 ) {
-    var [location_request] = input_requests;
     var phase_runner = phase.run_phase(action, root_stack);
     var input_options = phase_runner.next().value;
     display_handler.on_selection(root_stack);
     while(input_options){
-        var input_selection = await location_request(input_options);
+        var input_selection = await input_request(input_options);
         // @ts-ignore input_options potentially overbroad (ISelectable) here?
         display_handler.on_selection(input_selection);
         input_options = phase_runner.next(input_selection).value;

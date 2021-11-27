@@ -76,7 +76,7 @@ function addCanvasListeners(
 // addCanvasListeners(selection_broker, context, display_map, grid_space);
 // var pop = new PathOnlyPhase();
 // var display_handler = new PathOnlyDisplayHander(context, grid_space, display_map);
-// path_only_input_bridge(pop, action, root_stack, [input_request], display_handler);
+// path_only_input_bridge(pop, action, root_stack, input_request, display_handler);
 
 // Tactics
 var unit = new Unit(0);
