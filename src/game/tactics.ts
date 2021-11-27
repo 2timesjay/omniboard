@@ -57,51 +57,40 @@ export class TacticsDisplayHander {
     display_map: DisplayMap<ISelectable>;
     grid_space: GridSpace;
     units: Array<Unit>;
-    prev_selection: Stack<ISelectable>;
+    stateful_selectables: Array<ISelectable>;
 
     constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, board_state: BoardState){
         this.context = context;
         this.display_map = display_map;
         this.grid_space = board_state.grid;
         this.units = board_state.units;
-        this.prev_selection = null;
+        this.stateful_selectables = [];
     }
 
     on_selection(selection: Stack<ISelectable>) {
-        // TODO: Queue State Clearing is incorrect.
+        // TODO: Would be nice to display first loc as "queued".
+        // TODO: UnitDisplay state not actually well-handled right now.
         // Erase old selection_state;
-        var prev_selection = this.prev_selection;
-        if (prev_selection) {
-            do {
-                var loc = prev_selection.value;
-                var display = this.display_map.get(loc);
+        if (selection == null) { // Handle "Pop";
+            for(let stateful_selectable of this.stateful_selectables) {
+                var display = this.display_map.get(stateful_selectable);
                 display.selection_state = DisplayState.Neutral;
-                prev_selection = prev_selection.parent;
-            } while(prev_selection);
+            }
         }
         // pop or ignore pop signal if prev selection too shallow;
         // TODO: Super-pop - pop back to actual prev selection instead decrement.
-        if (selection) {
-            this.prev_selection = selection;
-        } else if (this.prev_selection && this.prev_selection.depth > 1) {
-            selection = this.prev_selection.pop();
-        } else {
-            selection = this.prev_selection;
-        }
-        if (selection) {
-            do {
-                var loc = selection.value;
-                var display = this.display_map.get(loc);
-                display.selection_state = DisplayState.Queue;
-                selection = selection.parent;
-            } while(selection);
+        if (selection instanceof Stack) {
+            this.stateful_selectables = selection.to_array().reverse();
+        } else if (this.stateful_selectables && this.stateful_selectables.length > 1) {
+            this.stateful_selectables.pop();
+        } 
+        for(let stateful_selectable of this.stateful_selectables) {
+            var display = this.display_map.get(stateful_selectable);
+            display.selection_state = DisplayState.Queue;
         }
         refreshDisplay(this.context, this.display_map, this.grid_space, this.units);
     }
 }
-
-// TODO: I have typed too many damn things.
-type TacticsSelectable = Unit | GridLocation | Action<TacticsSelectable>
 
 export async function tactics_input_bridge(
     phase: TacticsPhase, 
@@ -117,6 +106,8 @@ export async function tactics_input_bridge(
         var input_selection_promise = input_request(input_options);
         console.log("isp: ", input_selection_promise);
         var input_selection = await input_selection_promise;
+        // @ts-ignore
+        display_handler.on_selection(input_selection);
         input_options = phase_runner.next(input_selection).value;
     }
 }
