@@ -11,6 +11,7 @@ export class PathOnlyPhase implements IPhase {
     * run_phase(
         action: Action<ISelectable>, root_stack: Stack<ISelectable>
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
+        console.log("PathOnlyPhase.run_phase");
         var effects = yield *this.run_subphase(action, root_stack);
     }
 
@@ -19,6 +20,7 @@ export class PathOnlyPhase implements IPhase {
     ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
         // @ts-ignore Expects Stack - here and other places InputSelection was a reach.
         var effects = yield *action.input_option_generator(root_stack);
+        console.log("PathOnlyPhase.run_subphase");
         return effects;
     }
 }

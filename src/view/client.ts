@@ -53,7 +53,7 @@ function addCanvasListeners(
     }
 }
 
-// // --- Path-only ---
+// --- Path-only ---
 // var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
 //     var options = grid_space.getGridNeighborhood(loc_stack.value);
 //     return options;

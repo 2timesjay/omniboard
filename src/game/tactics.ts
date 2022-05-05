@@ -19,6 +19,7 @@ export class TacticsPhase implements IPhase {
 
     * run_phase(state: BoardState, cur_team: number
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
+        console.log("TacticsPhase.run_phase");
         var effects = yield *this.run_subphase(state, cur_team);
     }
 
@@ -48,6 +49,7 @@ export class TacticsPhase implements IPhase {
         // input_option_generator requires Stack, not just any InputSelection
         // @ts-ignore
         var effects = yield *action.input_option_generator(location_root);
+        console.log("TacticsPhase.run_phase");
         return effects;
     }
 }
