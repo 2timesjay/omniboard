@@ -8,3 +8,4 @@ bundle.js
 design/*
 dist/*
 src/*.js
+src/*.js.map
