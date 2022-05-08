@@ -105,12 +105,10 @@ export class TacticsDisplayHander {
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Neutral;
-            console.log("Clearing: ", display)
         }
         while(this.stateful_selectables.length > 0) {
             this.stateful_selectables.pop();
         }
-        console.log(this.display_map)
         this.refresh();
     }
 
