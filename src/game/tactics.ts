@@ -21,6 +21,10 @@ export class TacticsPhase implements IPhase {
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         console.log("TacticsPhase.run_phase");
         var effects = yield *this.run_subphase(state, cur_team);
+        console.log("Effects: ", effects);
+        state.process(effects);
+        console.log("BoardState: ", state);
+        console.log("Units: ", state.units);
     }
 
     // Consumer sees this as
@@ -49,7 +53,7 @@ export class TacticsPhase implements IPhase {
         // input_option_generator requires Stack, not just any InputSelection
         // @ts-ignore
         var effects = yield *action.input_option_generator(location_root);
-        console.log("TacticsPhase.run_phase");
+        console.log("TacticsPhase.run_subphase");
         return effects;
     }
 }
@@ -74,6 +78,7 @@ export class TacticsDisplayHander {
         // TODO: UnitDisplay state not actually well-handled right now.
         // Erase old selection_state;
         if (selection == null) { // Handle "Pop";
+            console.log("Pop")
             for(let stateful_selectable of this.stateful_selectables) {
                 var display = this.display_map.get(stateful_selectable);
                 display.selection_state = DisplayState.Neutral;
@@ -82,14 +87,34 @@ export class TacticsDisplayHander {
         // pop or ignore pop signal if prev selection too shallow;
         // TODO: Super-pop - pop back to actual prev selection instead decrement.
         if (selection instanceof Stack) {
-            this.stateful_selectables = selection.to_array().reverse();
+            this.stateful_selectables = selection.to_array();
         } else if (this.stateful_selectables && this.stateful_selectables.length > 1) {
             this.stateful_selectables.pop();
-        } 
+        }
+        // WARNING: stateful_selectables are a sort of parallel selection stack.
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Queue;
         }
+        this.refresh();
+    }
+
+    on_phase_end(){
+        console.log("Phase End");
+        // Clear states and clear stateful_selectables
+        for(let stateful_selectable of this.stateful_selectables) {
+            var display = this.display_map.get(stateful_selectable);
+            display.selection_state = DisplayState.Neutral;
+            console.log("Clearing: ", display)
+        }
+        while(this.stateful_selectables.length > 0) {
+            this.stateful_selectables.pop();
+        }
+        console.log(this.display_map)
+        this.refresh();
+    }
+
+    refresh(){
         refreshDisplay(this.context, this.display_map, this.grid_space, this.units);
     }
 }
@@ -100,16 +125,19 @@ export async function tactics_input_bridge(
     input_request: InputRequest<ISelectable>,
     display_handler: TacticsDisplayHander,
 ) {
-    var phase_runner = phase.run_phase(state, 0);
-    var input_options = phase_runner.next().value;
     display_handler.on_selection(null); // TODO: Handle "nothing" in on_selection
-    while(input_options){
-        // @ts-ignore input_options potentially overbroad (ISelectable) here?
-        var input_selection_promise = input_request(input_options);
-        console.log("isp: ", input_selection_promise);
-        var input_selection = await input_selection_promise;
-        // @ts-ignore
-        display_handler.on_selection(input_selection);
-        input_options = phase_runner.next(input_selection).value;
-    }
+    while (true) {
+        var phase_runner = phase.run_phase(state, 0);
+        var input_options = phase_runner.next().value;
+        while(input_options){
+            // @ts-ignore input_options potentially overbroad (ISelectable) here?
+            var input_selection_promise = input_request(input_options);
+            console.log("isp: ", input_selection_promise);
+            var input_selection = await input_selection_promise;
+            // @ts-ignore
+            display_handler.on_selection(input_selection);
+            input_options = phase_runner.next(input_selection).value;
+        }
+        display_handler.on_phase_end();
+    }  
 }

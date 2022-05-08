@@ -15,7 +15,8 @@ import { Unit } from "./unit";
 
 import {Awaited} from "./utilities";
 
-export interface IState {};
+export interface IState {
+};
 
 // Implement as Callable for now
 // https://www.typescriptlang.org/docs/handbook/2/functions.html#call-signatures
@@ -37,6 +38,16 @@ export type DigestFn<T extends ISelectable> = (selection: Array<T>) => Array<Eff
 export class BoardState implements IState {
     grid: GridSpace;
     units: Array<Unit>;
+
+    process(
+        effects: Array<Effect<BoardState>>
+    ): BoardState {
+        // TODO: Handle effect-tree and observers
+        for (var effect of effects) {
+            effect(this);
+        }
+        return this;
+    };
 }
 
 // T is the type of input expected
@@ -52,7 +63,7 @@ export class Action<T extends ISelectable> implements ISelectable {
         this.digest_fn = digest_fn;
     }
 
-    get_options(input: Stack<T>){
+    get_options(input: Stack<T>) {
         return bfs(input, this.increment_fn, this.termination_fn);
     }
 

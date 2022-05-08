@@ -12,11 +12,11 @@ export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, grid_space: GridSpace){
         return loc_stack.depth >= 4;
     }
     var digest_fn = (locs: Array<GridLocation>): Array<Effect<BoardState>> => {
-        console.log("Attempting to Digest");
+        console.log("Attempting to Digest: ", locs);
         function effect_constructor(loc: GridLocation){
-            console.log("Attempting to generate Effect");
+            console.log("Attempting to generate move Effect", loc);
             function effect(state: BoardState): BoardState {
-                console.log("Attempting to execute Effect");
+                console.log("Attempting to execute Move: ", unit.loc, loc);
                 unit.setLoc(loc);
                 return state;
             };

@@ -28,6 +28,10 @@ export class AbstractDisplay<T extends ISelectable> {
         this.selection_state = DisplayState.Neutral;
     }
 
+    update_pos() {
+        // TODO: Not Implemented
+    }
+
     display(context: CanvasRenderingContext2D) {
         if (this.state == DisplayState.Select) {
             this.selectDisplay(context);
@@ -72,7 +76,7 @@ export class AbstractDisplay<T extends ISelectable> {
             if (e.type == "click") {
                 let mousePos = getMousePos(canvas, e);
                 if (self.isHit(mousePos)) {
-                    self.state = DisplayState.Select;
+                    // self.state = DisplayState.Select;
                     return self.selectable;
                 } else {
                     self.state = DisplayState.Neutral;
@@ -172,6 +176,10 @@ export class UnitDisplay extends AbstractDisplay<Unit> {
 
     constructor(unit: Unit) {
         super(unit);
+        this.update_pos();
+    }
+
+    update_pos() {
         this.xOffset = this.selectable.loc.x * size + 0.2 * size;
         this.yOffset = this.selectable.loc.y * size + 0.2 * size;
         this.size = size * 0.6;

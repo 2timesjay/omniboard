@@ -80,7 +80,7 @@ function addCanvasListeners(
 
 // Tactics
 var unit = new Unit(0);
-unit.setLoc(grid_space.get(0, 0));
+unit.setLoc(grid_space.get(1, 0));
 unit.setActions(CONSTRUCT_BASIC_ACTIONS(unit, grid_space));
 var units = [unit]
 for (let unit of units) {
@@ -93,7 +93,6 @@ for (let unit of units) {
 var board_state = new BoardState();
 board_state.grid = grid_space;
 board_state.units = units;
-var units = [unit];
 addCanvasListeners(selection_broker, context, display_map, grid_space, units);
 // addCanvasListeners(unit_selection_broker, context, display_map, grid_space, units);
 var tp = new TacticsPhase();

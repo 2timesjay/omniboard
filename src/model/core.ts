@@ -29,13 +29,14 @@ export class Stack<T> {
     }
 
     to_array(): Array<T> {
+        // TODO: Should this be reversed?
         var arr = Array<T>();
         var value = this.value;
-        arr.push(value);
+        arr.unshift(value);
         var parent = this.parent;
         while(parent != null){
             value = parent.value;
-            arr.push(value);
+            arr.unshift(value);
             parent = parent.parent;
         }
         return arr;

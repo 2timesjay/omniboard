@@ -19,6 +19,7 @@ export function refreshDisplay(
     if (units) {
         for (let unit of units) {
             var unit_display = display_map.get(unit);
+            unit_display.update_pos();
             unit_display.display(context);
         }
     }
