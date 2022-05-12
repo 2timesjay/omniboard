@@ -63,6 +63,7 @@ export class TacticsDisplayHander {
     display_map: DisplayMap<ISelectable>;
     grid_space: GridSpace;
     units: Array<Unit>;
+    // TODO: Derive stateful_selectables directly from stack.
     stateful_selectables: Array<ISelectable>;
 
     constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, board_state: BoardState){
@@ -74,6 +75,7 @@ export class TacticsDisplayHander {
     }
 
     on_selection(selection: Stack<ISelectable>) {
+        // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         // TODO: UnitDisplay state not actually well-handled right now.
         // Erase old selection_state;
