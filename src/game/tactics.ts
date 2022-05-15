@@ -52,15 +52,17 @@ export class TacticsPhase implements IPhase {
         cur_team: number, 
     ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> { // InputRequest generator
         var unit_options = state.units.filter((u) => u.team == cur_team).filter(is_available);
-        // @ts-ignore InputSelection T instead of Stack<T>
-        var unit_sel: Unit = yield unit_options;
+        do {
+            // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Unit>
+            var unit_sel: Unit = yield unit_options;
+        } while (unit_sel == null);
         var unit = unit_sel;
         var action_options = unit.actions.filter(is_available);
         // @ts-ignore
-        // var action_sel: Stack<Action<GridLocation>> = yield action_options;
-        // var action = action_sel.value;
-        var action_sel: Action = yield action_options;
-        // var action_sel = action_options[0];
+        do {
+            // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Action>
+            var action_sel: Action = yield action_options;
+        } while (action_sel == null);
         var action = action_sel;
         var location_root = new Stack(unit.loc);
         // input_option_generator requires Stack, not just any InputSelection
@@ -85,6 +87,7 @@ export class TacticsDisplayHander {
     grid_space: GridSpace;
     units: Array<Unit>;
     // TODO: Derive stateful_selectables directly from stack.
+    misc_selectables: Array<ISelectable>;
     stateful_selectables: Array<ISelectable>;
 
     constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, board_state: BoardState){
@@ -92,6 +95,7 @@ export class TacticsDisplayHander {
         this.display_map = display_map;
         this.grid_space = board_state.grid;
         this.units = board_state.units;
+        this.misc_selectables = []; // TODO: merge with stateful_selectables
         this.stateful_selectables = [];
     }
 
@@ -99,8 +103,9 @@ export class TacticsDisplayHander {
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         // TODO: UnitDisplay state not actually well-handled right now.
-        // TODO: ActionDisplay has error on pop and doesn't erase correctly.
         // Erase old selection_state;
+        console.log("stateful_selectables: ", this.stateful_selectables)
+        console.log("current selection: ", selection)
         if (selection == null) { // Handle "Pop";
             console.log("Pop")
             for(let stateful_selectable of this.stateful_selectables) {
@@ -112,6 +117,12 @@ export class TacticsDisplayHander {
         // TODO: Super-pop - pop back to actual prev selection instead decrement.
         if (selection instanceof Stack) {
             this.stateful_selectables = selection.to_array();
+        // @ts-ignore
+        } else if (selection instanceof Unit) {
+            this.misc_selectables.push(selection);
+        // @ts-ignore
+        } else if (selection instanceof Action) {
+            this.misc_selectables.push(selection);
         } else if (this.stateful_selectables && this.stateful_selectables.length > 1) {
             this.stateful_selectables.pop();
         }
@@ -129,9 +140,18 @@ export class TacticsDisplayHander {
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Neutral;
+            display.state = DisplayState.Neutral;
         }
         while(this.stateful_selectables.length > 0) {
             this.stateful_selectables.pop();
+        }
+        for(let misc_selectable of this.misc_selectables) {
+            var display = this.display_map.get(misc_selectable);
+            display.state = DisplayState.Neutral;
+            console.log("Clearing Misc: ", display);
+        }
+        while(this.misc_selectables.length > 0) {
+            this.misc_selectables.pop();
         }
         this.refresh();
     }

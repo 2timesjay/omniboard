@@ -10,6 +10,9 @@ export function refreshDisplay(
     grid_space: GridSpace, 
     units?: Array<Unit> | null
 ) {
+    // Clear canvas
+    var canvas = context.canvas;
+    context.clearRect(0, 0, canvas.width, canvas.height);
     // TODO: Just refresh all display_map elements.
     for (let grid_row of grid_space.locs) {
         for (let grid_loc of grid_row) {
@@ -20,7 +23,6 @@ export function refreshDisplay(
     if (units) {
         for (let unit of units) {
             var unit_display = display_map.get(unit);
-            unit_display.update_pos();
             unit_display.display(context);
             for (let action of unit.actions) {
                 var action_display = display_map.get(action);

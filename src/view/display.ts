@@ -19,6 +19,7 @@ const size: number = 100;
 
 export class AbstractDisplay<T extends ISelectable> {
     selectable: T;
+    // TODO: Clean up this crazy state/selection_state
     state: DisplayState;
     selection_state: DisplayState
 
@@ -29,10 +30,11 @@ export class AbstractDisplay<T extends ISelectable> {
     }
 
     update_pos() {
-        // TODO: Not Implemented
+        // Not Implemented in base class
     }
 
     display(context: CanvasRenderingContext2D) {
+        this.update_pos();
         if (this.state == DisplayState.Select) {
             this.selectDisplay(context);
         } else if (this.state == DisplayState.Preview) {
