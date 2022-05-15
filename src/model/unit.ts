@@ -28,7 +28,7 @@ export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, grid_space: GridSpace){
         }
         return locs.map(effect_constructor)
     }
-    return [new Action(increment_fn, termination_fn, digest_fn)]
+    return [new Action("Move", 1, increment_fn, termination_fn, digest_fn)]
 } 
 
 export class Unit implements ISelectable {

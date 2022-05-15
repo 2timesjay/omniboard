@@ -2,7 +2,7 @@
 import { makeCanvas } from "./rendering";
 import { DisplayHitOnevent, DisplayMap, SelectionBroker, build_broker_callback } from "./input";
 import { GridLocation, GridSpace } from "../model/space";
-import { AbstractDisplay, GridLocationDisplay, UnitDisplay } from "./display";
+import { AbstractDisplay, GridLocationDisplay, MenuElementDisplay, UnitDisplay } from "./display";
 import { ISelectable, Stack } from "../model/core";
 import { async_input_getter, InputRequest } from "../model/input";
 import { Action, BoardState, Effect } from "../model/state";
@@ -53,31 +53,6 @@ function addCanvasListeners(
     }
 }
 
-// --- Path-only ---
-// var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
-//     var options = grid_space.getGridNeighborhood(loc_stack.value);
-//     return options;
-// };
-// var termination_fn = (loc_stack: Stack<GridLocation>): boolean => {
-//     return loc_stack.depth >= 4;
-// }
-// var digest_fn = (nums: Array<GridLocation>): Array<Effect<BoardState>> => {
-//     function effect(state: BoardState): BoardState {
-//         return state;
-//     };
-//     // Reconsider callable.
-//     effect.description = null;
-//     effect.pre_effect = null;
-//     effect.post_effect = null;
-//     return [effect];
-// }
-// var root_stack = new Stack<GridLocation>(grid_space.get(0, 0));
-// var action = new Action(increment_fn, termination_fn, digest_fn);
-// addCanvasListeners(selection_broker, context, display_map, grid_space);
-// var pop = new PathOnlyPhase();
-// var display_handler = new PathOnlyDisplayHander(context, grid_space, display_map);
-// path_only_input_bridge(pop, action, root_stack, input_request, display_handler);
-
 // Tactics
 var unit = new Unit(0);
 unit.setLoc(grid_space.get(1, 0));
@@ -85,6 +60,11 @@ unit.setActions(CONSTRUCT_BASIC_ACTIONS(unit, grid_space));
 var units = [unit]
 for (let unit of units) {
     let unit_display = new UnitDisplay(unit);
+    for (let action of unit.actions) {
+        let action_display = new MenuElementDisplay(action, unit_display)
+        display_map.set(action, action_display);
+        action_display.display(context);
+    }
     display_map.set(unit, unit_display);
     unit_display.display(context);
 }

@@ -53,11 +53,21 @@ export class BoardState implements IState {
 // T is the type of input expected
 export class Action<T extends ISelectable> implements ISelectable {
     // Class managing combination of input acquisition and effect generation.
+    text: string;
+    index: number;
     increment_fn: IncrementFn<T>;
     termination_fn: TerminationFn<T>;
     digest_fn: DigestFn<T>;
     
-    constructor(increment_fn: IncrementFn<T>, termination_fn: TerminationFn<T>, digest_fn: DigestFn<T>) {
+    constructor(
+        text: string,
+        index: number,
+        increment_fn: IncrementFn<T>, 
+        termination_fn: TerminationFn<T>, 
+        digest_fn: DigestFn<T>,
+    ) {
+        this.text = text;
+        this.index = index;
         this.increment_fn = increment_fn;
         this.termination_fn = termination_fn;
         this.digest_fn = digest_fn;

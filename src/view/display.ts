@@ -109,7 +109,7 @@ export class AbstractDisplay<T extends ISelectable> {
 }
 
 
-export class GridLocationDisplay extends AbstractDisplay<GridLocation> {
+export class GridLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatableDisplay {
     selectable: GridLocation;
     xOffset: number;
     yOffset: number;
@@ -166,7 +166,7 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> {
 }
 
 
-export class UnitDisplay extends AbstractDisplay<Unit> {
+export class UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisplay{
     selectable: Unit;
     xOffset: number;
     yOffset: number;
@@ -227,33 +227,40 @@ export class UnitDisplay extends AbstractDisplay<Unit> {
 }
 
 // TOOD: Elaborate or make into interface
+interface ILocatableDisplay {
+    xOffset: number;
+    yOffset: number;
+}
+
+
 interface IMenuable {// Action<ISelectable>
-    parent: ISelectable;
     index: number;
     text: string;
 }
 
 
-class MenuElementDisplay extends AbstractDisplay<IMenuable> {
+export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     selectable: IMenuable;
-    xOffset: number;
-    yOffset: number;
+    parent: ILocatableDisplay;
     size: number;
     width: number;
     height: number;
     
-    constructor(action: IMenuable) {
-        super(action);
-        this.size = size * 0.8
+    constructor(selectable: IMenuable, parent: ILocatableDisplay) {
+        super(selectable);
+        this.parent = parent;
+        this.size = size;
+        this.width = size;
+        this.height = size;
     }
 
-    // get xOffset() {
-    //     return this.selectable.unit.display.xOffset;
-    // }
+    get xOffset() {
+        return this.parent.xOffset;
+    }
 
-    // get yOffset() {
-    //     return this.selectable.unit.display.yOffset + this.size * this.action.index;
-    // }
+    get yOffset() {
+        return this.parent.yOffset + this.size * this.selectable.index;
+    }
 
 
     render(context: CanvasRenderingContext2D, clr: string) {

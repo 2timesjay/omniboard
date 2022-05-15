@@ -14,6 +14,18 @@ function is_available(selectable: ISelectable): boolean {
 }
 
 // TODO: Clean up
+/**
+ * Phase is same as typical board game sense.
+ * Tactics phase proceeds as follows for a given team:
+ *  1) Select a team member
+ *  2) Select a action
+ *  3) follow action's input requests
+ *  4) execute action's effects
+ *  5) repeat 2 until team member's actions are exhausted
+ *  6) repeat 1 until all team members have moved.
+ * Alternative:
+ *  Re-selection allowed - 5 loops to 1.
+ */
 export class TacticsPhase implements IPhase {
     constructor() {}
 
@@ -47,7 +59,8 @@ export class TacticsPhase implements IPhase {
         // @ts-ignore
         // var action_sel: Stack<Action<GridLocation>> = yield action_options;
         // var action = action_sel.value;
-        var action_sel = action_options[0];
+        var action_sel: Action = yield action_options;
+        // var action_sel = action_options[0];
         var action = action_sel;
         var location_root = new Stack(unit.loc);
         // input_option_generator requires Stack, not just any InputSelection
@@ -58,6 +71,14 @@ export class TacticsPhase implements IPhase {
     }
 }
 
+/**
+ * DisplayHandler combines handling input's effect on display and executing refreshes.
+ * Input, via new selections fed in through the InputBridge, affect the stack.
+ * The stack is used to update DisplayState of certain elements.
+ * Every Selectable in State is in the DisplayMap, which is literally a lookup map.
+ * Context is the actual display
+ * grid_space and units are for convenient iteration.
+ */
 export class TacticsDisplayHander {
     context: CanvasRenderingContext2D;
     display_map: DisplayMap<ISelectable>;
@@ -78,6 +99,7 @@ export class TacticsDisplayHander {
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         // TODO: UnitDisplay state not actually well-handled right now.
+        // TODO: ActionDisplay has error on pop and doesn't erase correctly.
         // Erase old selection_state;
         if (selection == null) { // Handle "Pop";
             console.log("Pop")
@@ -119,6 +141,10 @@ export class TacticsDisplayHander {
     }
 }
 
+/**
+ * input_bridge == controller. Calls phases in a loop and requests input
+ * then feeds input to display_handler.
+ */
 export async function tactics_input_bridge(
     phase: TacticsPhase, 
     state: BoardState, 
