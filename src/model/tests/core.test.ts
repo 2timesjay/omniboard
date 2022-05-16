@@ -13,7 +13,7 @@ test("Stack Test", (t) => {
     var stack = new Stack<number>(1);
     stack = stack.push(2);
     stack = stack.push(3);
-    t.deepEqual(stack.to_array(), [3, 2, 1])
+    t.deepEqual(stack.to_array(), [1, 2, 3])
     t.equal(stack.peek(), 3);
     stack = stack.pop();
     t.equal(stack.peek(), 2);

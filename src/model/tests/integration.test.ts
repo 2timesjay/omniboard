@@ -29,7 +29,7 @@ test("Integration test", (t) => {
     }
     var digest_fn = (nums: Array<SelectableNumber>): Array<Effect<NumberState>> => {
         function effect(state: NumberState): NumberState {
-            state.add(nums[0].value);
+            state.add(nums.pop().value);
             return state;
         };
         // Reconsider callable.
@@ -46,24 +46,23 @@ test("Integration test", (t) => {
     var input_option_generator = action.input_option_generator(root_stack);
     var number_state = new NumberState(10);
     var options = input_option_generator.next().value;
-    var selection: InputSelection<SelectableNumber> = null;
     var process_options = function(
         sel: InputSelection<SelectableNumber>
     ): Promise<InputSelection<SelectableNumber>> {
-        selection = sel;
         // @ts-ignore InputSelection of course
-        options = input_option_generator.next(sel).value;
+        var options = input_option_generator.next(sel).value;
         // @ts-ignore Board State
         return select_last_input_getter(options);
     }
     // TODO: This whole test is questionable.
     // @ts-ignore Board State
     select_last_input_getter(options)
-        .then(process_options) // 1 or 2 work; 3 repeats doesn't.
+        .then(process_options) // 1 or 2 work - initial selection and confirmation.
+        // .then(process_options) // 3 doesn't work because of repeat.
         .then((sel) => {
             t.notEqual(sel, null);
             // @ts-ignore InputSelection
-            var effects = action.digest_fn(selection.to_array());
+            var effects = action.digest_fn(sel.to_array());
             t.equal(effects.length, 1);
             var transformed_state = effects[0](number_state);
             t.equal(transformed_state.value, 31);

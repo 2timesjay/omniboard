@@ -1,6 +1,25 @@
 export interface ISelectable {}
 
-export class Stack<T> {
+class StackIterator<T> implements Iterator<T> {
+    private _stack: Stack<T> | null;
+
+    constructor(stack: Stack<T>) {
+        this._stack = stack;
+    }
+
+    next(): IteratorResult<T> {
+        if (this._stack == null) {
+            return {value: undefined, done: true};
+        }
+        else {
+            var cur = this._stack.value;
+            this._stack = this._stack.parent;
+            return {value: cur, done: false};   
+        }
+    }
+}
+
+export class Stack<T> implements Iterable<T>{
     value: T;
     parent: Stack<T> | null;
     depth: number;
@@ -16,6 +35,10 @@ export class Stack<T> {
         }
     }
 
+    [Symbol.iterator](): Iterator<T> {
+        return new StackIterator<T>(this);
+    }
+
     push(sel: T): Stack<T> {
         return new Stack<T>(sel, this);
     }
@@ -24,6 +47,7 @@ export class Stack<T> {
         return this.value;
     }
 
+    // TODO: This is not the conventional meaning of pop()
     pop(): Stack<T> {
         return this.parent;
     }
@@ -31,14 +55,9 @@ export class Stack<T> {
     to_array(): Array<T> {
         // TODO: Should this be reversed?
         var arr = Array<T>();
-        var value = this.value;
-        arr.unshift(value);
-        var parent = this.parent;
-        while(parent != null){
-            value = parent.value;
+        for (var value of this) {
             arr.unshift(value);
-            parent = parent.parent;
-        }
+        };
         return arr;
     }
 }

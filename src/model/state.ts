@@ -77,7 +77,7 @@ export class Action<T extends ISelectable> implements ISelectable {
         return bfs(input, this.increment_fn, this.termination_fn);
     }
 
-    // TODO: Cleanup
+    // TODO: Cleanup - Simplify coupling with controller loop.
     * input_option_generator(
         base: Stack<T>
     ): Generator<PreviewMap<T>, Array<Effect<BoardState>>, Stack<T>> {
