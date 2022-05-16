@@ -64,8 +64,9 @@ export class TacticsPhase implements IPhase {
             var action_sel: Action = yield action_options;
         } while (action_sel == null);
         var action = action_sel;
-        var location_root = new Stack(unit.loc);
         // input_option_generator requires Stack, not just any InputSelection
+        var location_root = new Stack(unit.loc);
+        // TODO: Revise action to simply return selected input stack; handle digest in phase.
         // @ts-ignore
         var effects = yield *action.input_option_generator(location_root);
         console.log("TacticsPhase.run_subphase");

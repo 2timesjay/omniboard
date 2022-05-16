@@ -51,7 +51,7 @@ export class BoardState implements IState {
 }
 
 // T is the type of input expected
-export class Action<T extends ISelectable> implements ISelectable {
+export class Action<T extends ISelectable, U extends IState> implements ISelectable {
     // Class managing combination of input acquisition and effect generation.
     text: string;
     index: number;
@@ -73,22 +73,24 @@ export class Action<T extends ISelectable> implements ISelectable {
         this.digest_fn = digest_fn;
     }
 
-    get_options(input: Stack<T>) {
+    get_options(input: Stack<T>): Tree<T> {
         return bfs(input, this.increment_fn, this.termination_fn);
     }
 
     // TODO: Cleanup - Simplify coupling with controller loop.
     * input_option_generator(
         base: Stack<T>
-    ): Generator<PreviewMap<T>, Array<Effect<BoardState>>, Stack<T>> {
+    ): Generator<PreviewMap<T>, Array<Effect<U>>, Stack<T>> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
         var input = base;
         var preview_map = this.get_options(input).to_map();
         var input_resp = yield preview_map;
         do {
+            var REJECT_CASE = !input_resp;
+            var CONFIRM_CASE = (input_resp.value == input.value)
             // TODO: Currently treats "null" response as special flag to pop.
-            if (!input_resp) {
+            if (REJECT_CASE) {
                 if (input.parent) {
                     input = input.pop();
                     console.log("reject")
@@ -98,7 +100,7 @@ export class Action<T extends ISelectable> implements ISelectable {
                 }
                 input_resp = yield preview_map;
             } else if (input_resp.value == input.value){
-                console.log("repeat");
+                console.log("confirm");
                 // input_resp = yield preview_map;
                 break;
             } else {

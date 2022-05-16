@@ -9,14 +9,14 @@ import { refreshDisplay } from "./shared";
 
 export class PathOnlyPhase implements IPhase {
     * run_phase(
-        action: Action<ISelectable>, root_stack: Stack<ISelectable>
+        action: Action<ISelectable, BoardState>, root_stack: Stack<ISelectable>
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         console.log("PathOnlyPhase.run_phase");
         var effects = yield *this.run_subphase(action, root_stack);
     }
 
     * run_subphase (
-        action: Action<ISelectable>, root_stack: Stack<ISelectable>
+        action: Action<ISelectable, BoardState>, root_stack: Stack<ISelectable>
     ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
         // @ts-ignore Expects Stack - here and other places InputSelection was a reach.
         var effects = yield *action.input_option_generator(root_stack);
@@ -75,7 +75,7 @@ export class PathOnlyDisplayHander {
 // TODO: I have typed too many damn things.
 export async function path_only_input_bridge(
     phase: PathOnlyPhase, 
-    action: Action<ISelectable>, 
+    action: Action<ISelectable, BoardState>, 
     root_stack: Stack<ISelectable>, 
     input_request: InputRequest<ISelectable>, 
     display_handler: PathOnlyDisplayHander,

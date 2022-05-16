@@ -1,6 +1,6 @@
 import { ISelectable, Stack } from "./core";
 import { GridLocation, GridSpace } from "./space";
-import { Action, BoardState, Effect } from "./state";
+import { Action, BoardState, Effect, IState } from "./state";
 
 
 export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, grid_space: GridSpace){
@@ -34,7 +34,7 @@ export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, grid_space: GridSpace){
 export class Unit implements ISelectable {
     team: number;
     loc: GridLocation;
-    actions: Array<Action<ISelectable>>;
+    actions: Array<Action<ISelectable, IState>>;
 
     constructor(team: number){
         this.team = team;
@@ -44,7 +44,7 @@ export class Unit implements ISelectable {
         this.loc = loc; 
     }
 
-    setActions(actions: Array<Action<ISelectable>>) {
+    setActions(actions: Array<Action<ISelectable, IState>>) {
         this.actions = actions;
     }
 }

@@ -42,7 +42,9 @@ test("Integration test", (t) => {
     // TODO: Make casting option more robust
     // TODO: A lot simpler to test with synchronous input_getter. Needed for AI?
     var select_last_input_getter = synthetic_input_getter<SelectableNumber>(select_last);
-    var action = new Action("sum", 0, increment_fn, termination_fn, digest_fn);
+    var action = new Action<SelectableNumber, NumberState>(
+        "sum", 0, increment_fn, termination_fn, digest_fn
+    );
     var input_option_generator = action.input_option_generator(root_stack);
     var number_state = new NumberState(10);
     var options = input_option_generator.next().value;
@@ -51,7 +53,7 @@ test("Integration test", (t) => {
     ): Promise<InputSelection<SelectableNumber>> {
         // @ts-ignore InputSelection of course
         var options = input_option_generator.next(sel).value;
-        // @ts-ignore Board State
+        // @ts-ignore input_option_generator is a mess.
         return select_last_input_getter(options);
     }
     // TODO: This whole test is questionable.
@@ -66,7 +68,6 @@ test("Integration test", (t) => {
             t.equal(effects.length, 1);
             var transformed_state = effects[0](number_state);
             t.equal(transformed_state.value, 31);
-            // console.log(input_promise);
             t.end();
         });
 })
