@@ -100,7 +100,7 @@ export class TacticsDisplayHander {
         this.stateful_selectables = [];
     }
 
-    on_selection(selection: Stack<ISelectable>) {
+    on_selection(selection: InputSelection<ISelectable>) {
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         // TODO: UnitDisplay state not actually well-handled right now.
@@ -177,11 +177,7 @@ export async function tactics_input_bridge(
         var phase_runner = phase.run_phase(state, 0);
         var input_options = phase_runner.next().value;
         while(input_options){
-            // @ts-ignore input_options potentially overbroad (ISelectable) here?
-            var input_selection_promise = input_request(input_options);
-            console.log("isp: ", input_selection_promise);
-            var input_selection = await input_selection_promise;
-            // @ts-ignore
+            var input_selection = await input_request(input_options);
             display_handler.on_selection(input_selection);
             input_options = phase_runner.next(input_selection).value;
         }

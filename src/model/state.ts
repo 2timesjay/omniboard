@@ -88,7 +88,7 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         var input_resp = yield preview_map;
         do {
             var REJECT_CASE = !input_resp;
-            var CONFIRM_CASE = (input_resp.value == input.value)
+            var CONFIRM_CASE = (input_resp != null && input_resp.value == input.value)
             // TODO: Currently treats "null" response as special flag to pop.
             if (REJECT_CASE) {
                 if (input.parent) {
@@ -99,7 +99,7 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
                     console.log("ignore reject");
                 }
                 input_resp = yield preview_map;
-            } else if (input_resp.value == input.value){
+            } else if (CONFIRM_CASE){
                 console.log("confirm");
                 // input_resp = yield preview_map;
                 break;
