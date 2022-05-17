@@ -28,13 +28,13 @@ export class PathOnlyPhase implements IPhase {
 export class PathOnlyDisplayHander {
     context: CanvasRenderingContext2D;
     display_map: DisplayMap<ISelectable>;
-    grid_space: GridSpace;
+    state: BoardState;
     prev_selection: Stack<ISelectable>;
 
-    constructor(context: CanvasRenderingContext2D, grid_space: GridSpace, display_map: DisplayMap<ISelectable>){
+    constructor(context: CanvasRenderingContext2D, state: BoardState, display_map: DisplayMap<ISelectable>){
         this.context = context;
         this.display_map = display_map;
-        this.grid_space = grid_space;
+        this.state = state;
         this.prev_selection = null;
     }
 
@@ -68,7 +68,7 @@ export class PathOnlyDisplayHander {
                 selection = selection.parent;
             } while(selection);
         }
-        refreshDisplay(this.context, this.display_map, this.grid_space);
+        refreshDisplay(this.context, this.display_map, this.state);
     }
 }
 

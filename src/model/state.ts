@@ -48,6 +48,22 @@ export class BoardState implements IState {
         }
         return this;
     };
+
+    get_selectables(): Array<ISelectable> {
+        var selectables = new Array<ISelectable>();
+        for (let grid_row of this.grid.locs) {
+            for (let grid_loc of grid_row) {
+                selectables.push(grid_loc);
+            }
+        }
+        for (let unit of this.units) {
+            selectables.push(unit);
+            for (let action of unit.actions) {
+                selectables.push(action);
+            }
+        }
+        return selectables;
+    }
 }
 
 // T is the type of input expected

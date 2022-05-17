@@ -40,16 +40,15 @@ function addCanvasListeners(
     selection_broker: SelectionBroker<ISelectable>,
     context: CanvasRenderingContext2D, 
     display_map: DisplayMap<ISelectable>,
-    grid_space: GridSpace, 
-    unit?: Array<Unit> | null,
+    state: BoardState,
 ) {
     context.canvas.onclick = function (event) {
         selection_broker.onclick(event);
-        refreshDisplay(context, display_map, grid_space, unit);
+        refreshDisplay(context, display_map, state);
     }
     context.canvas.onmousemove = function (event) {
         selection_broker.onmousemove(event);
-        refreshDisplay(context, display_map, grid_space, unit);
+        refreshDisplay(context, display_map, state);
     }
 }
 
@@ -73,7 +72,7 @@ for (let unit of units) {
 var board_state = new BoardState();
 board_state.grid = grid_space;
 board_state.units = units;
-addCanvasListeners(selection_broker, context, display_map, grid_space, units);
+addCanvasListeners(selection_broker, context, display_map, board_state);
 // addCanvasListeners(unit_selection_broker, context, display_map, grid_space, units);
 var tp = new TacticsPhase();
 var display_handler = new TacticsDisplayHander(context, display_map, board_state);

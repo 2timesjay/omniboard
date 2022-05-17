@@ -85,17 +85,15 @@ export class TacticsPhase implements IPhase {
 export class TacticsDisplayHander {
     context: CanvasRenderingContext2D;
     display_map: DisplayMap<ISelectable>;
-    grid_space: GridSpace;
-    units: Array<Unit>;
+    state: BoardState;
     // TODO: Derive stateful_selectables directly from stack.
     misc_selectables: Array<ISelectable>;
     stateful_selectables: Array<ISelectable>;
 
-    constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, board_state: BoardState){
+    constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, state: BoardState){
         this.context = context;
         this.display_map = display_map;
-        this.grid_space = board_state.grid;
-        this.units = board_state.units;
+        this.state = state;
         this.misc_selectables = []; // TODO: merge with stateful_selectables
         this.stateful_selectables = [];
     }
@@ -158,7 +156,7 @@ export class TacticsDisplayHander {
     }
 
     refresh(){
-        refreshDisplay(this.context, this.display_map, this.grid_space, this.units);
+        refreshDisplay(this.context, this.display_map, this.state);
     }
 }
 
