@@ -35,9 +35,13 @@ export class Unit implements ISelectable {
     team: number;
     loc: GridLocation;
     actions: Array<Action<ISelectable, IState>>;
+    hp: number;
+    max_hp: number;
 
     constructor(team: number){
         this.team = team;
+        this.max_hp = 10;
+        this.hp = 5; // this.max_hp;
     }
 
     setLoc(loc: GridLocation){

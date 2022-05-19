@@ -190,7 +190,9 @@ export class UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisp
     }
 
     render(context: CanvasRenderingContext2D, clr: string) {
-        makeSquare(this.xOffset, this.yOffset, context, this.size, clr);
+        var unit: Unit = this.selectable;
+        var unit_transparency = 0.2 + 0.8 * unit.hp / unit.max_hp
+        makeSquare(this.xOffset, this.yOffset, context, this.size, clr, unit_transparency);
     }
 
     alt_render(context: CanvasRenderingContext2D, clr: string) {
@@ -251,9 +253,9 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     constructor(selectable: IMenuable, parent: ILocatableDisplay) {
         super(selectable);
         this.parent = parent;
-        this.size = size;
-        this.width = size;
-        this.height = size;
+        this.size = size*0.8;
+        this.width = this.size;
+        this.height = this.size;
     }
 
     get xOffset() {
