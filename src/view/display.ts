@@ -1,6 +1,6 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
-import { makeCanvas, makeCircle, makeRect } from "./rendering";
+import { makeCanvas, makeCircle, makeRect, makeSquare } from "./rendering";
 import { getMousePos, Position } from "./input";
 import { Awaited } from "../model/utilities";
 import { GridLocation } from "../model/space";
@@ -129,7 +129,7 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 
     render(context: CanvasRenderingContext2D, clr: string) {
-        makeRect(this.xOffset, this.yOffset, context, this.size, clr);
+        makeSquare(this.xOffset, this.yOffset, context, this.size, clr);
     }
 
     alt_render(context: CanvasRenderingContext2D, clr: string) {
@@ -190,7 +190,7 @@ export class UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisp
     }
 
     render(context: CanvasRenderingContext2D, clr: string) {
-        makeRect(this.xOffset, this.yOffset, context, this.size, clr);
+        makeSquare(this.xOffset, this.yOffset, context, this.size, clr);
     }
 
     alt_render(context: CanvasRenderingContext2D, clr: string) {
@@ -266,9 +266,22 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
 
 
     render(context: CanvasRenderingContext2D, clr: string) {
+        makeRect(
+            this.xOffset, 
+            this.yOffset, 
+            context, 
+            this.selectable.text.length*0.5*this.size + 0.2*this.size, 
+            this.size, 
+            "white", 
+            0.5
+        );
         context.fillStyle = clr;
         context.font = 0.8 * this.size + "px Trebuchet MS";
-        context.fillText(this.selectable.text, this.xOffset, this.yOffset);
+        context.fillText(
+            this.selectable.text, 
+            this.xOffset + 0.2 * this.size, 
+            this.yOffset + 0.8 * this.size
+        );
     }
 
     neutralDisplay(context: CanvasRenderingContext2D) {

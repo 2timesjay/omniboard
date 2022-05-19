@@ -8,7 +8,7 @@ export function makeCanvas(width: number, height: number, attach: boolean) {
     return canvas;
 }
 
-export function makeRect(
+export function makeSquare(
     x: number, 
     y: number, 
     context: CanvasRenderingContext2D, 
@@ -21,6 +21,28 @@ export function makeRect(
     context.globalAlpha = alpha;
     context.beginPath();
     context.rect(x, y, size, size);
+    context.fillStyle = color;
+    context.fill();
+    context.lineWidth = 4;
+    context.strokeStyle = 'black';
+    context.stroke();
+    context.globalAlpha = 1.0;
+}
+
+export function makeRect(
+    x: number, 
+    y: number, 
+    context: CanvasRenderingContext2D, 
+    width: number, 
+    height: number,
+    clr?: string | null, 
+    lfa?: number | null
+): void {
+    const alpha = lfa == undefined ? 1.0 : lfa;
+    const color = clr == undefined ? "#000000" : clr;
+    context.globalAlpha = alpha;
+    context.beginPath();
+    context.rect(x, y, width, height);
     context.fillStyle = color;
     context.fill();
     context.lineWidth = 4;
