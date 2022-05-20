@@ -134,6 +134,7 @@ export function bfs<T extends ISelectable>(
     increment_fn: IncrementFn<T>, 
     termination_fn: TerminationFn<T>
 ): Tree<T> {
+    console.log("BFS root: ", root_stack);
     var preview_tree = Tree.from_stack<T>(root_stack);
     var explored = new Set<T>();
     var to_explore = new Array<Tree<T>>(preview_tree);

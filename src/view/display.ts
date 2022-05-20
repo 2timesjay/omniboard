@@ -191,7 +191,7 @@ export class UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisp
 
     render(context: CanvasRenderingContext2D, clr: string) {
         var unit: Unit = this.selectable;
-        var unit_transparency = 0.2 + 0.8 * unit.hp / unit.max_hp
+        var unit_transparency = 0.2 + 0.8 * unit.hp / unit.max_hp;
         makeSquare(this.xOffset, this.yOffset, context, this.size, clr, unit_transparency);
     }
 

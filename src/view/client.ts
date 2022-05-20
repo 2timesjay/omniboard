@@ -52,12 +52,19 @@ function addCanvasListeners(
     }
 }
 
-// Tactics
+// Tactics State setup
+var state = new BoardState();
+state.grid = grid_space;
 var unit = new Unit(0);
 unit.setLoc(grid_space.get(1, 0));
-unit.setActions(CONSTRUCT_BASIC_ACTIONS(unit, grid_space));
-var units = [unit]
+var other_unit = new Unit(1);
+other_unit.setLoc(grid_space.get(0,0));
+var units = [unit, other_unit]
+state.units = units;
+
+// TODO: Safer Laziness in action construction
 for (let unit of units) {
+    unit.setActions(CONSTRUCT_BASIC_ACTIONS(unit, state));
     let unit_display = new UnitDisplay(unit);
     for (let action of unit.actions) {
         let action_display = new MenuElementDisplay(action, unit_display)
@@ -69,11 +76,8 @@ for (let unit of units) {
 }
 
 // TODO: Before this will work must rework canvas onclick -> display onclick connection
-var board_state = new BoardState();
-board_state.grid = grid_space;
-board_state.units = units;
-addCanvasListeners(selection_broker, context, display_map, board_state);
+addCanvasListeners(selection_broker, context, display_map, state);
 // addCanvasListeners(unit_selection_broker, context, display_map, grid_space, units);
 var tp = new TacticsPhase();
-var display_handler = new TacticsDisplayHander(context, display_map, board_state);
-tactics_input_bridge(tp, board_state, input_request, display_handler);
+var display_handler = new TacticsDisplayHander(context, display_map, state);
+tactics_input_bridge(tp, state, input_request, display_handler);

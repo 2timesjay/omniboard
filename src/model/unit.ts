@@ -2,9 +2,42 @@ import { ISelectable, Stack } from "./core";
 import { GridLocation, GridSpace } from "./space";
 import { Action, BoardState, Effect, IState } from "./state";
 
+// TODO: Clicking other target gives weird queue view.
+// TODO: Break out input acquisition; use flatInputAcquisition here.
+function construct_attack(unit: Unit, state: BoardState){
+    var increment_fn = (unit_stack: Stack<Unit>): Array<Unit> => {
+        // TODO: Somehow allowed to click self. Worse, this autoconfirms (input gen bug)
+        var options = state.units.filter((u) => (u != unit));
+        return options;
+    };
+    var termination_fn = (unit_stack: Stack<Unit>): boolean => {
+        return (unit_stack.depth >= 2);
+    }
+    var digest_fn = (units: Array<Unit>): Array<Effect<BoardState>> => {
+        console.log("Attempting to Digest: ", unit);
+        function effect_constructor(target: Unit){
+            console.log("Attempting to generate damage Effect: ", target);
+            function effect(state: BoardState): BoardState {
+                console.log("Attempting to execute Damage: ", unit, target);
+                target.damage(5);
+                return state;
+            };
+            // TODO: Reconsider Effect as callable.
+            effect.description = "attack target";
+            effect.pre_effect = null;
+            effect.post_effect = null;
+            return effect;
+        }
+        var target = units.pop();
+        return [effect_constructor(target)];
+    }
+    var move = new Action("Attack", 2, increment_fn, termination_fn, digest_fn)
+    return move
+}
 
-export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, grid_space: GridSpace){
+function construct_move(unit: Unit, state: BoardState){
     var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
+        var grid_space = state.grid;
         var options = grid_space.getGridNeighborhood(loc_stack.value);
         return options;
     };
@@ -28,7 +61,17 @@ export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, grid_space: GridSpace){
         }
         return locs.map(effect_constructor)
     }
-    return [new Action("Move", 1, increment_fn, termination_fn, digest_fn)]
+    var move = new Action("Move", 1, increment_fn, termination_fn, digest_fn)
+    return move
+}
+
+export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, state: BoardState){
+    var move = construct_move(unit, state);
+    var attack = construct_attack(unit, state);
+    return [
+        move,
+        attack,
+    ]
 } 
 
 export class Unit implements ISelectable {
@@ -41,7 +84,15 @@ export class Unit implements ISelectable {
     constructor(team: number){
         this.team = team;
         this.max_hp = 10;
-        this.hp = 5; // this.max_hp;
+        this.hp = this.max_hp;
+    }
+
+    damage(damage_amount: number){
+        this.setHp(this.hp - damage_amount)
+    }
+
+    setHp(hp: number) {
+        this.hp = hp;
     }
 
     setLoc(loc: GridLocation){

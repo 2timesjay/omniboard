@@ -29,6 +29,7 @@ function is_available(selectable: ISelectable): boolean {
 export class TacticsPhase implements IPhase {
     constructor() {}
 
+    // TODO: Efficient way to represent "sequential state machine" without GOTO
     * run_phase(state: BoardState, cur_team: number
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         console.log("TacticsPhase.run_phase");
@@ -65,10 +66,21 @@ export class TacticsPhase implements IPhase {
         } while (action_sel == null);
         var action = action_sel;
         // input_option_generator requires Stack, not just any InputSelection
-        var location_root = new Stack(unit.loc);
+        var root = null;
+        console.log("action: ", action.text);
+        // TODO: Use enum or other better action identification
+        // TODO: use match syntax or case syntax
+        if (action.text == "Move") {
+            var location_root = new Stack(unit.loc);
+            root = location_root;
+        } else if (action.text == "Attack") {
+            var unit_root = new Stack(unit);
+            root = unit_root;
+        }
         // TODO: Revise action to simply return selected input stack; handle digest in phase.
         // @ts-ignore
-        var effects = yield *action.input_option_generator(location_root);
+        console.log("input option generator root: ", root)
+        var effects = yield *action.input_option_generator(root);
         console.log("TacticsPhase.run_subphase");
         return effects;
     }
