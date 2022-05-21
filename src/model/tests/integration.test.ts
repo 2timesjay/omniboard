@@ -2,7 +2,7 @@ import * as test from "tape";
 import { NumberState, SelectableNumber } from "../../tests/utilities";
 import {bfs, ISelectable, Stack, Tree} from "../core";
 import {InputSelection, SelectionFn, synthetic_input_getter} from "../input";
-import {Action, Effect, IState} from "../state";
+import {Action, Effect, IState, SequentialInputAcquirer} from "../state";
 import {Awaited} from "../utilities";
 
 function select_last<T>(arr: Array<T>): T {
@@ -27,6 +27,10 @@ test("Integration test", (t) => {
     var termination_fn = (nums: Stack<SelectableNumber>): boolean => {
         return nums.depth >= 4;
     }
+    var acquirer = new SequentialInputAcquirer<SelectableNumber>(
+        increment_fn,
+        termination_fn,
+    )
     var digest_fn = (nums: Array<SelectableNumber>): Array<Effect<NumberState>> => {
         function effect(state: NumberState): NumberState {
             state.add(nums.pop().value);
@@ -43,9 +47,9 @@ test("Integration test", (t) => {
     // TODO: A lot simpler to test with synchronous input_getter. Needed for AI?
     var select_last_input_getter = synthetic_input_getter<SelectableNumber>(select_last);
     var action = new Action<SelectableNumber, NumberState>(
-        "sum", 0, increment_fn, termination_fn, digest_fn
+        "sum", 0, acquirer, digest_fn
     );
-    var input_option_generator = action.input_option_generator(root_stack);
+    var input_option_generator = action.get_final_input_and_effect(root_stack);
     var number_state = new NumberState(10);
     var options = input_option_generator.next().value;
     var process_options = function(

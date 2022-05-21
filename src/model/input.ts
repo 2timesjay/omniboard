@@ -10,7 +10,6 @@ export type PreviewMap<T> = Map<T, Tree<T>>;
 
 export type InputOptions<T> = PreviewMap<T> | Array<T>;
 export type InputSelection<T> = Stack<T> | T;
-export type InputAcquisitionFn<T> = () => InputSelection<T>;
 
 // Should this be Stack instead of Tree (and everywhere similar?)
 // Should this be a generator???

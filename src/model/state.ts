@@ -4,12 +4,13 @@ import {
     ISelectable, 
     IncrementFn, 
     TerminationFn, 
-    bfs
+    bfs,
+    OptionFn
 } from "./core";
 
 import {
-    InputAcquisitionFn,
-    InputRequest, PreviewMap
+    InputOptions,
+    InputRequest, InputSelection, PreviewMap
 } from "./input";
 import { GridSpace } from "./space";
 import { Unit } from "./unit";
@@ -67,10 +68,48 @@ export class BoardState implements IState {
     }
 };
 
-class SequentialInputAcquirer<T> {
+interface IInputAcquirer<T> {
+}
+
+export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     // TODO: Cleanup - Simplify coupling with controller loop.
-    root: T
-    input_acquisition_fn: InputAcquisitionFn<T>;
+    option_fn: OptionFn<T>;
+    
+    constructor(
+        option_fn: OptionFn<T>
+    ) {
+        this.option_fn = option_fn;
+    }
+
+    * input_option_generator(
+        base?: T
+    ): Generator<Array<T>, T, T> {
+        // Handles cases where intermediate input is required by yielding it.
+        // Coroutine case.
+        var input = base;
+        var options = this.option_fn(input);
+        var input_resp = yield options;
+        do {
+            var REJECT_CASE = !input_resp;
+            var CONFIRM_CASE = (input_resp != null && input_resp == input)
+            // TODO: Currently treats "null" response as special flag to pop.
+            if (REJECT_CASE) {
+                var input_resp = yield options;
+            } else if (CONFIRM_CASE){
+                console.log("confirm");
+                break;
+            } else {
+                console.log("simple choice");
+                input_resp = yield options;
+            }
+        } while(true);
+        console.log("input_option_generation over");
+        return input;
+    }
+}
+
+export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
+    // TODO: Cleanup - Simplify coupling with controller loop.
     increment_fn: IncrementFn<T>;
     termination_fn: TerminationFn<T>;
 
@@ -87,7 +126,7 @@ class SequentialInputAcquirer<T> {
     }
 
     * input_option_generator(
-        base: Stack<T>
+        base?: Stack<T>
     ): Generator<PreviewMap<T>, Array<T>, Stack<T>> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
@@ -129,22 +168,18 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
     // Class managing combination of input acquisition and effect generation.
     text: string;
     index: number;
-    acquirer: SequentialInputAcquirer<T>;
+    acquirer: IInputAcquirer<T>;
     digest_fn: DigestFn<T>;
     
     constructor(
         text: string,
         index: number,
-        increment_fn: IncrementFn<T>, 
-        termination_fn: TerminationFn<T>, 
+        acquirer: IInputAcquirer<T>,
         digest_fn: DigestFn<T>,
     ) {
         this.text = text;
         this.index = index;
-        this.acquirer = new SequentialInputAcquirer<T>(
-            increment_fn,
-            termination_fn,
-        )
+        this.acquirer = acquirer;
         this.digest_fn = digest_fn;
     }
 
@@ -153,7 +188,10 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
     // }
 
     // TODO: Correctly type this.
-    * get_final_input_and_effect(base: Stack<T>): Effect<U> {
+    * get_final_input_and_effect(
+        base: Stack<T>
+    ): Generator<InputOptions<T>, Array<Effect<U>>, InputSelection<T>> {
+        // @ts-ignore InputOptions/InputSelection not actually okay here
         var input = yield *this.acquirer.input_option_generator(base);
         return this.digest_fn(input);
     }

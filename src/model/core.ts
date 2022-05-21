@@ -125,9 +125,11 @@ export class Tree<T> extends Stack<T> {
     }
 }
 
-export type IncrementFn<T extends ISelectable> = (stack: Stack<T>) => Array<T>;
+export type OptionFn<T extends ISelectable> = (selection?: T) => Array<T>;
 
-export type TerminationFn<T extends ISelectable> = (stack: Stack<T>) => boolean;
+export type IncrementFn<T extends ISelectable> = (selection?: Stack<T>) => Array<T>;
+
+export type TerminationFn<T extends ISelectable> = (selection?: Stack<T>) => boolean;
 
 export function bfs<T extends ISelectable>(
     root_stack: Stack<T>, 

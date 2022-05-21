@@ -80,7 +80,7 @@ export class TacticsPhase implements IPhase {
         // TODO: Revise action to simply return selected input stack; handle digest in phase.
         // @ts-ignore
         console.log("input option generator root: ", root)
-        var effects = yield *action.input_option_generator(root);
+        var effects = yield *action.get_final_input_and_effect(root);
         console.log("TacticsPhase.run_subphase");
         return effects;
     }

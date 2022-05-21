@@ -1,6 +1,6 @@
 import { ISelectable, Stack } from "./core";
 import { GridLocation, GridSpace } from "./space";
-import { Action, BoardState, Effect, IState } from "./state";
+import { Action, BoardState, Effect, IState, SequentialInputAcquirer } from "./state";
 
 // TODO: Clicking other target gives weird queue view.
 // TODO: Break out input acquisition; use flatInputAcquisition here.
@@ -13,6 +13,10 @@ function construct_attack(unit: Unit, state: BoardState){
     var termination_fn = (unit_stack: Stack<Unit>): boolean => {
         return (unit_stack.depth >= 2);
     }
+    var acquirer = new SequentialInputAcquirer<Unit>(
+        increment_fn,
+        termination_fn,
+    )
     var digest_fn = (units: Array<Unit>): Array<Effect<BoardState>> => {
         console.log("Attempting to Digest: ", unit);
         function effect_constructor(target: Unit){
@@ -31,7 +35,7 @@ function construct_attack(unit: Unit, state: BoardState){
         var target = units.pop();
         return [effect_constructor(target)];
     }
-    var move = new Action("Attack", 2, increment_fn, termination_fn, digest_fn)
+    var move = new Action("Attack", 2, acquirer, digest_fn)
     return move
 }
 
@@ -44,6 +48,10 @@ function construct_move(unit: Unit, state: BoardState){
     var termination_fn = (loc_stack: Stack<GridLocation>): boolean => {
         return loc_stack.depth >= 4;
     }
+    var acquirer = new SequentialInputAcquirer<GridLocation>(
+        increment_fn,
+        termination_fn,
+    )
     var digest_fn = (locs: Array<GridLocation>): Array<Effect<BoardState>> => {
         console.log("Attempting to Digest: ", locs);
         function effect_constructor(loc: GridLocation){
@@ -61,7 +69,7 @@ function construct_move(unit: Unit, state: BoardState){
         }
         return locs.map(effect_constructor)
     }
-    var move = new Action("Move", 1, increment_fn, termination_fn, digest_fn)
+    var move = new Action("Move", 1, acquirer, digest_fn)
     return move
 }
 
