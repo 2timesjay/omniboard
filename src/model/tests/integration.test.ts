@@ -47,6 +47,8 @@ test("Integration test", (t) => {
     // TODO: A lot simpler to test with synchronous input_getter. Needed for AI?
     var select_last_input_getter = synthetic_input_getter<SelectableNumber>(select_last);
     var action = new Action<SelectableNumber, NumberState>(
+        // TODO: Don't understand this ts-ignore
+        // @ts-ignore
         "sum", 0, acquirer, digest_fn
     );
     var input_option_generator = action.get_final_input_and_effect(root_stack);

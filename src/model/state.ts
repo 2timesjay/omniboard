@@ -35,7 +35,7 @@ export type Observer<T extends IState> = {
 };
 
 // TODO: The `any` here is a big wacky. Could https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-types help?
-export type DigestFn<T extends ISelectable> = (selection: Array<T>) => Array<Effect<any>>;
+export type DigestFn<T extends ISelectable> = (selection: InputSelection<T>) => Array<Effect<any>>;
 
 export class BoardState implements IState {
     grid: GridSpace;
@@ -68,7 +68,11 @@ export class BoardState implements IState {
     }
 };
 
+// TODO add structure
 interface IInputAcquirer<T> {
+    // * input_option_generator(
+    //     base?: Stack<T>
+    // ): Generator<PreviewMap<T>, Array<T>, Stack<T>>;
 }
 
 export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
@@ -99,7 +103,8 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
                 console.log("confirm");
                 break;
             } else {
-                console.log("simple choice");
+                console.log("simple choice: ", input_resp);
+                input = input_resp;
                 input_resp = yield options;
             }
         } while(true);
@@ -182,7 +187,7 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         this.acquirer = acquirer;
         this.digest_fn = digest_fn;
     }
-    
+
     // TODO: Correctly type this.
     * get_final_input_and_effect(
         base: Stack<T>

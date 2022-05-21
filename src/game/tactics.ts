@@ -74,7 +74,7 @@ export class TacticsPhase implements IPhase {
             var location_root = new Stack(unit.loc);
             root = location_root;
         } else if (action.text == "Attack") {
-            var unit_root = new Stack(unit);
+            var unit_root = unit;
             root = unit_root;
         }
         // TODO: Revise action to simply return selected input stack; handle digest in phase.
@@ -127,10 +127,23 @@ export class TacticsDisplayHander {
         // pop or ignore pop signal if prev selection too shallow;
         // TODO: Super-pop - pop back to actual prev selection instead decrement.
         if (selection instanceof Stack) {
+            // TODO: Clumsy Clear
+            for(let stateful_selectable of this.stateful_selectables) {
+                var display = this.display_map.get(stateful_selectable);
+                display.selection_state = DisplayState.Neutral;
+                display.state = DisplayState.Neutral;
+            }
             this.stateful_selectables = selection.to_array();
         // @ts-ignore
-        } else if (selection instanceof Unit) {
+        } else if (selection instanceof Unit) { // TODO: Distinguish attacker and Target
             this.misc_selectables.push(selection);
+            // TODO: Clumsy Clear
+            for(let stateful_selectable of this.stateful_selectables) {
+                var display = this.display_map.get(stateful_selectable);
+                display.selection_state = DisplayState.Neutral;
+                display.state = DisplayState.Neutral;
+            }
+            this.stateful_selectables = [selection];
         // @ts-ignore
         } else if (selection instanceof Action) {
             this.misc_selectables.push(selection);
@@ -148,6 +161,7 @@ export class TacticsDisplayHander {
     on_phase_end(){
         console.log("Phase End");
         // Clear states and clear stateful_selectables
+        // TODO: Clumsy Clear
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Neutral;

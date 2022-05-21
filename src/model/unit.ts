@@ -1,23 +1,19 @@
 import { ISelectable, Stack } from "./core";
 import { GridLocation, GridSpace } from "./space";
-import { Action, BoardState, Effect, IState, SequentialInputAcquirer } from "./state";
+import { Action, BoardState, Effect, IState, SequentialInputAcquirer, SimpleInputAcquirer } from "./state";
 
 // TODO: Clicking other target gives weird queue view.
 // TODO: User SimpleAcquirer
 function construct_attack(unit: Unit, state: BoardState){
-    var increment_fn = (unit_stack: Stack<Unit>): Array<Unit> => {
+    var option_fn = (): Array<Unit> => {
         // TODO: Somehow allowed to click self. Worse, this autoconfirms (input gen bug)
         var options = state.units.filter((u) => (u != unit));
         return options;
     };
-    var termination_fn = (unit_stack: Stack<Unit>): boolean => {
-        return (unit_stack.depth >= 2);
-    }
-    var acquirer = new SequentialInputAcquirer<Unit>(
-        increment_fn,
-        termination_fn,
+    var acquirer = new SimpleInputAcquirer<Unit>(
+        option_fn
     )
-    var digest_fn = (units: Array<Unit>): Array<Effect<BoardState>> => {
+    var digest_fn = (target: Unit): Array<Effect<BoardState>> => {
         console.log("Attempting to Digest: ", unit);
         function effect_constructor(target: Unit){
             console.log("Attempting to generate damage Effect: ", target);
@@ -32,7 +28,6 @@ function construct_attack(unit: Unit, state: BoardState){
             effect.post_effect = null;
             return effect;
         }
-        var target = units.pop();
         return [effect_constructor(target)];
     }
     var move = new Action("Attack", 2, acquirer, digest_fn)
