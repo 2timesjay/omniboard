@@ -3,7 +3,7 @@ import { GridLocation, GridSpace } from "./space";
 import { Action, BoardState, Effect, IState, SequentialInputAcquirer } from "./state";
 
 // TODO: Clicking other target gives weird queue view.
-// TODO: Break out input acquisition; use flatInputAcquisition here.
+// TODO: User SimpleAcquirer
 function construct_attack(unit: Unit, state: BoardState){
     var increment_fn = (unit_stack: Stack<Unit>): Array<Unit> => {
         // TODO: Somehow allowed to click self. Worse, this autoconfirms (input gen bug)

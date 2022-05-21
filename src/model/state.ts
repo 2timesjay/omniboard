@@ -182,11 +182,7 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         this.acquirer = acquirer;
         this.digest_fn = digest_fn;
     }
-
-    // get_options(input: Stack<T>): Tree<T> {
-    //     return bfs(input, this.increment_fn, this.termination_fn);
-    // }
-
+    
     // TODO: Correctly type this.
     * get_final_input_and_effect(
         base: Stack<T>
@@ -195,41 +191,4 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         var input = yield *this.acquirer.input_option_generator(base);
         return this.digest_fn(input);
     }
-    // // TODO: Cleanup - Simplify coupling with controller loop.
-    // * input_option_generator(
-    //     base: Stack<T>
-    // ): Generator<PreviewMap<T>, Array<Effect<U>>, Stack<T>> {
-    //     // Handles cases where intermediate input is required by yielding it.
-    //     // Coroutine case.
-    //     var input = base;
-    //     var preview_map = this.get_options(input).to_map();
-    //     var input_resp = yield preview_map;
-    //     do {
-    //         var REJECT_CASE = !input_resp;
-    //         var CONFIRM_CASE = (input_resp != null && input_resp.value == input.value)
-    //         // TODO: Currently treats "null" response as special flag to pop.
-    //         if (REJECT_CASE) {
-    //             if (input.parent) {
-    //                 input = input.pop();
-    //                 console.log("reject")
-    //                 preview_map = this.get_options(input).to_map();                        
-    //             } else {
-    //                 console.log("ignore reject");
-    //             }
-    //             input_resp = yield preview_map;
-    //         } else if (CONFIRM_CASE){
-    //             console.log("confirm");
-    //             // input_resp = yield preview_map;
-    //             break;
-    //         } else {
-    //             console.log("choice");
-    //             input = input_resp;
-    //             preview_map = this.get_options(input).to_map(); 
-    //             input_resp = yield preview_map;
-    //         }
-    //         // console.log(input);
-    //     } while(true);
-    //     console.log("input_option_generation over");
-    //     return this.digest_fn(input.to_array());
-    // }
 };
