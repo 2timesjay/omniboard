@@ -128,7 +128,8 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
             var CONFIRM_CASE = (input_resp != null && input_resp == input)
             // TODO: Currently treats "null" response as special flag to pop.
             if (REJECT_CASE) {
-                var input_resp = yield options;
+                // var input_resp = yield options;
+                return null; // NOTE: Propagates POP Signal to subphase
             } else if (CONFIRM_CASE){
                 console.log("confirm");
                 break;
@@ -179,6 +180,7 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
                     preview_map = this.get_options(input).to_map();                        
                 } else {
                     console.log("ignore reject");
+                    return null; // NOTE: Propagates POP Signal to subphase
                 }
                 input_resp = yield preview_map;
             } else if (CONFIRM_CASE){
