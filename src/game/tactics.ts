@@ -122,9 +122,10 @@ export class TacticsPhase implements IPhase {
         cur_team: number, 
     ): Generator<Array<Unit>, Unit, Unit> {
         var unit_options = state.units.filter((u) => u.team == cur_team).filter(is_available);
-        do {
-            var unit_sel: Unit = yield unit_options;
-        } while (unit_sel == null);
+        // do {
+        //     var unit_sel: Unit = yield unit_options;
+        // } while (unit_sel == null);
+        var unit_sel: Unit = yield unit_options;
         var unit = unit_sel;
         return unit;
     }
@@ -133,10 +134,12 @@ export class TacticsPhase implements IPhase {
         unit: Unit
     ): Generator<Array<Action<ISelectable, BoardState>>, Action<ISelectable, BoardState>, Action<ISelectable, BoardState>> {
         var action_options = unit.actions.filter(is_available);
-        do {
-            // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Action>
-            var action_sel: Action = yield action_options;
-        } while (action_sel == null);
+        // do {
+        //     // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Action>
+        //     var action_sel: Action = yield action_options;
+        // } while (action_sel == null);
+        // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Action>
+        var action_sel: Action = yield action_options;
         var action = action_sel;
         return action;
     }
