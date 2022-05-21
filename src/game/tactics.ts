@@ -51,20 +51,49 @@ export class TacticsPhase implements IPhase {
     * run_subphase (
         state: BoardState, 
         cur_team: number, 
-    ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> { // InputRequest generator
+    ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
+        // TODO: Handle no available options - gets stuck! Auto-pop?
+        // TODO: Allow pop from unit and action - sub-gens should return ISelectable|PopSignal
+        // @ts-ignore containing gen sends InputSelection<ISelectable> instead of Unit
+        var unit: Unit = yield *this.unit_selection(state, cur_team);
+
+        // @ts-ignore containing gen sends InputSelection<ISelectable> instead of Action
+        var action: Action = yield *this.action_selection(unit);
+        
+        var effects = yield *this.final_input_selection(unit, action);
+        console.log("TacticsPhase.run_subphase");
+        return effects
+    }
+
+    // TODO: Unify with SimpleInputAcquirer
+    * unit_selection (
+        state: BoardState, 
+        cur_team: number, 
+    ): Generator<Array<Unit>, Unit, Unit> {
         var unit_options = state.units.filter((u) => u.team == cur_team).filter(is_available);
         do {
-            // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Unit>
             var unit_sel: Unit = yield unit_options;
         } while (unit_sel == null);
         var unit = unit_sel;
+        return unit;
+    }
+
+    * action_selection (
+        unit: Unit
+    ): Generator<Array<Action<ISelectable, BoardState>>, Action<ISelectable, BoardState>, Action<ISelectable, BoardState>> {
         var action_options = unit.actions.filter(is_available);
-        // @ts-ignore
         do {
             // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Action>
             var action_sel: Action = yield action_options;
         } while (action_sel == null);
         var action = action_sel;
+        return action;
+    }
+
+    * final_input_selection (
+        unit: Unit,
+        action: Action<ISelectable, BoardState>,
+    ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
         // input_option_generator requires Stack, not just any InputSelection
         var root = null;
         console.log("action: ", action.text);
@@ -77,11 +106,10 @@ export class TacticsPhase implements IPhase {
             var unit_root = unit;
             root = unit_root;
         }
-        // TODO: Revise action to simply return selected input stack; handle digest in phase.
-        // @ts-ignore
         console.log("input option generator root: ", root)
+        // TODO: Revise action to simply return selected input stack; handle digest in sub-phase.
+        // @ts-ignore Unit | Stack<GridLocation>
         var effects = yield *action.get_final_input_and_effect(root);
-        console.log("TacticsPhase.run_subphase");
         return effects;
     }
 }

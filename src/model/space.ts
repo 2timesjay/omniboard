@@ -118,4 +118,8 @@ export class GridSpace {
     getGridNeighborhood(loc: GridLocation): Array<GridLocation> {
         return this.getNeighborhood(loc, GRID_ADJACENCY);
     }
+
+    getDistance(loc: GridLocation, other_loc: GridLocation): number {
+        return Math.abs(loc.x - other_loc.x) + Math.abs(loc.y - other_loc.y);
+    }
 }
