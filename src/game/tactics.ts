@@ -13,6 +13,8 @@ function is_available(selectable: ISelectable): boolean {
     return true;
 }
 
+export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>>
+
 // TODO: Clean up
 /**
  * Phase is same as typical board game sense.
@@ -33,12 +35,32 @@ export class TacticsPhase implements IPhase {
     * run_phase(state: BoardState, cur_team: number
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         console.log("TacticsPhase.run_phase");
-        var effects = yield *this.run_subphase(state, cur_team);
+        // var effects = yield *this.run_subphase(state, cur_team);
+        var data_dict = new Map<string, any>([["state", state], ["cur_team", cur_team]]);
+        var effects = yield *this.run_subphase(data_dict);
         console.log("Effects: ", effects);
         state.process(effects);
         console.log("BoardState: ", state);
         console.log("Units: ", state.units);
     }
+
+    // * run_subphase (
+    //     state: BoardState, 
+    //     cur_team: number, 
+    // ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
+    //     // TODO: Handle no available options - gets stuck! Auto-pop?
+    //     // TODO: Allow pop from unit and action - sub-gens should return ISelectable|PopSignal/null
+    //     // @ts-ignore containing gen sends InputSelection<ISelectable> instead of Unit
+    //     var unit: Unit = yield *this.unit_selection(state, cur_team);
+
+    //     // @ts-ignore containing gen sends InputSelection<ISelectable> instead of Action
+    //     var action: Action = yield *this.action_selection(unit);
+        
+    //     // TODO: digest here instead of in final_input_selection
+    //     var effects = yield *this.final_input_selection(unit, action);
+    //     console.log("TacticsPhase.run_subphase");
+    //     return effects
+    // }
 
     // Consumer sees this as
     // unit_options = run_phase.next()
@@ -48,21 +70,50 @@ export class TacticsPhase implements IPhase {
     // location_options = run_phase.next(unit_sel)
     // Select Location
     // run_phase.next(location_sel);
-    * run_subphase (
-        state: BoardState, 
-        cur_team: number, 
+    * run_subphase( // TODO: Can this be streamlined? Also, document!
+        data_dict: Map<string, any>,
     ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
-        // TODO: Handle no available options - gets stuck! Auto-pop?
-        // TODO: Allow pop from unit and action - sub-gens should return ISelectable|PopSignal
-        // @ts-ignore containing gen sends InputSelection<ISelectable> instead of Unit
-        var unit: Unit = yield *this.unit_selection(state, cur_team);
-
-        // @ts-ignore containing gen sends InputSelection<ISelectable> instead of Action
-        var action: Action = yield *this.action_selection(unit);
-        
-        var effects = yield *this.final_input_selection(unit, action);
-        console.log("TacticsPhase.run_subphase");
-        return effects
+        // Immutable
+        var pending = [
+            {
+                result_label: "unit",
+                args_list: ["state", "cur_team"],
+                gen_fn: this.unit_selection,
+            },
+            {
+                result_label: "action",
+                args_list: ["unit"],
+                gen_fn: this.action_selection,
+            },
+            {
+                result_label: "final",
+                args_list: ["unit", "action"],
+                gen_fn: this.final_input_selection,
+            }
+        ]
+        var input_pointer = 0;
+        var final_result;
+        while (input_pointer < pending.length) {
+            var cur_ia_dict = pending[input_pointer];
+            var gen_fn = cur_ia_dict.gen_fn;
+            var args_list = cur_ia_dict.args_list;
+            var data_list = args_list.map((arg) => data_dict.get(arg));
+            var result_label = cur_ia_dict.result_label;
+            console.log(input_pointer, result_label)
+            console.log(gen_fn, result_label, data_dict, data_list);
+            var cur_ia = gen_fn.apply(this, data_list);
+            var result = yield *cur_ia; // TODO: Harmonize naming w/InputAcquirer
+            var REJECT_SIGNAL = result == null;
+            if (REJECT_SIGNAL) { // NULL INPUT
+                // NOTE: Can't break out of subphase for now.
+                input_pointer = Math.max(input_pointer - 1, 0); 
+            } else { // VALID INPUT
+                data_dict.set(result_label, result);
+                input_pointer += 1;
+                final_result = result;
+            }
+        }
+        return final_result;
     }
 
     // TODO: Unify with SimpleInputAcquirer
