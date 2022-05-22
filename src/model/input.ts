@@ -8,7 +8,6 @@ import {
     Tree,
 } from "./core";
 import { Awaited, Rejection } from "./utilities";
-// TODO: Build a generator a la https://whistlr.info/2020/async-generators-input/ ?
 
 export type PreviewMap<T> = Map<T, Tree<T>>;
 
@@ -32,11 +31,15 @@ export function synthetic_input_getter<T extends ISelectable>(
     selection_fn: SelectionFn<T>
 ): InputRequest<T> {
     return async function get_input( 
-        preview_map: Map<T, Tree<T>>
-    ): Promise<Stack<T>> {
-        var arr = Array.from(preview_map.keys())
-        var selection = selection_fn(arr);
-        return preview_map.get(selection);
+        input_options: InputOptions<T>
+    ): Promise<InputSelection<T>> {
+        if (input_options instanceof Array) {
+            return selection_fn(input_options);
+        } else {
+            var arr = Array.from(input_options.keys())
+            var selection = selection_fn(arr);
+            return input_options.get(selection);
+        }
     };
 }
 
@@ -45,14 +48,14 @@ export function async_input_getter<T extends ISelectable>(
     selection_fn: CallbackSelectionFn<T>
 ): InputRequest<T> {
     return async function get_input( 
-        preview_map: Map<T, Tree<T>>
+        input_options: InputOptions<T>
     ): Promise<Stack<T>> {
-        console.log("pm: ", preview_map)
+        console.log("pm: ", input_options)
         // TODO: Fix Hack to handle Arr InputOptions
-        if (preview_map instanceof Array) {
-            var arr: Array<T> = preview_map
+        if (input_options instanceof Array) {
+            var arr: Array<T> = input_options
         } else {
-            var arr = Array.from(preview_map.keys())
+            var arr = Array.from(input_options.keys())
         }
         // TODO: "resolve" returns value, "reject" deselects
         // TODO: selecting null parent of Stack head as CONFIRM signal?
@@ -65,10 +68,10 @@ export function async_input_getter<T extends ISelectable>(
         return selection_promise.then(
             function(selection) { 
                 console.log("aig_res: ", selection);
-                if (preview_map instanceof Array) {
+                if (input_options instanceof Array) {
                     return selection;
                 } else {
-                    return preview_map.get(selection); 
+                    return input_options.get(selection); 
                 }
             }
         ).catch(
@@ -178,6 +181,7 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
             var CONFIRM_CASE = (input_resp != null && input_resp.value == input.value)
             // TODO: Currently treats "null" response as special flag to pop.
             if (REJECT_CASE) {
+                // TODO: Propagate null selection better - current state + "pop signal" tuple?
                 if (input.parent) {
                     input = input.pop();
                     console.log("reject")

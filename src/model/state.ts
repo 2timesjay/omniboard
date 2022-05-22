@@ -96,9 +96,6 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         // @ts-ignore InputOptions/InputSelection not actually okay here
         var input = yield *this.acquirer.input_option_generator(base);
         // TODO: More elegant propagation? Probably solved by separating digest.
-        // if (!input) {
-        //     return null;
-        // }
         return input;
     }
 };

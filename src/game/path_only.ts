@@ -8,6 +8,8 @@ import { DisplayMap } from "../view/input";
 import { refreshDisplay } from "./shared";
 
 export class PathOnlyPhase implements IPhase {
+    current_inputs: Array<InputSelection<ISelectable>>;
+
     * run_phase(
         action: Action<ISelectable, BoardState>, root_stack: Stack<ISelectable>
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
