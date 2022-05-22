@@ -25,29 +25,30 @@ export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, In
  */
 export class TacticsPhase implements IPhase {
     available_units: Set<Unit>;
-    available_actions: Set<Action<ISelectable, IState>>;
+    available_actions: Set<Action<ISelectable, BoardState>>;
 
     constructor() {}
 
     // TODO: Make less mutable.
-    update_exhausted(unit: Unit, action: Action<ISelectable, IState>) {
+    update_exhausted(unit: Unit, action: Action<ISelectable, BoardState>) {
+        // TODO: If can't attack, need "End Turn" option. Otherwise phase can't end.
+        this.available_actions.delete(action);
         this.available_units.delete(unit);
-        // this.available_actions.delete(action);
     }
 
     // TODO: Efficient way to represent "sequential state machine" without GOTO
     * run_phase(state: BoardState, cur_team: number
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         console.log("TacticsPhase.run_phase");
-        this.available_units = new Set(state.units.filter((u) => u.team == cur_team)); 
-        this.available_actions = new Set();       
+        var team_units = state.units.filter((u) => u.team == cur_team);
+        this.available_units = new Set(team_units); 
+        this.available_actions = new Set(team_units.flatMap((u) => u.actions));       
         while(this.available_units.size) {
             // var effects = yield *this.run_subphase(state, cur_team);
             var data_dict = new Map<string, any>([["state", state]]);
             var effects = yield *this.run_subphase(data_dict);
             
             // TODO: Should "exhaust" be control or Effect? Latter eventually.
-            console.log("Data dict: ", data_dict)
             var unit = data_dict.get("unit");
             var action = data_dict.get("action");
             this.update_exhausted(unit, action);
@@ -56,6 +57,7 @@ export class TacticsPhase implements IPhase {
             state.process(effects);
             console.log("BoardState: ", state);
             console.log("Units: ", state.units);
+            console.log("AVAILABLE ACTIONS: ", this.available_actions)
         }
     }
 
@@ -115,9 +117,6 @@ export class TacticsPhase implements IPhase {
     ): Generator<Array<Unit>, Unit, Unit> {
         var unit_options = state.units
             .filter((u) => this.available_units.has(u));
-        // do {
-        //     var unit_sel: Unit = yield unit_options;
-        // } while (unit_sel == null);
         var unit_sel: Unit = yield unit_options;
         var unit = unit_sel;
         return unit;
@@ -126,14 +125,8 @@ export class TacticsPhase implements IPhase {
     * action_selection (
         unit: Unit
     ): Generator<Array<Action<ISelectable, BoardState>>, Action<ISelectable, BoardState>, Action<ISelectable, BoardState>> {
-        // TODO: Handle action availability
-        var action_options = unit.actions;//.filter((a) => this.available_actions.has(a));
-        // do {
-        //     // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Action>
-        //     var action_sel: Action = yield action_options;
-        // } while (action_sel == null);
-        // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Action>
-        var action_sel: Action = yield action_options;
+        var action_options = unit.actions.filter((a) => this.available_actions.has(a));
+        var action_sel: Action<ISelectable, BoardState> = yield action_options;
         var action = action_sel;
         return action;
     }
@@ -273,8 +266,9 @@ export async function tactics_input_bridge(
     display_handler: TacticsDisplayHander,
 ) {
     display_handler.on_selection(null); // TODO: Handle "nothing" in on_selection
+    var team = 0;
     while (true) {
-        var phase_runner = phase.run_phase(state, 0);
+        var phase_runner = phase.run_phase(state, team);
         var input_options = phase_runner.next().value;
         while(input_options){
             var input_selection = await input_request(input_options);
@@ -283,5 +277,6 @@ export async function tactics_input_bridge(
         }
         // TODO: Need "on_subphase_end" hook, or something better.
         display_handler.on_phase_end();
+        team = (team + 1) % 2; // Switch teams
     }  
 }

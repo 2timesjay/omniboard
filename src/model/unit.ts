@@ -5,7 +5,7 @@ import { Action, BoardState, Effect, IState } from "./state";
 
 // TODO: Clicking other target gives weird queue view.
 // TODO: User SimpleAcquirer
-function construct_attack(unit: Unit, state: BoardState){
+function construct_attack(unit: Unit, state: BoardState) {
     var option_fn = (): Array<Unit> => {
         // TODO: Somehow allowed to click self. Worse, this autoconfirms (input gen bug)
         var units = state.units.filter((u) => (u.team != unit.team));
@@ -36,11 +36,11 @@ function construct_attack(unit: Unit, state: BoardState){
         }
         return [effect_constructor(target)];
     }
-    var move = new Action("Attack", 2, acquirer, digest_fn)
+    var move = new Action<Unit, BoardState>("Attack", 2, acquirer, digest_fn)
     return move
 }
 
-function construct_move(unit: Unit, state: BoardState){
+function construct_move(unit: Unit, state: BoardState) {
     var units = state.units;
     var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
         var grid_space = state.grid;
@@ -73,7 +73,7 @@ function construct_move(unit: Unit, state: BoardState){
         }
         return locs.map(effect_constructor)
     }
-    var move = new Action("Move", 1, acquirer, digest_fn)
+    var move = new Action<Array<GridLocation>, BoardState>("Move", 1, acquirer, digest_fn)
     return move
 }
 
@@ -89,7 +89,7 @@ export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, state: BoardState){
 export class Unit implements ISelectable {
     team: number;
     loc: GridLocation;
-    actions: Array<Action<ISelectable, IState>>;
+    actions: Array<Action<ISelectable, BoardState>>;
     hp: number;
     max_hp: number;
     speed: number;
@@ -110,14 +110,14 @@ export class Unit implements ISelectable {
     }
 
     setHp(hp: number) {
-        this.hp = hp;
+        this.hp = Math.max(hp, 0);
     }
 
     setLoc(loc: GridLocation){
         this.loc = loc; 
     }
 
-    setActions(actions: Array<Action<ISelectable, IState>>) {
+    setActions(actions: Array<Action<ISelectable, BoardState>>) {
         this.actions = actions;
     }
 }
