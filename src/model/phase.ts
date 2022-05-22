@@ -5,4 +5,5 @@ import { Action, BoardState, Effect, IState } from "./state";
 import { Unit } from "./unit";
 
 export interface IPhase {
+    current_inputs: any; // TODO: Fix typing.
 }

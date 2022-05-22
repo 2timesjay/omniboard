@@ -182,11 +182,10 @@ export class TacticsDisplayHander {
         this.context = context;
         this.display_map = display_map;
         this.state = state;
-        this.misc_selectables = []; // TODO: merge with stateful_selectables
         this.stateful_selectables = [];
     }
 
-    on_selection(selection: InputSelection<ISelectable>, phase: TacticsPhase) {
+    on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         // TODO: UnitDisplay state not actually well-handled right now.
@@ -222,10 +221,6 @@ export class TacticsDisplayHander {
             }
         } 
         // WARNING: stateful_selectables are a sort of parallel selection stack.
-        for(let misc_selectable of this.misc_selectables) {
-            var display = this.display_map.get(misc_selectable);
-            display.selection_state = DisplayState.Queue;
-        }
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Queue;
@@ -244,14 +239,6 @@ export class TacticsDisplayHander {
         }
         while(this.stateful_selectables.length > 0) {
             this.stateful_selectables.pop();
-        }
-        for(let misc_selectable of this.misc_selectables) {
-            var display = this.display_map.get(misc_selectable);
-            display.state = DisplayState.Neutral;
-            console.log("Clearing Misc: ", display);
-        }
-        while(this.misc_selectables.length > 0) {
-            this.misc_selectables.pop();
         }
         this.refresh();
     }
