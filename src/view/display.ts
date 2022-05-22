@@ -196,7 +196,8 @@ export class UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisp
     }
 
     alt_render(context: CanvasRenderingContext2D, clr: string) {
-        makeCircle(this.xOffset, this.yOffset, context, this.size*.6, clr);
+        var offset = 0.2 * this.size;
+        makeSquare(this.xOffset + offset, this.yOffset + offset, context, this.size*.6, clr);
     }
 
     neutralDisplay(context: CanvasRenderingContext2D) {
@@ -285,7 +286,6 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
             this.yOffset + 0.8 * this.size
         );
     }
-
     neutralDisplay(context: CanvasRenderingContext2D) {
     }
 

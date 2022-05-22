@@ -26,10 +26,13 @@ export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, In
 export class TacticsPhase implements IPhase {
     available_units: Set<Unit>;
     available_actions: Set<Action<ISelectable, BoardState>>;
+    current_inputs: Array<InputSelection<ISelectable>>;
 
-    constructor() {}
+    constructor() {
+        this.current_inputs = []
+    }
 
-    // TODO: Make less mutable.
+    // TODO: Replace with a BoardState solution.
     update_exhausted(unit: Unit, action: Action<ISelectable, BoardState>) {
         // TODO: If can't attack, need "End Turn" option. Otherwise phase can't end.
         this.available_actions.delete(action);
@@ -46,24 +49,29 @@ export class TacticsPhase implements IPhase {
         while(this.available_units.size) {
             // var effects = yield *this.run_subphase(state, cur_team);
             var data_dict = new Map<string, any>([["state", state]]);
-            var effects = yield *this.run_subphase(data_dict);
-            
+            // TODO: Mutable data_dict is someone messy; hidden here.
+            var data_dict = yield *this.run_subphase(data_dict);
+
             // TODO: Should "exhaust" be control or Effect? Latter eventually.
             var unit = data_dict.get("unit");
             var action = data_dict.get("action");
+            var final = data_dict.get("final");
+            var effects = action.digest_fn(final);
             this.update_exhausted(unit, action);
 
             console.log("Effects: ", effects);
             state.process(effects);
+            this.current_inputs.length = 0;
             console.log("BoardState: ", state);
             console.log("Units: ", state.units);
-            console.log("AVAILABLE ACTIONS: ", this.available_actions)
+            // TODO: yield a special "subphase end" signal.
         }
     }
 
+    // TODO: Looks like type checking completely breaks down here. Too hacky!
     * run_subphase( // TODO: Can this be streamlined? Also, document!
         data_dict: Map<string, any>,
-    ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
+    ): Generator<InputOptions<ISelectable>, Map<string, any>, InputSelection<ISelectable>> {
         // Immutable
         var pending = [
             {
@@ -83,32 +91,31 @@ export class TacticsPhase implements IPhase {
             }
         ]
         var input_pointer = 0;
-        var final_result;
         while (input_pointer < pending.length) {
             var cur_ia_dict = pending[input_pointer];
             var gen_fn = cur_ia_dict.gen_fn;
             var args_list = cur_ia_dict.args_list;
             var data_list = args_list.map((arg) => data_dict.get(arg));
             var result_label = cur_ia_dict.result_label;
-            console.log(input_pointer, result_label)
-            console.log(gen_fn, result_label, data_dict, data_list);
             var cur_ia = gen_fn.apply(this, data_list);
             var result = yield *cur_ia; // TODO: Harmonize naming w/InputAcquirer
             var REJECT_SIGNAL = result == null;
             if (REJECT_SIGNAL) { // NULL INPUT
                 // TODO: Display doesn't handle this correctly
-                // TODO: Doesn't work on final input since that generates effect.
                 console.log("Subphase Backward")
                 // NOTE: Can't break out of subphase for now.
+                // NOTE: data_dict isn't cleared - may be important
                 input_pointer = Math.max(input_pointer - 1, 0); 
+                this.current_inputs.pop();
             } else { // VALID INPUT
                 console.log("Subphase Forward")
                 data_dict.set(result_label, result);
+                this.current_inputs.push(result);
+                console.log("SP Current inputs: ", this.current_inputs);
                 input_pointer += 1;
-                final_result = result;
             }
         }
-        return final_result;
+        return data_dict;
     }
 
     // TODO: Unify with SimpleInputAcquirer
@@ -134,7 +141,7 @@ export class TacticsPhase implements IPhase {
     * final_input_selection (
         unit: Unit,
         action: Action<ISelectable, BoardState>,
-    ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
+    ): Generator<InputOptions<ISelectable>, InputSelection<ISelectable>, InputSelection<ISelectable>> {
         // input_option_generator requires Stack, not just any InputSelection
         var root = null;
         console.log("action: ", action.text);
@@ -150,8 +157,8 @@ export class TacticsPhase implements IPhase {
         console.log("input option generator root: ", root)
         // TODO: Revise action to simply return selected input stack; handle digest in sub-phase.
         // @ts-ignore Unit | Stack<GridLocation>
-        var effects = yield *action.get_final_input_and_effect(root);
-        return effects;
+        var final_inputs = yield *action.get_final_input(root);
+        return final_inputs;
     }
 }
 
@@ -179,47 +186,44 @@ export class TacticsDisplayHander {
         this.stateful_selectables = [];
     }
 
-    on_selection(selection: InputSelection<ISelectable>) {
+    on_selection(selection: InputSelection<ISelectable>, phase: TacticsPhase) {
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         // TODO: UnitDisplay state not actually well-handled right now.
         // Erase old selection_state;
+        var current_inputs = [...phase.current_inputs]; // Shallow Copy
+        // var top_input = current_inputs.pop();
         console.log("stateful_selectables: ", this.stateful_selectables)
         console.log("current selection: ", selection)
-        if (selection == null) { // Handle "Pop";
-            console.log("Pop")
-            for(let stateful_selectable of this.stateful_selectables) {
-                var display = this.display_map.get(stateful_selectable);
-                display.selection_state = DisplayState.Neutral;
-            }
+        console.log("DH Current inputs: ", current_inputs, selection);
+        for(let stateful_selectable of this.stateful_selectables) {
+            var display = this.display_map.get(stateful_selectable);
+            display.selection_state = DisplayState.Neutral;
+            display.state = DisplayState.Neutral;
         }
+        this.stateful_selectables = current_inputs;
+        // if (selection == null) { // Handle "Pop";
+        //     console.log("Pop")
+        //     for(let stateful_selectable of this.stateful_selectables) {
+        //         var display = this.display_map.get(stateful_selectable);
+        //         display.selection_state = DisplayState.Neutral;
+        //     }
+        // }
         // pop or ignore pop signal if prev selection too shallow;
         // TODO: Super-pop - pop back to actual prev selection instead decrement.
         if (selection instanceof Stack) {
             // TODO: Clumsy Clear
-            for(let stateful_selectable of this.stateful_selectables) {
-                var display = this.display_map.get(stateful_selectable);
-                display.selection_state = DisplayState.Neutral;
-                display.state = DisplayState.Neutral;
-            }
-            this.stateful_selectables = selection.to_array();
-        // @ts-ignore
+            this.stateful_selectables.push(...selection.to_array());
         } else if (selection instanceof Unit) { // TODO: Distinguish attacker and Target
-            this.misc_selectables.push(selection);
-            // TODO: Clumsy Clear
-            for(let stateful_selectable of this.stateful_selectables) {
-                var display = this.display_map.get(stateful_selectable);
-                display.selection_state = DisplayState.Neutral;
-                display.state = DisplayState.Neutral;
-            }
-            this.stateful_selectables = [selection];
-        // @ts-ignore
+            this.stateful_selectables.push(selection);
         } else if (selection instanceof Action) {
-            this.misc_selectables.push(selection);
-        } else if (this.stateful_selectables && this.stateful_selectables.length > 1) {
-            this.stateful_selectables.pop();
+            this.stateful_selectables.push(selection);
         }
         // WARNING: stateful_selectables are a sort of parallel selection stack.
+        for(let misc_selectable of this.misc_selectables) {
+            var display = this.display_map.get(misc_selectable);
+            display.selection_state = DisplayState.Queue;
+        }
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Queue;
@@ -227,7 +231,7 @@ export class TacticsDisplayHander {
         this.refresh();
     }
 
-    on_phase_end(){
+    on_phase_end(phase: TacticsPhase){
         console.log("Phase End");
         // Clear states and clear stateful_selectables
         // TODO: Clumsy Clear
@@ -265,18 +269,18 @@ export async function tactics_input_bridge(
     input_request: InputRequest<ISelectable>,
     display_handler: TacticsDisplayHander,
 ) {
-    display_handler.on_selection(null); // TODO: Handle "nothing" in on_selection
+    display_handler.on_selection(null, phase);
     var team = 0;
     while (true) {
         var phase_runner = phase.run_phase(state, team);
         var input_options = phase_runner.next().value;
         while(input_options){
             var input_selection = await input_request(input_options);
-            display_handler.on_selection(input_selection);
+            display_handler.on_selection(input_selection, phase);
             input_options = phase_runner.next(input_selection).value;
         }
         // TODO: Need "on_subphase_end" hook, or something better.
-        display_handler.on_phase_end();
+        display_handler.on_phase_end(phase);
         team = (team + 1) % 2; // Switch teams
     }  
 }

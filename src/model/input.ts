@@ -115,6 +115,10 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
         this.option_fn = option_fn;
     }
 
+    public static from_options<U>(options: Array<U>): SimpleInputAcquirer<U> {
+        return new SimpleInputAcquirer<U>(() => options);
+    }
+
     * input_option_generator(
         base?: T
     ): Generator<Array<T>, T, T> {

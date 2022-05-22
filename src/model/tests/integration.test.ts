@@ -51,7 +51,7 @@ test("Integration test", (t) => {
         // @ts-ignore
         "sum", 0, acquirer, digest_fn
     );
-    var input_option_generator = action.get_final_input_and_effect(root_stack);
+    var input_option_generator = action.get_final_input(root_stack);
     var number_state = new NumberState(10);
     var options = input_option_generator.next().value;
     var process_options = function(
@@ -62,7 +62,7 @@ test("Integration test", (t) => {
         // @ts-ignore input_option_generator is a mess.
         return select_last_input_getter(options);
     }
-    // TODO: This whole test is questionable.
+    // TODO: This whole test is questionable. Can clean up without gen's effect return.
     // @ts-ignore Board State
     select_last_input_getter(options)
         .then(process_options) // 1 or 2 work - initial selection and confirmation.

@@ -90,15 +90,15 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
     }
 
     // TODO: Correctly type this.
-    * get_final_input_and_effect(
+    * get_final_input(
         base: Stack<T>
-    ): Generator<InputOptions<T>, Array<Effect<U>>, InputSelection<T>> {
+    ): Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>> {
         // @ts-ignore InputOptions/InputSelection not actually okay here
         var input = yield *this.acquirer.input_option_generator(base);
         // TODO: More elegant propagation? Probably solved by separating digest.
         if (!input) {
             return null;
         }
-        return this.digest_fn(input);
+        return input;
     }
 };
