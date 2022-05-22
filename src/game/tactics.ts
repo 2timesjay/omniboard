@@ -202,13 +202,13 @@ export class TacticsDisplayHander {
             display.state = DisplayState.Neutral;
         }
         this.stateful_selectables = current_inputs;
-        // if (selection == null) { // Handle "Pop";
-        //     console.log("Pop")
-        //     for(let stateful_selectable of this.stateful_selectables) {
-        //         var display = this.display_map.get(stateful_selectable);
-        //         display.selection_state = DisplayState.Neutral;
-        //     }
-        // }
+        if (selection == null) { // Handle "Pop";
+            console.log("Pop")
+            for(let stateful_selectable of this.stateful_selectables) {
+                var display = this.display_map.get(stateful_selectable);
+                display.selection_state = DisplayState.Neutral;
+            }
+        }
         // pop or ignore pop signal if prev selection too shallow;
         // TODO: Super-pop - pop back to actual prev selection instead decrement.
         if (selection instanceof Stack) {
