@@ -101,11 +101,11 @@ export class TacticsPhase implements IPhase {
             var result = yield *cur_ia; // TODO: Harmonize naming w/InputAcquirer
             var REJECT_SIGNAL = result == null;
             if (REJECT_SIGNAL) { // NULL INPUT
-                // TODO: Display doesn't handle this correctly
                 console.log("Subphase Backward")
                 // NOTE: Can't break out of subphase for now.
                 // NOTE: data_dict isn't cleared - may be important
                 input_pointer = Math.max(input_pointer - 1, 0); 
+                // TODO: Do a more sophisticated job of maintaining current_inputs. Simplify DisplayHandler.
                 this.current_inputs.pop();
             } else { // VALID INPUT
                 console.log("Subphase Forward")
@@ -189,12 +189,9 @@ export class TacticsDisplayHander {
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         // TODO: UnitDisplay state not actually well-handled right now.
-        // Erase old selection_state;
         var current_inputs = [...phase.current_inputs]; // Shallow Copy
-        // var top_input = current_inputs.pop();
-        console.log("stateful_selectables: ", this.stateful_selectables)
-        console.log("current selection: ", selection)
         console.log("DH Current inputs: ", current_inputs, selection);
+        // Erase old selection_state;
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Neutral;
