@@ -201,24 +201,26 @@ export class TacticsDisplayHander {
             display.selection_state = DisplayState.Neutral;
             display.state = DisplayState.Neutral;
         }
-        this.stateful_selectables = current_inputs;
+        // TODO: mini-pops in SequentialInputAcquirer not handled correctly
         if (selection == null) { // Handle "Pop";
             console.log("Pop")
+            this.stateful_selectables.pop();
             for(let stateful_selectable of this.stateful_selectables) {
                 var display = this.display_map.get(stateful_selectable);
                 display.selection_state = DisplayState.Neutral;
-            }
+            }        
         }
-        // pop or ignore pop signal if prev selection too shallow;
         // TODO: Super-pop - pop back to actual prev selection instead decrement.
-        if (selection instanceof Stack) {
-            // TODO: Clumsy Clear
-            this.stateful_selectables.push(...selection.to_array());
-        } else if (selection instanceof Unit) { // TODO: Distinguish attacker and Target
-            this.stateful_selectables.push(selection);
-        } else if (selection instanceof Action) {
-            this.stateful_selectables.push(selection);
-        }
+        else {
+            this.stateful_selectables = current_inputs;
+            if (selection instanceof Stack) {
+                this.stateful_selectables.push(...selection.to_array());
+            } else if (selection instanceof Unit) { // TODO: Distinguish attacker and Target
+                this.stateful_selectables.push(selection);
+            } else if (selection instanceof Action) {
+                this.stateful_selectables.push(selection);
+            }
+        } 
         // WARNING: stateful_selectables are a sort of parallel selection stack.
         for(let misc_selectable of this.misc_selectables) {
             var display = this.display_map.get(misc_selectable);
