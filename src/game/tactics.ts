@@ -2,16 +2,11 @@ import { ISelectable, Stack } from "../model/core";
 import { InputOptions, InputRequest, InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
-import { BoardState, Effect, Action } from "../model/state";
+import { BoardState, Effect, Action, IState } from "../model/state";
 import { Unit } from "../model/unit";
 import { DisplayState } from "../view/display";
 import { DisplayMap } from "../view/input";
 import { refreshDisplay } from "./shared";
-
-
-function is_available(selectable: ISelectable): boolean {
-    return true;
-}
 
 export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>>
 
@@ -29,19 +24,39 @@ export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, In
  *  Re-selection allowed - 5 loops to 1.
  */
 export class TacticsPhase implements IPhase {
+    available_units: Set<Unit>;
+    available_actions: Set<Action<ISelectable, IState>>;
+
     constructor() {}
+
+    // TODO: Make less mutable.
+    update_exhausted(unit: Unit, action: Action<ISelectable, IState>) {
+        this.available_units.delete(unit);
+        // this.available_actions.delete(action);
+    }
 
     // TODO: Efficient way to represent "sequential state machine" without GOTO
     * run_phase(state: BoardState, cur_team: number
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         console.log("TacticsPhase.run_phase");
-        // var effects = yield *this.run_subphase(state, cur_team);
-        var data_dict = new Map<string, any>([["state", state], ["cur_team", cur_team]]);
-        var effects = yield *this.run_subphase(data_dict);
-        console.log("Effects: ", effects);
-        state.process(effects);
-        console.log("BoardState: ", state);
-        console.log("Units: ", state.units);
+        this.available_units = new Set(state.units.filter((u) => u.team == cur_team)); 
+        this.available_actions = new Set();       
+        while(this.available_units.size) {
+            // var effects = yield *this.run_subphase(state, cur_team);
+            var data_dict = new Map<string, any>([["state", state]]);
+            var effects = yield *this.run_subphase(data_dict);
+            
+            // TODO: Should "exhaust" be control or Effect? Latter eventually.
+            console.log("Data dict: ", data_dict)
+            var unit = data_dict.get("unit");
+            var action = data_dict.get("action");
+            this.update_exhausted(unit, action);
+
+            console.log("Effects: ", effects);
+            state.process(effects);
+            console.log("BoardState: ", state);
+            console.log("Units: ", state.units);
+        }
     }
 
     * run_subphase( // TODO: Can this be streamlined? Also, document!
@@ -51,7 +66,7 @@ export class TacticsPhase implements IPhase {
         var pending = [
             {
                 result_label: "unit",
-                args_list: ["state", "cur_team"],
+                args_list: ["state"],
                 gen_fn: this.unit_selection,
             },
             {
@@ -96,10 +111,10 @@ export class TacticsPhase implements IPhase {
 
     // TODO: Unify with SimpleInputAcquirer
     * unit_selection (
-        state: BoardState, 
-        cur_team: number, 
+        state: BoardState,
     ): Generator<Array<Unit>, Unit, Unit> {
-        var unit_options = state.units.filter((u) => u.team == cur_team).filter(is_available);
+        var unit_options = state.units
+            .filter((u) => this.available_units.has(u));
         // do {
         //     var unit_sel: Unit = yield unit_options;
         // } while (unit_sel == null);
@@ -111,7 +126,8 @@ export class TacticsPhase implements IPhase {
     * action_selection (
         unit: Unit
     ): Generator<Array<Action<ISelectable, BoardState>>, Action<ISelectable, BoardState>, Action<ISelectable, BoardState>> {
-        var action_options = unit.actions.filter(is_available);
+        // TODO: Handle action availability
+        var action_options = unit.actions;//.filter((a) => this.available_actions.has(a));
         // do {
         //     // @ts-ignore InputSelection<ISelectable> instead of InputSelection<Action>
         //     var action_sel: Action = yield action_options;
@@ -265,6 +281,7 @@ export async function tactics_input_bridge(
             display_handler.on_selection(input_selection);
             input_options = phase_runner.next(input_selection).value;
         }
+        // TODO: Need "on_subphase_end" hook, or something better.
         display_handler.on_phase_end();
     }  
 }

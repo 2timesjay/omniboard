@@ -12,7 +12,7 @@ import { TacticsDisplayHander, TacticsPhase, tactics_input_bridge } from "../gam
 import { CONSTRUCT_BASIC_ACTIONS, Unit } from "../model/unit";
 
 /* Generic setup */
-const k = 4;
+const k = 6;
 const size = 100;
 const canvas = makeCanvas(k * 100, k * size, true);
 const context = canvas.getContext("2d");
@@ -55,11 +55,13 @@ function addCanvasListeners(
 // Tactics State setup
 var state = new BoardState();
 state.grid = grid_space;
-var unit = new Unit(0);
-unit.setLoc(grid_space.get(1, 0));
-var other_unit = new Unit(1);
-other_unit.setLoc(grid_space.get(0,0));
-var units = [unit, other_unit]
+var unit_1 = new Unit(0);
+unit_1.setLoc(grid_space.get(3, 2));
+var unit_2 = new Unit(1);
+unit_2.setLoc(grid_space.get(2,2));
+var unit_3 = new Unit(0);
+unit_3.setLoc(grid_space.get(4, 4));
+var units = [unit_1, unit_2, unit_3];
 state.units = units;
 
 // TODO: Safer Laziness in action construction
