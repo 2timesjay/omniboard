@@ -9,6 +9,7 @@ import {
 } from "./core";
 
 import {
+    Confirmation,
     IInputAcquirer,
     InputOptions,
     InputRequest, InputSelection, PreviewMap
@@ -41,6 +42,7 @@ export type DigestFn<T extends ISelectable> = (selection: InputSelection<T>) => 
 export class BoardState implements IState {
     grid: GridSpace;
     units: Array<Unit>;
+    confirmation: Confirmation; // NOTE: Single Confirmation for all cases.
 
     process(
         effects: Array<Effect<BoardState>>
@@ -66,6 +68,7 @@ export class BoardState implements IState {
                 selectables.push(action);
             }
         }
+        selectables.push(this.confirmation);
         return selectables;
     }
 };

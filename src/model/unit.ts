@@ -1,17 +1,18 @@
 import { ISelectable, Stack } from "./core";
-import { AutoInputAcquirer, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
+import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
 import { GridLocation, GridSpace } from "./space";
 import { Action, BoardState, Effect, IState } from "./state";
 
-// Replace with acquirer "Confirmation" object
-export class Nothing implements ISelectable {}
-function construct_end_turn(nothing: Nothing, state: BoardState) {
-    var acquirer = new AutoInputAcquirer<Nothing>(nothing);
-    var digest_fn = (nothing: Nothing): Array<Effect<BoardState>> => {
+// TODO: Move somewhere more appropriate
+export const GLOBAL_CONFIRMATION = new  Confirmation(); 
+
+function construct_end_turn(confirmation: Confirmation, state: BoardState) {
+    var acquirer = new AutoInputAcquirer<Confirmation>(confirmation);
+    var digest_fn = (confirmation: Confirmation): Array<Effect<BoardState>> => {
         console.log("Attempting to Digest: ", "End Turn");
         return [];
     }
-    var end_turn = new Action<Nothing, BoardState>("End Turn", 3, acquirer, digest_fn)
+    var end_turn = new Action<Confirmation, BoardState>("End Turn", 3, acquirer, digest_fn)
     return end_turn
 }
 
@@ -92,7 +93,7 @@ function construct_move(unit: Unit, state: BoardState) {
 export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, state: BoardState){
     var move = construct_move(unit, state);
     var attack = construct_attack(unit, state);
-    var end_turn = construct_end_turn(new Nothing(), state);
+    var end_turn = construct_end_turn(GLOBAL_CONFIRMATION, state);
     return [
         move,
         attack,

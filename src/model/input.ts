@@ -1,3 +1,4 @@
+import { IMenuable } from "../view/display";
 import { 
     bfs,
     IncrementFn,
@@ -104,7 +105,16 @@ export type SelectionGen<T> = (
     ((base?: T) => Generator<Array<T>, T, T>)
 )
 
-// TODO add structure
+export class Confirmation implements ISelectable, IMenuable {
+    index: number;
+    text: string;
+
+    constructor() {
+        this.index = 1;
+        this.text = "Confirm";
+    }
+}
+
 export interface IInputAcquirer<T> {
     current_input: InputSelection<T>;
     input_option_generator: SelectionGen<T>;
@@ -118,16 +128,14 @@ export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
         auto_input: T
     ) {
         this.auto_input = auto_input;
+        // NOTE: Pre-queues auto_input;
         this.current_input = auto_input;
     }
 
     * input_option_generator(
         base?: T
     ): Generator<Array<T>, T, T> {
-        console.log("Auto: ", this.auto_input);
-        this.current_input = this.auto_input;
-        // yield [this.auto_input];
-        // Degenerate Generator (DeGenerator?)
+        this.current_input = yield [this.auto_input]; // For confirmation only.
         return this.current_input;
     }
 }

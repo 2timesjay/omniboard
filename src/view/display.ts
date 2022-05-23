@@ -238,7 +238,7 @@ interface ILocatableDisplay {
 }
 
 
-interface IMenuable {// Action<ISelectable>
+export interface IMenuable {// Action<ISelectable>, Confirmation
     index: number;
     text: string;
 }

@@ -1,9 +1,9 @@
 import { ISelectable, Stack } from "../model/core";
-import { InputOptions, InputRequest, InputSelection } from "../model/input";
+import { Confirmation, InputOptions, InputRequest, InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, Effect, Action, IState } from "../model/state";
-import { Nothing, Unit } from "../model/unit";
+import { Unit } from "../model/unit";
 import { DisplayState } from "../view/display";
 import { DisplayMap } from "../view/input";
 import { refreshDisplay } from "./shared";
@@ -156,8 +156,8 @@ export class TacticsPhase implements IPhase {
             var unit_root = unit;
             root = unit_root;
         } else if (action.text == "End Turn") {
-            var nothing_root = new Nothing();
-            root = nothing_root;
+            var confirmation_root = new Confirmation();
+            root = confirmation_root;
         }
         // TODO: Revise action to simply return selected input stack; handle digest in sub-phase.
         // @ts-ignore Unit | Stack<GridLocation>
@@ -187,12 +187,15 @@ export class TacticsDisplayHander {
         this.stateful_selectables = [];
     }
 
+    /**
+     * NOTE: Implicitly relies on subtle hack; final confirmation via "confirm click" 
+     *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
+     */ 
     on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         var current_inputs = [...phase.current_inputs]; // Shallow Copy
         // Set previous selection_state to neutral;
-        // TODO: Action End Turn needs to make it into selectables to be erased!
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Neutral;
@@ -203,14 +206,16 @@ export class TacticsDisplayHander {
         var top_sel = current_inputs[current_inputs.length - 1];
         // Action_inputs are a special case because they're currently the 
         // application of SequentialInputAcquirer.
-        if (selection instanceof Action and selection.text == "End Turn") {
-            this.stateful_selectables.push(selection);
-        }
         var action_inputs = (top_sel instanceof Action) ? top_sel.acquirer.current_input : null;
         var action_inputs_arr = action_inputs instanceof Stack ? action_inputs.to_array() : (
             action_inputs == null ? [] : [action_inputs]
         )
-        this.stateful_selectables = current_inputs ;
+        this.stateful_selectables = current_inputs;
+        // TODO: Replace this hackiness with "confirmation"
+        // if (selection instanceof Action && selection.text == "End Turn") {
+        //     console.log("End Turn Display handling")
+        //     this.stateful_selectables.push(selection);
+        // }
         this.stateful_selectables.push(...action_inputs_arr);
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);

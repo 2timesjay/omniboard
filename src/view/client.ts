@@ -9,7 +9,7 @@ import { Action, BoardState, Effect } from "../model/state";
 import { refreshDisplay } from "../game/shared";
 import { PathOnlyDisplayHander, PathOnlyPhase, path_only_input_bridge } from "../game/path_only";
 import { TacticsController, TacticsDisplayHander, TacticsPhase } from "../game/tactics";
-import { CONSTRUCT_BASIC_ACTIONS, Unit } from "../model/unit";
+import { CONSTRUCT_BASIC_ACTIONS, GLOBAL_CONFIRMATION, Unit } from "../model/unit";
 
 /* Generic setup */
 const k = 6;
@@ -76,6 +76,15 @@ for (let unit of units) {
     display_map.set(unit, unit_display);
     unit_display.display(context);
 }
+let global_confirmation_display = new MenuElementDisplay(
+    GLOBAL_CONFIRMATION, 
+    // @ts-ignore doesn't know this is an ILocatableDisplay
+    // TODO: Replace with some kind of "invisible pin" display.
+    display_map.get(grid_space.get(1,1)), 
+)
+display_map.set(GLOBAL_CONFIRMATION, global_confirmation_display);
+
+state.confirmation = GLOBAL_CONFIRMATION;
 
 // TODO: Before this will work must rework canvas onclick -> display onclick connection
 addCanvasListeners(selection_broker, context, display_map, state);
