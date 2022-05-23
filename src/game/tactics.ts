@@ -217,6 +217,7 @@ export class TacticsDisplayHander {
         //     this.stateful_selectables.push(selection);
         // }
         this.stateful_selectables.push(...action_inputs_arr);
+        console.log("Display Sels: ", this.stateful_selectables)
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Queue;

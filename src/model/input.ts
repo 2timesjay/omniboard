@@ -128,15 +128,15 @@ export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
         auto_input: T
     ) {
         this.auto_input = auto_input;
-        // NOTE: Pre-queues auto_input;
+        // NOTE: Pre-queues auto_input; NEVER CHANGED.
         this.current_input = auto_input;
     }
 
     * input_option_generator(
         base?: T
     ): Generator<Array<T>, T, T> {
-        this.current_input = yield [this.auto_input]; // For confirmation only.
-        return this.current_input;
+        var selection = yield [this.auto_input]; // For confirmation only.
+        return selection;
     }
 }
 
@@ -149,6 +149,7 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
         option_fn: OptionFn<T>
     ) {
         this.option_fn = option_fn;
+        // NOTE: State has to return after any complete pop off the stack.
         this.current_input = null;
     }
 
