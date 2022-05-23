@@ -3,7 +3,7 @@ import { InputOptions, InputRequest, InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, Effect, Action, IState } from "../model/state";
-import { Unit } from "../model/unit";
+import { Nothing, Unit } from "../model/unit";
 import { DisplayState } from "../view/display";
 import { DisplayMap } from "../view/input";
 import { refreshDisplay } from "./shared";
@@ -147,6 +147,7 @@ export class TacticsPhase implements IPhase {
         // input_option_generator requires Stack, not just any InputSelection
         var root = null;
         // TODO: Use enum or other better action identification
+        // TODO: Handle as data that's part of action?
         // TODO: use match syntax or case syntax
         if (action.text == "Move") {
             var location_root = new Stack(unit.loc);
@@ -154,6 +155,9 @@ export class TacticsPhase implements IPhase {
         } else if (action.text == "Attack") {
             var unit_root = unit;
             root = unit_root;
+        } else if (action.text == "End Turn") {
+            var nothing_root = new Nothing();
+            root = nothing_root;
         }
         // TODO: Revise action to simply return selected input stack; handle digest in sub-phase.
         // @ts-ignore Unit | Stack<GridLocation>
@@ -174,8 +178,6 @@ export class TacticsDisplayHander {
     context: CanvasRenderingContext2D;
     display_map: DisplayMap<ISelectable>;
     state: BoardState;
-    // TODO: Derive stateful_selectables directly from stack.
-    misc_selectables: Array<ISelectable>;
     stateful_selectables: Array<ISelectable>;
 
     constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, state: BoardState){
@@ -188,9 +190,9 @@ export class TacticsDisplayHander {
     on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
-        // TODO: UnitDisplay state not actually well-handled right now.
         var current_inputs = [...phase.current_inputs]; // Shallow Copy
         // Set previous selection_state to neutral;
+        // TODO: Action End Turn needs to make it into selectables to be erased!
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Neutral;
@@ -234,7 +236,7 @@ export class TacticsDisplayHander {
         // Clear states and clear stateful_selectables
         // TODO: Clumsy Clear
         for (var display of this.display_map.values()) {
-            console.log("clearing ", display);
+            console.log("Clearing ", display);
             display.selection_state = DisplayState.Neutral;
             display.state = DisplayState.Neutral;
         }
@@ -285,6 +287,7 @@ export class TacticsController {
             // TODO: Enemy becomes selectable after this for some reason?
             team = (team + 1) % 2; // Switch teams
         }  
+        // NOTE: Don't forget, input_request also influences display state!
         input_request(INPUT_OPTIONS_CLEAR);
         display_handler.on_game_end();
     }

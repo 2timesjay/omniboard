@@ -118,14 +118,17 @@ export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
         auto_input: T
     ) {
         this.auto_input = auto_input;
-        this.current_input = null;
+        this.current_input = auto_input;
     }
 
     * input_option_generator(
         base?: T
     ): Generator<Array<T>, T, T> {
+        console.log("Auto: ", this.auto_input);
+        this.current_input = this.auto_input;
+        // yield [this.auto_input];
         // Degenerate Generator (DeGenerator?)
-        return this.auto_input;
+        return this.current_input;
     }
 }
 

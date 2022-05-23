@@ -3,14 +3,16 @@ import { AutoInputAcquirer, SequentialInputAcquirer, SimpleInputAcquirer } from 
 import { GridLocation, GridSpace } from "./space";
 import { Action, BoardState, Effect, IState } from "./state";
 
-function construct_end_turn(nothing: null, state: BoardState) {
-    var acquirer = new AutoInputAcquirer<null>(null);
-    var digest_fn = (nothing: null): Array<Effect<BoardState>> => {
+// Replace with acquirer "Confirmation" object
+export class Nothing implements ISelectable {}
+function construct_end_turn(nothing: Nothing, state: BoardState) {
+    var acquirer = new AutoInputAcquirer<Nothing>(nothing);
+    var digest_fn = (nothing: Nothing): Array<Effect<BoardState>> => {
         console.log("Attempting to Digest: ", "End Turn");
         return [];
     }
-    var move = new Action<null, BoardState>("End Turn", 3, acquirer, digest_fn)
-    return move
+    var end_turn = new Action<Nothing, BoardState>("End Turn", 3, acquirer, digest_fn)
+    return end_turn
 }
 
 function construct_attack(unit: Unit, state: BoardState) {
@@ -90,7 +92,7 @@ function construct_move(unit: Unit, state: BoardState) {
 export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, state: BoardState){
     var move = construct_move(unit, state);
     var attack = construct_attack(unit, state);
-    var end_turn = construct_end_turn(null, state);
+    var end_turn = construct_end_turn(new Nothing(), state);
     return [
         move,
         attack,

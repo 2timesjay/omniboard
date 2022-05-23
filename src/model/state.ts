@@ -94,9 +94,8 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         return this.acquirer.current_input;
     }
 
-    // TODO: Correctly type this.
     * get_final_input(
-        base: Stack<T>
+        base: InputSelection<T>
     ): Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>> {
         // @ts-ignore expects 'Stack<T> & T', but the containing gen sends 'InputSelection<T>'
         var input = yield *this.acquirer.input_option_generator(base);
