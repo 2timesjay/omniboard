@@ -203,6 +203,9 @@ export class TacticsDisplayHander {
         var top_sel = current_inputs[current_inputs.length - 1];
         // Action_inputs are a special case because they're currently the 
         // application of SequentialInputAcquirer.
+        if (selection instanceof Action and selection.text == "End Turn") {
+            this.stateful_selectables.push(selection);
+        }
         var action_inputs = (top_sel instanceof Action) ? top_sel.acquirer.current_input : null;
         var action_inputs_arr = action_inputs instanceof Stack ? action_inputs.to_array() : (
             action_inputs == null ? [] : [action_inputs]
