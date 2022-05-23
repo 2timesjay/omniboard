@@ -43,7 +43,9 @@ export class TacticsPhase implements IPhase {
     * run_phase(state: BoardState, cur_team: number
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         console.log("TacticsPhase.run_phase");
-        var team_units = state.units.filter((u) => u.team == cur_team);
+        var team_units = state.units
+            .filter((u) => u.team == cur_team)
+            .filter((u) => u.is_alive());
         this.available_units = new Set(team_units); 
         this.available_actions = new Set(team_units.flatMap((u) => u.actions));       
         while(this.available_units.size) {
@@ -234,27 +236,58 @@ export class TacticsDisplayHander {
     }
 }
 
-/**
- * input_bridge == controller. Calls phases in a loop and requests input
- * then feeds input to display_handler.
- */
-export async function tactics_input_bridge(
-    phase: TacticsPhase, 
-    state: BoardState, 
-    input_request: InputRequest<ISelectable>,
-    display_handler: TacticsDisplayHander,
-) {
-    display_handler.on_selection(null, phase);
-    var team = 0;
-    while (true) {
-        var phase_runner = phase.run_phase(state, team);
-        var input_options = phase_runner.next().value;
-        while(input_options){
-            var input_selection = await input_request(input_options);
-            input_options = phase_runner.next(input_selection).value;
-            display_handler.on_selection(input_selection, phase);
-        }
-        display_handler.on_phase_end(phase);
-        team = (team + 1) % 2; // Switch teams
-    }  
+
+export class TacticsController {
+    state: BoardState;
+
+    constructor(state: BoardState) {
+        this.state = state;
+    }
+
+    /**
+     * input_bridge == controller. Calls phases in a loop and requests input
+     * then feeds input to display_handler.
+     */
+    async tactics_input_bridge(
+        phase: TacticsPhase, 
+        input_request: InputRequest<ISelectable>,
+        display_handler: TacticsDisplayHander,
+    ) {
+        display_handler.on_selection(null, phase);
+        var team = 0;
+        while (true) {
+            var phase_runner = phase.run_phase(this.state, team);
+            var input_options = phase_runner.next().value;
+            while(input_options){
+                var input_selection = await input_request(input_options);
+                input_options = phase_runner.next(input_selection).value;
+                display_handler.on_selection(input_selection, phase);
+            }
+            display_handler.on_phase_end(phase);
+            if (this.victory_condition(team)) {
+                console.log("VICTORY!!!");
+                break;
+            } else if (this.defeat_condition(team)) {
+                console.log("DEFEAT!!!");
+                break;
+            }
+            team = (team + 1) % 2; // Switch teams
+        }  
+    }
+
+    // TODO: This and defeat -> ternary enum?
+    victory_condition(team: number): boolean {
+        var other_team = (team + 1) % 2;
+        var enemy_units = this.state.units
+            .filter((u) => u.team == other_team)
+            .filter((u) => u.is_alive);
+        return enemy_units.length == 0;
+    }
+
+    defeat_condition(team: number): boolean {
+        var ally_units = this.state.units
+            .filter((u) => u.team == team)
+            .filter((u) => u.is_alive));
+        return ally_units.length == 0;
+    }
 }

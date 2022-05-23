@@ -115,6 +115,10 @@ export class Unit implements ISelectable {
         this.hp = Math.max(hp, 0);
     }
 
+    is_alive(): bool {
+        return this.hp > 0;
+    }
+
     setLoc(loc: GridLocation){
         this.loc = loc; 
     }
