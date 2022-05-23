@@ -1,10 +1,18 @@
 import { ISelectable, Stack } from "./core";
-import { SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
+import { AutoInputAcquirer, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
 import { GridLocation, GridSpace } from "./space";
 import { Action, BoardState, Effect, IState } from "./state";
 
-// TODO: Clicking other target gives weird queue view.
-// TODO: User SimpleAcquirer
+function construct_end_turn(nothing: null, state: BoardState) {
+    var acquirer = new AutoInputAcquirer<null>(null);
+    var digest_fn = (nothing: null): Array<Effect<BoardState>> => {
+        console.log("Attempting to Digest: ", "End Turn");
+        return [];
+    }
+    var move = new Action<null, BoardState>("End Turn", 3, acquirer, digest_fn)
+    return move
+}
+
 function construct_attack(unit: Unit, state: BoardState) {
     var option_fn = (): Array<Unit> => {
         // TODO: Somehow allowed to click self. Worse, this autoconfirms (input gen bug)
@@ -82,9 +90,11 @@ function construct_move(unit: Unit, state: BoardState) {
 export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, state: BoardState){
     var move = construct_move(unit, state);
     var attack = construct_attack(unit, state);
+    var end_turn = construct_end_turn(null, state);
     return [
         move,
         attack,
+        end_turn,
     ]
 } 
 

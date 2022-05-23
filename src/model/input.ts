@@ -110,6 +110,25 @@ export interface IInputAcquirer<T> {
     input_option_generator: SelectionGen<T>;
 }
 
+export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
+    auto_input: T;
+    current_input: T;
+    
+    constructor(
+        auto_input: T
+    ) {
+        this.auto_input = auto_input;
+        this.current_input = null;
+    }
+
+    * input_option_generator(
+        base?: T
+    ): Generator<Array<T>, T, T> {
+        // Degenerate Generator (DeGenerator?)
+        return this.auto_input;
+    }
+}
+
 export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     // TODO: Cleanup - Simplify coupling with controller loop.
     option_fn: OptionFn<T>;
