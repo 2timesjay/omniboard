@@ -81,7 +81,7 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         text: string,
         index: number,
         acquirer: IInputAcquirer<T>,
-        digest_fn: DigestFn<T>,
+        digest_fn: DigestFn<InputSelection<T>>,
     ) {
         this.text = text;
         this.index = index;
@@ -89,11 +89,15 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         this.digest_fn = digest_fn;
     }
 
+    peek_final_input(): InputSelection<T> {
+        return this.acquirer.current_input;
+    }
+
     // TODO: Correctly type this.
     * get_final_input(
         base: Stack<T>
     ): Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>> {
-        // @ts-ignore InputOptions/InputSelection not actually okay here
+        // @ts-ignore expects 'Stack<T> & T', but the containing gen sends 'InputSelection<T>'
         var input = yield *this.acquirer.input_option_generator(base);
         // TODO: More elegant propagation? Probably solved by separating digest.
         return input;

@@ -99,23 +99,28 @@ export async function acquire_flat_input<T extends ISelectable>(options: Array<T
     return input;
 }
 
-
+// TODO: Refine and use everywhere
+export type SelectionGen<T> = (
+    ((base?: Stack<T>) => Generator<PreviewMap<T>, Stack<T>, Stack<T>>) | 
+    ((base?: T) => Generator<Array<T>, T, T>)
+)
 
 // TODO add structure
 export interface IInputAcquirer<T> {
-    // * input_option_generator(
-    //     base?: Stack<T>
-    // ): Generator<PreviewMap<T>, Array<T>, Stack<T>>;
+    current_input: InputSelection<T>;
+    input_option_generator: SelectionGen<T>;
 }
 
 export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     // TODO: Cleanup - Simplify coupling with controller loop.
     option_fn: OptionFn<T>;
+    current_input: T;
     
     constructor(
         option_fn: OptionFn<T>
     ) {
         this.option_fn = option_fn;
+        this.current_input = null;
     }
 
     public static from_options<U>(options: Array<U>): SimpleInputAcquirer<U> {
@@ -127,12 +132,12 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     ): Generator<Array<T>, T, T> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
-        var input = base;
-        var options = this.option_fn(input);
+        this.current_input = base;
+        var options = this.option_fn(this.current_input);
         var input_resp = yield options;
         do {
             var REJECT_CASE = !input_resp;
-            var CONFIRM_CASE = (input_resp != null && input_resp == input)
+            var CONFIRM_CASE = (input_resp != null && input_resp == this.current_input)
             // TODO: Currently treats "null" response as special flag to pop.
             if (REJECT_CASE) {
                 // var input_resp = yield options;
@@ -142,12 +147,12 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
                 break;
             } else {
                 console.log("simple choice: ", input_resp);
-                input = input_resp;
+                this.current_input = input_resp;
                 input_resp = yield options;
             }
         } while(true);
         console.log("input_option_generation over");
-        return input;
+        return this.current_input;
     }
 }
 
@@ -155,6 +160,7 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
     // TODO: Cleanup - Simplify coupling with controller loop.
     increment_fn: IncrementFn<T>;
     termination_fn: TerminationFn<T>;
+    current_input: Stack<T>;
 
     constructor(
         increment_fn: IncrementFn<T>, 
@@ -162,6 +168,7 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
     ) {
         this.increment_fn = increment_fn;
         this.termination_fn = termination_fn;
+        this.current_input = null;
     }
 
     get_options(input: Stack<T>): Tree<T> {
@@ -170,22 +177,22 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
 
     * input_option_generator(
         base?: Stack<T>
-    ): Generator<PreviewMap<T>, Array<T>, Stack<T>> {
+    ): Generator<PreviewMap<T>, Stack<T>, Stack<T>> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
-        var input = base;
-        var preview_map = this.get_options(input).to_map();
+        this.current_input = base;
+        var preview_map = this.get_options(this.current_input).to_map();
         var input_resp = yield preview_map;
         do {
             var REJECT_CASE = !input_resp;
-            var CONFIRM_CASE = (input_resp != null && input_resp.value == input.value)
+            var CONFIRM_CASE = (input_resp != null && input_resp.value == this.current_input.value)
             // TODO: Currently treats "null" response as special flag to pop.
             if (REJECT_CASE) {
                 // TODO: Propagate null selection better - current state + "pop signal" tuple?
-                if (input.parent) {
-                    input = input.pop();
+                if (this.current_input.parent) {
+                    this.current_input = this.current_input.pop();
                     console.log("reject")
-                    preview_map = this.get_options(input).to_map();                        
+                    preview_map = this.get_options(this.current_input).to_map();                        
                 } else {
                     console.log("ignore reject");
                     return null; // NOTE: Propagates POP Signal to subphase
@@ -193,17 +200,15 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
                 input_resp = yield preview_map;
             } else if (CONFIRM_CASE){
                 console.log("confirm");
-                // input_resp = yield preview_map;
                 break;
             } else {
                 console.log("choice");
-                input = input_resp;
-                preview_map = this.get_options(input).to_map(); 
+                this.current_input = input_resp;
+                preview_map = this.get_options(this.current_input).to_map(); 
                 input_resp = yield preview_map;
             }
-            // console.log(input);
         } while(true);
         console.log("input_option_generation over");
-        return input.to_array();
+        return this.current_input;
     }
 }

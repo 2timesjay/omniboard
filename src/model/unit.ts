@@ -56,8 +56,9 @@ function construct_move(unit: Unit, state: BoardState) {
         increment_fn,
         termination_fn,
     )
-    var digest_fn = (locs: Array<GridLocation>): Array<Effect<BoardState>> => {
-        console.log("Attempting to Digest: ", locs);
+    var digest_fn = (locs: Stack<GridLocation>): Array<Effect<BoardState>> => {
+        var locs_arr = locs.to_array();
+        console.log("Attempting to Digest: ", locs_arr);
         function effect_constructor(loc: GridLocation){
             console.log("Attempting to generate move Effect", loc);
             function effect(state: BoardState): BoardState {
@@ -71,9 +72,10 @@ function construct_move(unit: Unit, state: BoardState) {
             effect.post_effect = null;
             return effect;
         }
-        return locs.map(effect_constructor)
+        return locs_arr.map(effect_constructor)
     }
-    var move = new Action<Array<GridLocation>, BoardState>("Move", 1, acquirer, digest_fn)
+    // TODO: Fix bad use of generics here.
+    var move = new Action<GridLocation, BoardState>("Move", 1, acquirer, digest_fn)
     return move
 }
 

@@ -53,6 +53,7 @@ export class TacticsPhase implements IPhase {
             var data_dict = yield *this.run_subphase(data_dict);
 
             // TODO: Should "exhaust" be control or Effect? Latter eventually.
+            // TODO: Destroyed type info with this approach - fix.
             var unit = data_dict.get("unit");
             var action = data_dict.get("action");
             var final = data_dict.get("final");
@@ -68,7 +69,7 @@ export class TacticsPhase implements IPhase {
         }
     }
 
-    // TODO: Looks like type checking completely breaks down here. Too hacky!
+    // TODO: Looks like type checking completely breaks down here. Replace with State Machine.
     * run_subphase( // TODO: Can this be streamlined? Also, document!
         data_dict: Map<string, any>,
     ): Generator<InputOptions<ISelectable>, Map<string, any>, InputSelection<ISelectable>> {
@@ -102,16 +103,14 @@ export class TacticsPhase implements IPhase {
             var REJECT_SIGNAL = result == null;
             if (REJECT_SIGNAL) { // NULL INPUT
                 console.log("Subphase Backward")
-                // NOTE: Can't break out of subphase for now.
                 // NOTE: data_dict isn't cleared - may be important
                 input_pointer = Math.max(input_pointer - 1, 0); 
-                // TODO: Do a more sophisticated job of maintaining current_inputs. Simplify DisplayHandler.
                 this.current_inputs.pop();
             } else { // VALID INPUT
+                // TODO: Can I fully render current_input (including in-progress) here?
                 console.log("Subphase Forward")
                 data_dict.set(result_label, result);
                 this.current_inputs.push(result);
-                console.log("SP Current inputs: ", this.current_inputs);
                 input_pointer += 1;
             }
         }
@@ -191,33 +190,23 @@ export class TacticsDisplayHander {
         // TODO: UnitDisplay state not actually well-handled right now.
         var current_inputs = [...phase.current_inputs]; // Shallow Copy
         console.log("DH Current inputs: ", current_inputs, selection);
-        // Erase old selection_state;
+        // Set previous selection_state to neutral;
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Neutral;
             display.state = DisplayState.Neutral;
         }
-        // TODO: mini-pops in SequentialInputAcquirer not handled correctly
-        if (selection == null) { // Handle "Pop";
-            console.log("Pop")
-            this.stateful_selectables.pop();
-            for(let stateful_selectable of this.stateful_selectables) {
-                var display = this.display_map.get(stateful_selectable);
-                display.selection_state = DisplayState.Neutral;
-            }        
-        }
-        // TODO: Super-pop - pop back to actual prev selection instead decrement.
-        else {
-            this.stateful_selectables = current_inputs;
-            if (selection instanceof Stack) {
-                this.stateful_selectables.push(...selection.to_array());
-            } else if (selection instanceof Unit) { // TODO: Distinguish attacker and Target
-                this.stateful_selectables.push(selection);
-            } else if (selection instanceof Action) {
-                this.stateful_selectables.push(selection);
-            }
-        } 
-        // WARNING: stateful_selectables are a sort of parallel selection stack.
+
+        // Update and queue-display selection state
+        var top_sel = current_inputs[current_inputs.length - 1];
+        // Action_inputs are a special case because they're currently the 
+        // application of SequentialInputAcquirer.
+        var action_inputs = (top_sel instanceof Action) ? top_sel.acquirer.current_input : null;
+        var action_inputs_arr = action_inputs instanceof Stack ? action_inputs.to_array() : (
+            action_inputs == null ? [] : [action_inputs]
+        )
+        this.stateful_selectables = current_inputs ;
+        this.stateful_selectables.push(...action_inputs_arr);
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Queue;
@@ -262,10 +251,9 @@ export async function tactics_input_bridge(
         var input_options = phase_runner.next().value;
         while(input_options){
             var input_selection = await input_request(input_options);
-            display_handler.on_selection(input_selection, phase);
             input_options = phase_runner.next(input_selection).value;
+            display_handler.on_selection(input_selection, phase);
         }
-        // TODO: Need "on_subphase_end" hook, or something better.
         display_handler.on_phase_end(phase);
         team = (team + 1) % 2; // Switch teams
     }  
