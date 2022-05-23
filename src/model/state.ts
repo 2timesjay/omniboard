@@ -52,6 +52,7 @@ export class BoardState implements IState {
         return this;
     };
 
+    // TODO: Add actions or handle generically
     get_selectables(): Array<ISelectable> {
         var selectables = new Array<ISelectable>();
         for (let grid_row of this.grid.locs) {

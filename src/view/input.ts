@@ -21,7 +21,7 @@ export function getMousePos(canvasDom: HTMLElement, mouseEvent: MouseEvent): Pos
 
 export type DisplayHitOnevent = (e: MouseEvent) => ISelectable | null;
 
-export function setUpOptions(options: Array<AbstractDisplay<ISelectable>>) {
+export function setupOptions(options: Array<AbstractDisplay<ISelectable>>) {
     options.forEach((o) => o.state = DisplayState.Option);
 }
 
@@ -78,7 +78,7 @@ export function build_broker_callback<T extends ISelectable>(
 ): CallbackSelectionFn<T> {
     // Sets selection_broker's fanout to onevents of instances of T in Options.
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
-        console.log("generating broker callback: ", options);
+        console.log("Setup Selection Callbacks on Canvas: ", options);
         var displays = options.map((o) => display_map.get(o));
         var onclicks = displays.map(
             (d) => d.createOnclick(canvas)
@@ -86,7 +86,7 @@ export function build_broker_callback<T extends ISelectable>(
         var onmousemoves =  displays.map(
             (d) => d.createOnmousemove(canvas)
         );
-        setUpOptions(displays);
+        setupOptions(displays);
         selection_broker.setonevents([...onclicks, ...onmousemoves]);
         selection_broker.setPromiseHandlers(resolve, reject);
     }

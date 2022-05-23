@@ -8,6 +8,8 @@ import { DisplayState } from "../view/display";
 import { DisplayMap } from "../view/input";
 import { refreshDisplay } from "./shared";
 
+const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
+
 export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>>
 
 // TODO: Clean up
@@ -49,7 +51,6 @@ export class TacticsPhase implements IPhase {
         this.available_units = new Set(team_units); 
         this.available_actions = new Set(team_units.flatMap((u) => u.actions));       
         while(this.available_units.size) {
-            // var effects = yield *this.run_subphase(state, cur_team);
             var data_dict = new Map<string, any>([["state", state]]);
             // TODO: Mutable data_dict is someone messy; hidden here.
             var data_dict = yield *this.run_subphase(data_dict);
@@ -228,6 +229,19 @@ export class TacticsDisplayHander {
         this.refresh();
     }
 
+    on_game_end(){
+        console.log("Game End");
+        // Clear states and clear stateful_selectables
+        // TODO: Clumsy Clear
+        for (var display of this.display_map.values()) {
+            console.log("clearing ", display);
+            display.selection_state = DisplayState.Neutral;
+            display.state = DisplayState.Neutral;
+        }
+        console.log(this.display_map);
+        this.refresh();
+    }
+
     refresh(){
         refreshDisplay(this.context, this.display_map, this.state);
     }
@@ -261,7 +275,6 @@ export class TacticsController {
                 display_handler.on_selection(input_selection, phase);
             }
             display_handler.on_phase_end(phase);
-            // TODO: Enemy becomes selectable after this for some reason?
             if (this.victory_condition(team)) {
                 console.log("VICTORY!!!");
                 break;
@@ -269,8 +282,11 @@ export class TacticsController {
                 console.log("DEFEAT!!!");
                 break;
             }
+            // TODO: Enemy becomes selectable after this for some reason?
             team = (team + 1) % 2; // Switch teams
         }  
+        input_request(INPUT_OPTIONS_CLEAR);
+        display_handler.on_game_end();
     }
 
     // TODO: This and defeat -> ternary enum?

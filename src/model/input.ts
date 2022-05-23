@@ -24,7 +24,7 @@ export type SelectionFn<T extends ISelectable> = (options: Array<T>) => T
 
 // TODO: Pass preview_map directly instead of just options.
 export type CallbackSelectionFn<T extends ISelectable> = (
-    options: Array<T>, resolve: Awaited<T>, reject: Rejection // Awaited from utilities. Replace in ts 4.5
+    options: InputOptions<T>, resolve: Awaited<T>, reject: Rejection // Awaited from utilities. Replace in ts 4.5
 ) => void;
 
 export function synthetic_input_getter<T extends ISelectable>(
@@ -43,13 +43,14 @@ export function synthetic_input_getter<T extends ISelectable>(
     };
 }
 
-// AKA build_callback_input_getter
+// AKA build_input_request
 export function async_input_getter<T extends ISelectable>(
     selection_fn: CallbackSelectionFn<T>
 ): InputRequest<T> {
     return async function get_input( 
         input_options: InputOptions<T>
     ): Promise<Stack<T>> {
+        console.log("Building InputRequest: ", input_options);
         // TS analog to type guarding kind of.
         if (input_options instanceof Array) {
             var arr: Array<T> = input_options
