@@ -8,7 +8,7 @@ import { async_input_getter, InputRequest } from "../model/input";
 import { Action, BoardState, Effect } from "../model/state";
 import { refreshDisplay } from "../game/shared";
 import { PathOnlyDisplayHander, PathOnlyPhase, path_only_input_bridge } from "../game/path_only";
-import { TacticsDisplayHander, TacticsPhase, tactics_input_bridge } from "../game/tactics";
+import { TacticsController, TacticsDisplayHander, TacticsPhase } from "../game/tactics";
 import { CONSTRUCT_BASIC_ACTIONS, Unit } from "../model/unit";
 
 /* Generic setup */
@@ -60,7 +60,7 @@ unit_1.setLoc(grid_space.get(3, 2));
 var unit_2 = new Unit(1);
 unit_2.setLoc(grid_space.get(2,2));
 var unit_3 = new Unit(0);
-unit_3.setLoc(grid_space.get(4, 4));
+unit_3.setLoc(grid_space.get(2, 3));
 var units = [unit_1, unit_2, unit_3];
 state.units = units;
 
@@ -82,4 +82,5 @@ addCanvasListeners(selection_broker, context, display_map, state);
 // addCanvasListeners(unit_selection_broker, context, display_map, grid_space, units);
 var tp = new TacticsPhase();
 var display_handler = new TacticsDisplayHander(context, display_map, state);
-tactics_input_bridge(tp, state, input_request, display_handler);
+var tc = new TacticsController(state);
+tc.tactics_input_bridge(tp, input_request, display_handler);

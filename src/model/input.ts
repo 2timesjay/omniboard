@@ -50,15 +50,12 @@ export function async_input_getter<T extends ISelectable>(
     return async function get_input( 
         input_options: InputOptions<T>
     ): Promise<Stack<T>> {
-        console.log("pm: ", input_options)
-        // TODO: Fix Hack to handle Arr InputOptions
+        // TS analog to type guarding kind of.
         if (input_options instanceof Array) {
             var arr: Array<T> = input_options
         } else {
             var arr = Array.from(input_options.keys())
         }
-        // TODO: "resolve" returns value, "reject" deselects
-        // TODO: selecting null parent of Stack head as CONFIRM signal?
         // Manually specify type to remove errors
         var selection_promise: Promise<T> = new Promise(
             function(resolve, reject) {
@@ -67,7 +64,7 @@ export function async_input_getter<T extends ISelectable>(
         );
         return selection_promise.then(
             function(selection) { 
-                console.log("aig_res: ", selection);
+                console.log("Resolve Selection: ", selection);
                 if (input_options instanceof Array) {
                     return selection;
                 } else {
@@ -76,7 +73,8 @@ export function async_input_getter<T extends ISelectable>(
             }
         ).catch(
             function() {
-                console.log("aig_rej");
+                // TODO: Replace with some kind of explicit signal?
+                console.log("Reject Selection");
                 return null;
             }
         );
@@ -143,15 +141,14 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
                 // var input_resp = yield options;
                 return null; // NOTE: Propagates POP Signal to subphase
             } else if (CONFIRM_CASE){
-                console.log("confirm");
+                console.log("Confirm Simple InputSelection");
                 break;
             } else {
-                console.log("simple choice: ", input_resp);
+                console.log("InputSelection: ", input_resp);
                 this.current_input = input_resp;
                 input_resp = yield options;
             }
         } while(true);
-        console.log("input_option_generation over");
         return this.current_input;
     }
 }
@@ -191,24 +188,23 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
                 // TODO: Propagate null selection better - current state + "pop signal" tuple?
                 if (this.current_input.parent) {
                     this.current_input = this.current_input.pop();
-                    console.log("reject")
+                    console.log("Pop Sequential InputSelection")
                     preview_map = this.get_options(this.current_input).to_map();                        
                 } else {
-                    console.log("ignore reject");
+                    console.log("Cannot Pop Sequential InputSelection");
                     return null; // NOTE: Propagates POP Signal to subphase
                 }
                 input_resp = yield preview_map;
             } else if (CONFIRM_CASE){
-                console.log("confirm");
+                console.log("Confirm Sequential InputSelection");
                 break;
             } else {
-                console.log("choice");
+                console.log("InputSelection: ", input_resp);
                 this.current_input = input_resp;
                 preview_map = this.get_options(this.current_input).to_map(); 
                 input_resp = yield preview_map;
             }
         } while(true);
-        console.log("input_option_generation over");
         return this.current_input;
     }
 }

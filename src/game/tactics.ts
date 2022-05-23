@@ -145,7 +145,6 @@ export class TacticsPhase implements IPhase {
     ): Generator<InputOptions<ISelectable>, InputSelection<ISelectable>, InputSelection<ISelectable>> {
         // input_option_generator requires Stack, not just any InputSelection
         var root = null;
-        console.log("action: ", action.text);
         // TODO: Use enum or other better action identification
         // TODO: use match syntax or case syntax
         if (action.text == "Move") {
@@ -155,7 +154,6 @@ export class TacticsPhase implements IPhase {
             var unit_root = unit;
             root = unit_root;
         }
-        console.log("input option generator root: ", root)
         // TODO: Revise action to simply return selected input stack; handle digest in sub-phase.
         // @ts-ignore Unit | Stack<GridLocation>
         var final_inputs = yield *action.get_final_input(root);
@@ -191,7 +189,6 @@ export class TacticsDisplayHander {
         // TODO: Would be nice to display first loc as "queued".
         // TODO: UnitDisplay state not actually well-handled right now.
         var current_inputs = [...phase.current_inputs]; // Shallow Copy
-        console.log("DH Current inputs: ", current_inputs, selection);
         // Set previous selection_state to neutral;
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
@@ -264,6 +261,7 @@ export class TacticsController {
                 display_handler.on_selection(input_selection, phase);
             }
             display_handler.on_phase_end(phase);
+            // TODO: Enemy becomes selectable after this for some reason?
             if (this.victory_condition(team)) {
                 console.log("VICTORY!!!");
                 break;
@@ -280,14 +278,16 @@ export class TacticsController {
         var other_team = (team + 1) % 2;
         var enemy_units = this.state.units
             .filter((u) => u.team == other_team)
-            .filter((u) => u.is_alive);
+            .filter((u) => u.is_alive());
+        console.log("Num enemy: ", enemy_units.length)
         return enemy_units.length == 0;
     }
 
     defeat_condition(team: number): boolean {
         var ally_units = this.state.units
             .filter((u) => u.team == team)
-            .filter((u) => u.is_alive));
+            .filter((u) => u.is_alive());
+        console.log("Num ally: ", ally_units.length)
         return ally_units.length == 0;
     }
 }

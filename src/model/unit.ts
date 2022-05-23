@@ -115,7 +115,7 @@ export class Unit implements ISelectable {
         this.hp = Math.max(hp, 0);
     }
 
-    is_alive(): bool {
+    is_alive(): boolean {
         return this.hp > 0;
     }
 
