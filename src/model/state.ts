@@ -36,7 +36,7 @@ export type Observer<T extends IState> = {
     (effect: Effect<T>, state: T): Array<Effect<T>>;
 };
 
-// TODO: The `any` here is a big wacky. Could https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-types help?
+// TODO: The `any` here is a bit wacky. Could https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-types help?
 export type DigestFn<T extends ISelectable> = (selection: InputSelection<T>) => Array<Effect<any>>;
 
 export class BoardState implements IState {

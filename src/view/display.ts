@@ -254,8 +254,8 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     constructor(selectable: IMenuable, parent: ILocatableDisplay) {
         super(selectable);
         this.parent = parent;
-        this.size = size*0.8;
-        this.width = this.size;
+        this.size = size*0.4;
+        this.width = this.selectable.text.length*0.5*this.size + 0.2*this.size,
         this.height = this.size;
     }
 
@@ -273,8 +273,8 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
             this.xOffset, 
             this.yOffset, 
             context, 
-            this.selectable.text.length*0.5*this.size + 0.2*this.size, 
-            this.size, 
+            this.width,
+            this.height, 
             "white", 
             0.5
         );

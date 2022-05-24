@@ -12,7 +12,7 @@ function construct_end_turn(confirmation: Confirmation, state: BoardState) {
         console.log("Attempting to Digest: ", "End Turn");
         return [];
     }
-    var end_turn = new Action<Confirmation, BoardState>("End Turn", 3, acquirer, digest_fn)
+    var end_turn = new Action<Confirmation, BoardState>("End Turn", 4, acquirer, digest_fn)
     return end_turn
 }
 
@@ -90,13 +90,59 @@ function construct_move(unit: Unit, state: BoardState) {
     return move
 }
 
+// TODO: Picks paths that touch units twice. Due to BFS bug likely. Semi-fixed with dist restriction.
+function construct_chain_lightning(unit: Unit, state: BoardState) {
+    var units = state.units;
+    var increment_fn = (unit_stack: Stack<Unit>): Array<Unit> => {
+        var grid = state.grid;
+        var units = state.units;
+        var origin_loc = unit_stack.value.loc;
+        var options = units.filter((u) => {
+            var dist = grid.getDistance(origin_loc, u.loc);
+            return 0 < dist && dist <= 3;
+        });
+        return options;
+    };
+    var termination_fn = (loc_stack: Stack<Unit>): boolean => {
+        return loc_stack.depth >= 4; // + 1 because stack starts at root.
+    }
+    var acquirer = new SequentialInputAcquirer<Unit>(
+        increment_fn,
+        termination_fn,
+    )
+    var digest_fn = (units: Stack<Unit>): Array<Effect<BoardState>> => {
+        var units_arr = units.to_array();
+        var unit = units_arr.shift();
+        console.log("Attempting to Digest: ", units_arr);
+        function effect_constructor(target: Unit){
+            console.log("Attempting to generate Chain Lightning Effect", unit, target);
+            function effect(state: BoardState): BoardState {
+                console.log("Attempting to execute Damage: ", unit, target);
+                target.damage(2);
+                return state;
+            };
+            // TODO: Reconsider Effect as callable.
+            effect.description = "move unit";
+            effect.pre_effect = null;
+            effect.post_effect = null;
+            return effect;
+        }
+        return units_arr.map(effect_constructor)
+    }
+    // TODO: Fix bad use of generics here.
+    var move = new Action<Unit, BoardState>("Chain Lightning", 3, acquirer, digest_fn)
+    return move
+}
+
 export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, state: BoardState){
     var move = construct_move(unit, state);
     var attack = construct_attack(unit, state);
+    var chain_lightning = construct_chain_lightning(unit, state);
     var end_turn = construct_end_turn(GLOBAL_CONFIRMATION, state);
     return [
         move,
         attack,
+        chain_lightning,
         end_turn,
     ]
 } 

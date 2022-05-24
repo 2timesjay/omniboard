@@ -62,6 +62,12 @@ unit_2.setLoc(grid_space.get(2,2));
 var unit_3 = new Unit(0);
 unit_3.setLoc(grid_space.get(2, 3));
 var units = [unit_1, unit_2, unit_3];
+for (var co of [[1,2],[2,1],[2,0],[0,2],[0,0]]) {
+    var [x, y] = co;
+    var unit_extra = new Unit(1);
+    unit_extra.setLoc(grid_space.get(x, y));
+    units.push(unit_extra);
+}
 state.units = units;
 
 // TODO: Safer Laziness in action construction

@@ -150,11 +150,14 @@ export class TacticsPhase implements IPhase {
         // TODO: Handle as data that's part of action?
         // TODO: use match syntax or case syntax
         if (action.text == "Move") {
-            var location_root = new Stack(unit.loc);
-            root = location_root;
+            var location_stack_root = new Stack(unit.loc);
+            root = location_stack_root;
         } else if (action.text == "Attack") {
             var unit_root = unit;
             root = unit_root;
+        } else if (action.text == "Chain Lightning") {
+            var unit_stack_root = new Stack(unit);
+            root = unit_stack_root;
         } else if (action.text == "End Turn") {
             var confirmation_root = new Confirmation();
             root = confirmation_root;
