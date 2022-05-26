@@ -90,7 +90,7 @@ function construct_move(unit: Unit, state: BoardState) {
     return move
 }
 
-// TODO: Picks paths that touch units twice. Due to BFS bug likely. Semi-fixed with dist restriction.
+// TODO: option to select unit twice shown but triggers "confirm". Either forbid or fix.
 function construct_chain_lightning(unit: Unit, state: BoardState) {
     var units = state.units;
     var increment_fn = (unit_stack: Stack<Unit>): Array<Unit> => {
