@@ -1,9 +1,10 @@
 /* Imports */
 import { makeCanvas } from "./rendering";
-import { TacticsController, TacticsDisplayHander, TacticsPhase } from "../game/tactics";
+import { TacticsController, TacticsPhase } from "../game/tactics";
 import { tactics_setup } from "../game/tactics_setup";
 import { display_setup } from "../game/tactics_display_setup";
 import { Canvas2DBroker } from "./broker";
+import { DisplayHandler } from "./display_handler";
 
 // State Setup
 var k = 6;
@@ -19,6 +20,6 @@ var broker = new Canvas2DBroker(display_map, state, context);
 var input_request = broker.input_request;
 
 var tp = new TacticsPhase();
-var display_handler = new TacticsDisplayHander(context, display_map, state);
+var display_handler = new DisplayHandler(context, display_map, state);
 var tc = new TacticsController(state);
 tc.tactics_input_bridge(tp, input_request, display_handler);

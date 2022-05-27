@@ -4,8 +4,8 @@ import { IPhase } from "../model/phase";
 import { GridSpace } from "../model/space";
 import { Action, BoardState, Effect } from "../model/state";
 import { DisplayState } from "../view/display";
+import { refreshDisplay } from "../view/display_handler";
 import { DisplayMap } from "../view/input";
-import { refreshDisplay } from "./shared";
 
 export class PathOnlyPhase implements IPhase {
     current_inputs: Array<InputSelection<ISelectable>>;

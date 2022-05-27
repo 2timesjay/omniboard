@@ -52,8 +52,8 @@ function construct_attack(unit: Unit, state: BoardState) {
 }
 
 function construct_move(unit: Unit, state: BoardState) {
-    var units = state.units;
     var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
+        var units = state.units;
         var grid_space = state.grid;
         var neighborhood = grid_space.getGridNeighborhood(loc_stack.value);
         var occupied = new Set(units.map((u) => u.loc));
@@ -92,7 +92,6 @@ function construct_move(unit: Unit, state: BoardState) {
 
 // TODO: option to select unit twice shown but triggers "confirm". Either forbid or fix.
 function construct_chain_lightning(unit: Unit, state: BoardState) {
-    var units = state.units;
     var increment_fn = (unit_stack: Stack<Unit>): Array<Unit> => {
         var grid = state.grid;
         var units = state.units;

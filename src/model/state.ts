@@ -20,6 +20,7 @@ import { Unit } from "./unit";
 import {Awaited} from "./utilities";
 
 export interface IState {
+    get_selectables: () => Array<ISelectable>;
 };
 
 // Implement as Callable for now

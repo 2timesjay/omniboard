@@ -16,6 +16,10 @@ export class NumberState implements IState {
         this.value = value;
     }
 
+    get_selectables(): Array<ISelectable> {
+        return []
+    }
+
     // Should this mutate or return new State?
     add(add_value: number) {
         this.value = this.value + add_value;
