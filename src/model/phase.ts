@@ -5,5 +5,6 @@ import { Action, BoardState, Effect, IState } from "./state";
 import { Unit } from "./unit";
 
 export interface IPhase {
-    current_inputs: any; // TODO: Fix typing.
+    current_inputs: Array<InputSelection<ISelectable>>; // TODO: Fix typing.
+    run_phase: (state: IState, cur_team: number) => Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>>;
 }
