@@ -2,6 +2,9 @@ import { GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
 import { CONSTRUCT_BASIC_ACTIONS, GLOBAL_CONFIRMATION, Unit } from "../model/unit";
 
+/**
+ * Create a KxK grid for Tactics game
+ */
 export function tactics_setup(k: number): BoardState {
     const grid_space = new GridSpace(k, k);
 

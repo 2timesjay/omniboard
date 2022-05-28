@@ -12,22 +12,32 @@ import { Awaited, Rejection } from "./utilities";
 
 export type PreviewMap<T> = Map<T, Tree<T>>;
 
+// NOTE: PreviewMap Options should return Stack Selection; Array returns T.
 export type InputOptions<T> = PreviewMap<T> | Array<T>;
 export type InputSelection<T> = Stack<T> | T;
 
-// Should this be Stack instead of Tree (and everywhere similar?)
-// Should this be a generator???
+/**
+ * NOTE: Key type; from InputOptions generates asynchronous request for InputSelection.
+ *   Bridge between InputState and user. 
+ */
 export type InputRequest<T extends ISelectable> = (
     input_options: InputOptions<T>
 ) => Promise<InputSelection<T>>;
 
-export type SelectionFn<T extends ISelectable> = (options: Array<T>) => T
 
+/**
+ * Mechanistic Callback/SelectionFn classes - about the "how" of InputFetching 
+ *   not abstract interfaces.
+ */
+export type SelectionFn<T extends ISelectable> = (options: Array<T>) => T
 // TODO: Pass preview_map directly instead of just options.
 export type CallbackSelectionFn<T extends ISelectable> = (
     options: InputOptions<T>, resolve: Awaited<T>, reject: Rejection // Awaited from utilities. Replace in ts 4.5
 ) => void;
 
+/**
+ * synthetic/async_input_getter: InputRequest factories really.
+ */
 export function synthetic_input_getter<T extends ISelectable>(
     selection_fn: SelectionFn<T>
 ): InputRequest<T> {
@@ -44,7 +54,7 @@ export function synthetic_input_getter<T extends ISelectable>(
     };
 }
 
-// AKA build_input_request
+// Builds an async InputRequest. Explicitly constructs promise around selection_fn
 export function async_input_getter<T extends ISelectable>(
     selection_fn: CallbackSelectionFn<T>
 ): InputRequest<T> {
@@ -83,28 +93,17 @@ export function async_input_getter<T extends ISelectable>(
     };
 }
 
-export function flat_tree_helper<T extends ISelectable>(options: Array<T>) {
-    var tree = new Tree(null);
-    for (var option of options){
-        tree.add_child(new Tree(option));
-    }
-    return tree;
-}
-
-// TODO: Does "null" root cause problems? Probably
-export async function acquire_flat_input<T extends ISelectable>(options: Array<T>, input_request: InputRequest<T>): Promise<InputSelection<T>> {
-    // Single-element input acquisition
-    var preview_tree = flat_tree_helper<T>(options);
-    var input = await input_request(preview_tree.to_map());
-    return input;
-}
-
+/**
+ * Key Type; Closely related to InputRequest, but a generator version - takes
+ * InputOptions and returns corresponding InputSelection type.
+ */
 // TODO: Refine and use everywhere
 export type SelectionGen<T> = (
     ((base?: Stack<T>) => Generator<PreviewMap<T>, Stack<T>, Stack<T>>) | 
     ((base?: T) => Generator<Array<T>, T, T>)
 )
 
+// TODO: Move and maybe generate from selectables instead of creating singleton.
 export class Confirmation implements ISelectable, IMenuable {
     index: number;
     text: string;
@@ -115,6 +114,11 @@ export class Confirmation implements ISelectable, IMenuable {
     }
 }
 
+/**
+ * InputAcquirers: Generate repeated InputRequests, yielding intermediate InputSelections,
+ *   until satisfying conditions are met for a final InputSelection to be returned. 
+ *   `yield` vs. `return` distinguishes the two.
+ */
 export interface IInputAcquirer<T> {
     current_input: InputSelection<T>;
     input_option_generator: SelectionGen<T>;

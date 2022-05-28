@@ -15,7 +15,46 @@ export enum DisplayState {
     Queue,
 }
 
+// Following https://www.typescriptlang.org/docs/handbook/mixins.html
+type Mixinable = new (...args: any[]) => {};
+type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
+
 const size: number = 100;
+
+interface ILocatableDisplay {
+    _xOffset: number;
+    _yOffset: number;
+    get xOffset(): number;
+    get yOffset(): number;
+}
+
+export interface IMenuable {// Action<ISelectable>, Confirmation
+    index: number;
+    text: string;
+}
+
+// TODO: Add animate_size()
+// NOTE: This is some sicko stuff.
+type Animatable = ConstrainedMixinable<ILocatableDisplay>;
+function Animate<TBase extends Animatable>(Base: TBase){
+    return class Animated extends Base {        
+        get xOffset(): number {
+            return this._xOffset + this.animate_x();
+        }
+
+        get yOffset(): number {
+            return this._yOffset + this.animate_y();
+        }
+
+        animate_x(): number {
+            return Math.cos(Date.now()/100);
+        }
+
+        animate_y(): number {
+            return Math.sin(Date.now()/100);
+        }
+    }
+}
 
 export class AbstractDisplay<T extends ISelectable> {
     selectable: T;
@@ -110,22 +149,29 @@ export class AbstractDisplay<T extends ISelectable> {
 
 }
 
-
 export class GridLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatableDisplay {
     selectable: GridLocation;
-    xOffset: number;
-    yOffset: number;
+    _xOffset: number;
+    _yOffset: number;
     size: number;
     width: number;
     height: number;
 
     constructor(loc: GridLocation) {
         super(loc);
-        this.xOffset = this.selectable.x * size + 0.1 * size;
-        this.yOffset = this.selectable.y * size + 0.1 * size;
+        this._xOffset = this.selectable.x * size + 0.1 * size;
+        this._yOffset = this.selectable.y * size + 0.1 * size;
         this.size = size * 0.8;
         this.width = size * 0.8;
         this.height = size * 0.8;
+    }
+
+    get xOffset(): number {
+        return this._xOffset;
+    }
+
+    get yOffset(): number {
+        return this._yOffset;
     }
 
     render(context: CanvasRenderingContext2D, clr: string) {
@@ -168,10 +214,10 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
 }
 
 
-export class UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisplay{
+class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisplay{
     selectable: Unit;
-    xOffset: number;
-    yOffset: number;
+    _xOffset: number;
+    _yOffset: number;
     size: number;
     width: number;
     height: number;
@@ -181,9 +227,17 @@ export class UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisp
         this.update_pos();
     }
 
+    get xOffset(): number {
+        return this._xOffset;
+    }
+
+    get yOffset(): number {
+        return this._yOffset;
+    }
+
     update_pos() {
-        this.xOffset = this.selectable.loc.x * size + 0.2 * size;
-        this.yOffset = this.selectable.loc.y * size + 0.2 * size;
+        this._xOffset = this.selectable.loc.x * size + 0.2 * size;
+        this._yOffset = this.selectable.loc.y * size + 0.2 * size;
         this.size = size * 0.6;
         this.width = size * 0.6;
         this.height = size * 0.6;
@@ -231,18 +285,7 @@ export class UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisp
     }
 }
 
-// TOOD: Elaborate or make into interface
-interface ILocatableDisplay {
-    xOffset: number;
-    yOffset: number;
-}
-
-
-export interface IMenuable {// Action<ISelectable>, Confirmation
-    index: number;
-    text: string;
-}
-
+export const UnitDisplay = Animate(_UnitDisplay);
 
 export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     selectable: IMenuable;
@@ -260,11 +303,11 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     }
 
     get xOffset() {
-        return this.parent.xOffset;
+        return this.parent._xOffset;
     }
 
     get yOffset() {
-        return this.parent.yOffset + this.size * this.selectable.index;
+        return this.parent._yOffset + this.size * this.selectable.index;
     }
 
 

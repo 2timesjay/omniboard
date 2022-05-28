@@ -19,6 +19,9 @@ class StackIterator<T> implements Iterator<T> {
     }
 }
 
+/**
+ * Stack - more like a LinkedList really. 
+ */ 
 export class Stack<T> implements Iterable<T>{
     value: T;
     parent: Stack<T> | null;
@@ -62,6 +65,11 @@ export class Stack<T> implements Iterable<T>{
     }
 }
 
+/**
+ * Tree - Each subtree can be treated as a Stack.
+ * This is useful for converting a choice on a PreviewMap
+ * into a Stack InputSelection with maximum ease.
+ */
 export class Tree<T> extends Stack<T> {
     value: T;
     parent: Tree<T> | null;

@@ -10,6 +10,7 @@ import { DisplayMap } from "../view/input";
 export class PathOnlyPhase implements IPhase {
     current_inputs: Array<InputSelection<ISelectable>>;
 
+    // @ts-ignore wrong inputs
     * run_phase(
         action: Action<ISelectable, BoardState>, root_stack: Stack<ISelectable>
     ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {

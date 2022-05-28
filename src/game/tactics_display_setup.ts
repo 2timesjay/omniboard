@@ -3,9 +3,12 @@ import { BoardState } from "../model/state";
 import { GLOBAL_CONFIRMATION } from "../model/unit";
 import { GridLocationDisplay, UnitDisplay, MenuElementDisplay, AbstractDisplay } from "../view/display";
 
+/**
+ * Create Display elements for every selectable in state.
+ */
 export function display_setup(
-        k: number, state: BoardState, context: CanvasRenderingContext2D
-    ): Map<ISelectable, AbstractDisplay<ISelectable>> {
+        state: BoardState, context: CanvasRenderingContext2D
+): Map<ISelectable, AbstractDisplay<ISelectable>> {
     var units = state.units;
     var grid = state.grid;
     

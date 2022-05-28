@@ -7,21 +7,29 @@ export class SelectableNumber implements ISelectable {
     constructor(value: number) {
         this.value = value;
     }
+
+    add(other: SelectableNumber) {
+        this.value += other.value;
+    }
+
+    equals(other: SelectableNumber): boolean {
+        return this.value == other.value;
+    }
 }
 
+// TODO: Try immutable version
 export class NumberState implements IState {
-    value: number;
+    num: SelectableNumber;
     
     constructor(value: number){
-        this.value = value;
+        this.num = new SelectableNumber(value);
     }
 
     get_selectables(): Array<ISelectable> {
-        return []
+        return [this.num]
     }
 
-    // Should this mutate or return new State?
-    add(add_value: number) {
-        this.value = this.value + add_value;
+    add(other: SelectableNumber) {
+        this.num.add(other);
     }
 }

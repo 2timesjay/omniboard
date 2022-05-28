@@ -1,8 +1,6 @@
-import { ISelectable, Stack } from "./core";
-import { acquire_flat_input, async_input_getter, CallbackSelectionFn, InputOptions, InputRequest, InputSelection } from "./input";
-import { GridLocation } from "./space";
-import { Action, BoardState, Effect, IState } from "./state";
-import { Unit } from "./unit";
+import { ISelectable } from "./core";
+import { InputOptions, InputSelection } from "./input";
+import { IState } from "./state";
 
 export interface IPhase {
     current_inputs: Array<InputSelection<ISelectable>>; // TODO: Fix typing.

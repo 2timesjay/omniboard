@@ -33,7 +33,7 @@ test("Integration test", (t) => {
     )
     var digest_fn = (nums: Array<SelectableNumber>): Array<Effect<NumberState>> => {
         function effect(state: NumberState): NumberState {
-            state.add(nums.pop().value);
+            state.add(nums.pop());
             return state;
         };
         // Reconsider callable.
@@ -73,7 +73,7 @@ test("Integration test", (t) => {
             var effects = action.digest_fn(sel.to_array());
             t.equal(effects.length, 1);
             var transformed_state = effects[0](number_state);
-            t.equal(transformed_state.value, 31);
+            t.true(transformed_state.num.equals(new SelectableNumber(31)));
             t.end();
         });
 })
