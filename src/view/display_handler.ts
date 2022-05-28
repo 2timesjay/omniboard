@@ -3,7 +3,7 @@ import { ISelectable, Stack } from "../model/core";
 import { InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
 import { BoardState, Action, IState } from "../model/state";
-import { DisplayState } from "./display";
+import { DisplayState, Flinch, LinearVisual } from "./display";
 import { DisplayMap } from "./input";
 import { makeLine } from "./rendering";
 
@@ -67,6 +67,15 @@ export class BaseDisplayHandler {
      *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
      */ 
     on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
+        console.log(this.stateful_selectables);
+        // TODO: Just a placeholder
+        if (this.stateful_selectables.length > 0) {
+            var unit_display = this.display_map.get(this.stateful_selectables[0]);
+            console.log(unit_display);
+            // @ts-ignore 
+            unit_display.animation = new Flinch(Math.random()*20 - 10, Math.random()*20 - 10, 1000);
+        }
+
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         var current_inputs = [...phase.current_inputs]; // Shallow Copy
@@ -127,6 +136,13 @@ export class BaseDisplayHandler {
     }
 
     render_pathy_inputs() {
-        // makeLine(0, 0, 600, 600, this.context, 10);
+        // TODO: turn into a function of Action or some object that encapsulates it.
+        for (var i = 0; i < this.pathy_inputs.length - 1; i++) {
+            var from = this.display_map.get(this.pathy_inputs[i]);
+            var to = this.display_map.get(this.pathy_inputs[i+1]);
+            // @ts-ignore AbstractDisplay<ISelectable> is not ILocatable - fair
+            var line = new LinearVisual(from, to);
+            line.display(this.context);
+        }
     }
 }

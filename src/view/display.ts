@@ -1,6 +1,6 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
-import { makeCanvas, makeCircle, makeRect, makeSquare } from "./rendering";
+import { makeCanvas, makeCircle, makeLine, makeRect, makeSquare } from "./rendering";
 import { getMousePos, Position } from "./input";
 import { Awaited } from "../model/utilities";
 import { GridLocation } from "../model/space";
@@ -21,11 +21,14 @@ type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 
 const size: number = 100;
 
-interface ILocatableDisplay {
+// TODO: Add size, add center;
+interface ILocatable {
     _xOffset: number;
     _yOffset: number;
+    _size: number;
     get xOffset(): number;
     get yOffset(): number;
+    get size(): number;
 }
 
 export interface IMenuable {// Action<ISelectable>, Confirmation
@@ -33,26 +36,136 @@ export interface IMenuable {// Action<ISelectable>, Confirmation
     text: string;
 }
 
+// Time-varying animations
+interface IAnimation {
+    animate_x(): number;
+    animate_y(): number;
+    animate_size(): number; // TODO: Implement on ILocatable
+}
+
+export class CircleInPlace { 
+    rand = 2*Math.random() - 1;
+
+    animate_x(): number {
+        return Math.cos(Date.now()/100 + this.rand);
+    }
+
+    animate_y(): number {
+        return Math.sin(Date.now()/100 + this.rand);
+    }
+
+    animate_size(): number {
+        return 1;
+    }
+}
+
+function shuffle(arr: Array<number>) {
+    let currentIndex = arr.length,  randomIndex;
+  
+    // While there remain elements to shuffle.
+    while (currentIndex != 0) {
+  
+      // Pick a remaining element.
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [arr[currentIndex], arr[randomIndex]] = [
+        arr[randomIndex], arr[currentIndex]];
+    }
+  
+    return arr;
+  }
+
+export class Flinch { 
+    rand: number = 2*Math.random() - 1;
+    x_walk: Array<number>;
+    y_walk: Array<number>;
+    x: number;
+    y: number;
+
+    constructor(initial_x: number, initial_y: number, duration: number) {
+        this.x = initial_x;
+        this.x_walk = new Array(Math.round((duration - initial_x)/2)).fill(1);
+        this.x_walk.push(...(new Array(Math.round((initial_x + duration)/2))).fill(-1))
+        shuffle(this.x_walk);
+        this.y = initial_y;
+        this.y_walk = new Array(Math.round((duration - initial_y)/2)).fill(1);
+        this.y_walk.push(...(new Array(Math.round((initial_y + duration)/2))).fill(-1))
+        shuffle(this.y_walk);
+    }
+
+    animate_x(): number {
+        this.x += this.x_walk.length > 0 ? this.x_walk.pop(): 0;
+        return this.x;
+    }
+
+    animate_y(): number {
+        this.y += this.y_walk.length > 0 ? this.y_walk.pop(): 0;
+        return this.y;
+    }
+
+    animate_size(): number {
+        return 1;
+    }
+}
+
 // TODO: Add animate_size()
 // NOTE: This is some sicko stuff.
-type Animatable = ConstrainedMixinable<ILocatableDisplay>;
-function Animate<TBase extends Animatable>(Base: TBase){
-    return class Animated extends Base {        
+type Animatable = ConstrainedMixinable<ILocatable>;
+function Animate<TBase extends Animatable>(Base: TBase, animation: IAnimation){
+    return class Animated extends Base {  
+        animation = animation;
+
         get xOffset(): number {
-            return this._xOffset + this.animate_x();
+            return this._xOffset + this.animation.animate_x();
         }
 
         get yOffset(): number {
-            return this._yOffset + this.animate_y();
+            return this._yOffset + this.animation.animate_y();
         }
 
-        animate_x(): number {
-            return Math.cos(Date.now()/100);
+        get size(): number {
+            return this._size*this.animation.animate_size();
         }
+    }
+}
 
-        animate_y(): number {
-            return Math.sin(Date.now()/100);
-        }
+export class AbstractVisual {
+    constructor() {
+    }
+
+    display(context: CanvasRenderingContext2D) {
+    }
+}
+
+export class LinearVisual {
+    from: ILocatable;
+    to: ILocatable;
+
+    constructor(from: ILocatable, to: ILocatable) {
+        this.from = from;
+        this.to = to;    
+    }
+
+    display(context: CanvasRenderingContext2D) {
+        this.render(context, 'indianred')
+    }
+
+    render(context: CanvasRenderingContext2D, clr: string) {
+        var from = this.from;
+        var to = this.to;
+        // @ts-ignore
+        var adj_from = from.size * 0.5;
+        // @ts-ignore
+        var adj_to = to.size * 0.5;
+        var x_from = from.xOffset + adj_from;
+        var y_from = from.yOffset + adj_from;
+        var x_to = to.xOffset + adj_to;
+        var y_to = to.yOffset + adj_to;
+        makeLine(
+            x_from, y_from, x_to, y_to,
+            context, 10, clr)
     }
 }
 
@@ -149,11 +262,11 @@ export class AbstractDisplay<T extends ISelectable> {
 
 }
 
-export class GridLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatableDisplay {
+export class GridLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatable {
     selectable: GridLocation;
     _xOffset: number;
     _yOffset: number;
-    size: number;
+    _size: number;
     width: number;
     height: number;
 
@@ -161,7 +274,7 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
         super(loc);
         this._xOffset = this.selectable.x * size + 0.1 * size;
         this._yOffset = this.selectable.y * size + 0.1 * size;
-        this.size = size * 0.8;
+        this._size = size * 0.8;
         this.width = size * 0.8;
         this.height = size * 0.8;
     }
@@ -172,6 +285,10 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
 
     get yOffset(): number {
         return this._yOffset;
+    }
+
+    get size(): number {
+        return this._size;
     }
 
     render(context: CanvasRenderingContext2D, clr: string) {
@@ -214,11 +331,11 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
 }
 
 
-class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisplay{
+class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable{
     selectable: Unit;
     _xOffset: number;
     _yOffset: number;
-    size: number;
+    _size: number;
     width: number;
     height: number;
 
@@ -235,10 +352,14 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisplay{
         return this._yOffset;
     }
 
+    get size(): number {
+        return this._size;
+    }
+
     update_pos() {
         this._xOffset = this.selectable.loc.x * size + 0.2 * size;
         this._yOffset = this.selectable.loc.y * size + 0.2 * size;
-        this.size = size * 0.6;
+        this._size = size * 0.6;
         this.width = size * 0.6;
         this.height = size * 0.6;
     }
@@ -285,16 +406,18 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatableDisplay{
     }
 }
 
-export const UnitDisplay = Animate(_UnitDisplay);
+export const UnitDisplay = Animate(_UnitDisplay, new CircleInPlace());
+// export const UnitDisplay = Animate(_UnitDisplay, new Flinch(100, 0, 1000));
+// export const UnitDisplay = Animate(_UnitDisplay, new Flinch(0, 0, 0));
 
 export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     selectable: IMenuable;
-    parent: ILocatableDisplay;
+    parent: ILocatable;
     size: number;
     width: number;
     height: number;
     
-    constructor(selectable: IMenuable, parent: ILocatableDisplay) {
+    constructor(selectable: IMenuable, parent: ILocatable) {
         super(selectable);
         this.parent = parent;
         this.size = size*0.4;
