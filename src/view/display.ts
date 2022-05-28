@@ -6,6 +6,7 @@ import { Awaited } from "../model/utilities";
 import { GridLocation } from "../model/space";
 import { Unit } from "../model/unit";
 import { Action } from "../model/state";
+import { createWatchCompilerHost } from "typescript";
 
 export enum DisplayState {
     Neutral,
@@ -36,26 +37,34 @@ export interface IMenuable {// Action<ISelectable>, Confirmation
     text: string;
 }
 
+type DeltaGen = Generator<number, void, DeltaGen>;
+
 // Time-varying animations
 interface IAnimation {
-    animate_x(): number;
-    animate_y(): number;
-    animate_size(): number; // TODO: Implement on ILocatable
+    delta_x(): DeltaGen;
+    delta_y(): DeltaGen;
+    delta_size(): DeltaGen; // TODO: Implement on ILocatable
 }
 
-export class CircleInPlace { 
+export class CircleInPlace implements IAnimation { 
     rand = 2*Math.random() - 1;
 
-    animate_x(): number {
-        return Math.cos(Date.now()/100 + this.rand);
+    * delta_x(): DeltaGen {
+        while(true){
+            yield Math.cos(Date.now()/100 + this.rand);
+        } 
     }
 
-    animate_y(): number {
-        return Math.sin(Date.now()/100 + this.rand);
+    * delta_y(): DeltaGen {
+        while(true){
+            yield Math.sin(Date.now()/100 + this.rand);
+        }
     }
 
-    animate_size(): number {
-        return 1;
+    * delta_size(): DeltaGen {
+        while(true){
+            yield Math.sin(Date.now()/100 + this.rand);
+        }
     }
 }
 
@@ -77,12 +86,13 @@ function shuffle(arr: Array<number>) {
     return arr;
   }
 
-export class Flinch { 
+export class Flinch implements IAnimation { 
     rand: number = 2*Math.random() - 1;
     x_walk: Array<number>;
     y_walk: Array<number>;
     x: number;
     y: number;
+    finished: boolean;
 
     constructor(initial_x: number, initial_y: number, duration: number) {
         this.x = initial_x;
@@ -93,41 +103,51 @@ export class Flinch {
         this.y_walk = new Array(Math.round((duration - initial_y)/2)).fill(1);
         this.y_walk.push(...(new Array(Math.round((initial_y + duration)/2))).fill(-1))
         shuffle(this.y_walk);
+        this.finished = false;
     }
 
-    animate_x(): number {
-        this.x += this.x_walk.length > 0 ? this.x_walk.pop(): 0;
-        return this.x;
+    * delta_x(): DeltaGen {
+        while(this.x_walk.length > 0) {
+            this.x += this.x_walk.pop();
+            yield this.x;
+        }
+        this.finished = true;
     }
 
-    animate_y(): number {
-        this.y += this.y_walk.length > 0 ? this.y_walk.pop(): 0;
-        return this.y;
+    * delta_y(): DeltaGen {
+        while(this.y_walk.length > 0) {
+            this.y += this.y_walk.pop();
+            yield this.y;
+        }
+        this.finished = true;
     }
 
-    animate_size(): number {
-        return 1;
+    * delta_size(): DeltaGen {
+        while(this.finished) {
+            yield 1;
+        }
     }
 }
 
-// TODO: Add animate_size()
-// NOTE: This is some sicko stuff.
+// NOTE: TS Mixins are some sicko stuff.
 type Animatable = ConstrainedMixinable<ILocatable>;
 function Animate<TBase extends Animatable>(Base: TBase, animation: IAnimation){
     return class Animated extends Base {  
-        animation = animation;
+        _animation = animation;
 
         get xOffset(): number {
-            return this._xOffset + this.animation.animate_x();
+            return this._xOffset + this._animation.delta_x();
         }
 
         get yOffset(): number {
-            return this._yOffset + this.animation.animate_y();
+            return this._yOffset + this._animation.delta_y();
         }
 
         get size(): number {
-            return this._size*this.animation.animate_size();
+            return this._size*this._animation.delta_size();
         }
+
+
     }
 }
 
