@@ -1,3 +1,4 @@
+import { DisplayHandler } from "../view/display_handler";
 import { 
     Stack, 
     Tree, 
@@ -27,6 +28,8 @@ export interface IState {
 // https://www.typescriptlang.org/docs/handbook/2/functions.html#call-signatures
 export type Effect<T extends IState> = {
     description: string;
+    set_animate?: (display_handler: DisplayHandler) => void;
+    animate?: () => void;
     pre_effect: Observer<T>;
     post_effect: Observer<T>;
     (state: T): T;
@@ -50,6 +53,9 @@ export class BoardState implements IState {
     ): BoardState {
         // TODO: Handle effect-tree and observers
         for (var effect of effects) {
+            if (effect.animate != null){
+                effect.animate();
+            }
             effect(this);
         }
         return this;

@@ -48,7 +48,6 @@ interface IAnimation {
 
 function interruptable_generator(base_gen_builder: () => DeltaGen): () => DeltaGen {
     return function*(): DeltaGen {
-        console.log("Interruptable Generator Build");
         while(true) {
             console.log("Interruptable Generator Base Gen Build");
             var base_gen = base_gen_builder();
@@ -62,6 +61,7 @@ function interruptable_generator(base_gen_builder: () => DeltaGen): () => DeltaG
 }
 
 class BaseAnimation implements IAnimation {
+
     * _delta_x(): DeltaGen {
         while(true) {
             var gen = yield 0;
@@ -174,7 +174,6 @@ export class Flinch implements IAnimation {
 
     // @ts-ignore
     * delta_x(): DeltaGen {
-        console.log("Flinch DX Build")
         while(this.x_walk.length > 0) {
             this.x += this.x_walk.pop();
             yield this.x;
@@ -193,7 +192,43 @@ export class Flinch implements IAnimation {
 
     // @ts-ignore
     * delta_s(): DeltaGen {
-        while(this.finished) {
+        while(!this.finished) {
+            yield 1;
+        }
+    }
+}
+
+export class Move implements IAnimation { 
+    x_walk: Array<number>;
+    y_walk: Array<number>;
+    finished: boolean;
+
+    constructor(dx:number, dy: number, duration: number) {
+        this.x_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dx*size/duration);
+        this.y_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dy*size/duration);
+        this.finished = false;
+    }
+
+    // @ts-ignore
+    * delta_x(): DeltaGen {
+        console.log("Move DX")
+        while(this.x_walk.length > 0) {
+            yield this.x_walk.shift();
+        }
+        this.finished = true;
+    }
+
+    // @ts-ignore
+    * delta_y(): DeltaGen {
+        while(this.y_walk.length > 0) {
+            yield this.y_walk.shift();
+        }
+        this.finished = true;
+    }
+
+    // @ts-ignore
+    * delta_s(): DeltaGen {
+        while(!this.finished) {
             yield 1;
         }
     }

@@ -45,6 +45,12 @@ interface IDiscreteLocation extends ILocation {}
 
 interface ILocationAttributes {}
 
+// TODO: Quick and dirty: expand use?
+export interface Point {
+    x: number;
+    y: number;
+}
+
 export class GridLocation implements IDiscreteLocation {
     x: number;
     y: number;
@@ -119,7 +125,12 @@ export class GridSpace {
         return this.getNeighborhood(loc, GRID_ADJACENCY);
     }
 
+    getVector(loc: GridLocation, other_loc: GridLocation): Point {
+        return {x: other_loc.x - loc.x, y: other_loc.y - loc.y};
+    }
+
     getDistance(loc: GridLocation, other_loc: GridLocation): number {
+        var {x, y} = this.getVector(loc, other_loc);
         return Math.abs(loc.x - other_loc.x) + Math.abs(loc.y - other_loc.y);
     }
 }

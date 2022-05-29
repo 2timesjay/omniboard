@@ -3,7 +3,7 @@ import { ISelectable, Stack } from "../model/core";
 import { InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
 import { BoardState, Action, IState } from "../model/state";
-import { DisplayState, Flinch, LinearVisual, UnitDisplay } from "./display";
+import { DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
 import { DisplayMap } from "./input";
 import { makeLine } from "./rendering";
 
@@ -68,14 +68,15 @@ export class BaseDisplayHandler {
      */ 
     on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
         console.log(this.stateful_selectables);
-        // TODO: Just a placeholder
-        if (this.stateful_selectables.length > 0) {
-            var unit_display = this.display_map.get(this.stateful_selectables[0]);
-            console.log(unit_display); 
-            var flinch = new Flinch(Math.random()*20 - 10, Math.random()*20 - 10, 100);
-            // @ts-ignore AbstractDisplay; but also can't cast unit_display to Mixin'd UnitDisplay?
-            unit_display.interrupt_animation(flinch);
-        }
+        // TODO: Just an animation placeholder
+        // if (this.stateful_selectables.length > 0) {
+        //     var unit_display = this.display_map.get(this.stateful_selectables[0]);
+        //     console.log(unit_display); 
+        //     // var anim = new Flinch(Math.random()*20 - 10, Math.random()*20 - 10, 100);
+        //     var anim = new Move(1, 1, 100);
+        //     // @ts-ignore AbstractDisplay; but also can't cast unit_display to Mixin'd UnitDisplay?
+        //     unit_display.interrupt_animation(anim);
+        // }
 
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".

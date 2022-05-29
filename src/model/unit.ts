@@ -1,6 +1,8 @@
+import { Move } from "../view/display";
+import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
-import { GridLocation, GridSpace } from "./space";
+import { GridLocation, GridSpace, Point } from "./space";
 import { Action, BoardState, Effect, IState } from "./state";
 
 // TODO: Move somewhere more appropriate
@@ -77,8 +79,15 @@ function construct_move(unit: Unit, state: BoardState) {
                 unit.setLoc(loc);
                 return state;
             };
+            var vector: Point = state.grid.getVector(unit.loc, loc);
             // TODO: Reconsider Effect as callable.
             effect.description = "move unit";
+            effect.set_animate = (display_handler:DisplayHandler) => {
+                var unit_display = display_handler.display_map.get(unit);
+                var animation = new Move(vector.x, vector.y, 100);
+                // @ts-ignore
+                effect.animate = () => (unit_display.interrupt_animation(animation));
+            }
             effect.pre_effect = null;
             effect.post_effect = null;
             return effect;
