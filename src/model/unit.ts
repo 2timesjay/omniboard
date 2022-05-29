@@ -1,4 +1,4 @@
-import { Move } from "../view/display";
+import { Flinch, Move } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
@@ -41,8 +41,16 @@ function construct_attack(unit: Unit, state: BoardState) {
                 target.damage(unit.strength);
                 return state;
             };
+            var vector: Point = state.grid.getVector(unit.loc, target.loc);
             // TODO: Reconsider Effect as callable.
             effect.description = "attack target";
+            effect.set_animate = (display_handler:DisplayHandler) => {
+                var unit_display = display_handler.display_map.get(target);
+                // TODO: Relate to graphical size.
+                var animation = new Flinch(vector.x*20, vector.y*20, 100);
+                // @ts-ignore
+                effect.animate = () => (unit_display.interrupt_animation(animation));
+            }
             effect.pre_effect = null;
             effect.post_effect = null;
             return effect;
@@ -130,7 +138,14 @@ function construct_chain_lightning(unit: Unit, state: BoardState) {
                 return state;
             };
             // TODO: Reconsider Effect as callable.
-            effect.description = "move unit";
+            effect.description = "lightning damage unit";
+            effect.set_animate = (display_handler: DisplayHandler) => {
+                console.log("Animation for target: ", target);
+                var unit_display = display_handler.display_map.get(target);
+                var animation = new Flinch(.4*(2*Math.random()-1), .4*(2*Math.random()-1), 100);
+                // @ts-ignore
+                effect.animate = () => {console.log("CL Anim"); unit_display.interrupt_animation(animation)};
+            }
             effect.pre_effect = null;
             effect.post_effect = null;
             return effect;

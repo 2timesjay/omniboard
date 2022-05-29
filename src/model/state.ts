@@ -51,15 +51,27 @@ export class BoardState implements IState {
     async process(
         effects: Array<Effect<BoardState>>
     ): Promise<BoardState> {
+        var self = this;
         // TODO: Handle effect-tree and observers
+        var execution_promise = sleep(0);
         for (var effect of effects) {
-            if (effect.animate != null){
-                console.log("Animating")
-                effect.animate();
-                await sleep(1000)
+            if (false) {
+            // if (effect.animate != null){
+                console.log("Animating + Executing")
+                execution_promise = execution_promise
+                    .then(() => effect.animate())
+                    .then(() => sleep(1000))
+                    .then(() => effect(self))
+                    .then(() => console.log("Tempo"));
+            } else {
+                console.log("Executing")
+                // execution_promise = execution_promise
+                //     .then(() => sleep(1000))
+                //     .then(() => effect(self))  
+                //     .then(() => console.log("Tempo"));
+                // effect(self);
+                sleep(0).then(() => effect.bind(self)(self));
             }
-            console.log("Executing")
-            effect(this);
         }
         return this;
     };

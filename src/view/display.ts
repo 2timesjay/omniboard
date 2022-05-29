@@ -160,6 +160,7 @@ export class Flinch implements IAnimation {
     y: number;
     finished: boolean;
 
+    // TODO: Harmonize with Move (use grid locs instead of pixel args)
     constructor(initial_x: number, initial_y: number, duration: number) {
         this.x = initial_x;
         this.x_walk = new Array(Math.round((duration - initial_x)/2)).fill(1);
