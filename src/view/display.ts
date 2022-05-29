@@ -37,34 +37,101 @@ export interface IMenuable {// Action<ISelectable>, Confirmation
     text: string;
 }
 
-type DeltaGen = Generator<number, void, DeltaGen>;
+type DeltaGen = Generator<number, DeltaGen, DeltaGen>;
 
 // Time-varying animations
 interface IAnimation {
     delta_x(): DeltaGen;
     delta_y(): DeltaGen;
-    delta_size(): DeltaGen; // TODO: Implement on ILocatable
+    delta_s(): DeltaGen; // TODO: Implement on ILocatable
 }
 
-export class CircleInPlace implements IAnimation { 
-    rand = 2*Math.random() - 1;
+function interruptable_generator(base_gen_builder: () => DeltaGen): () => DeltaGen {
+    return function*(): DeltaGen {
+        console.log("Interruptable Generator Build");
+        while(true) {
+            console.log("Interruptable Generator Base Gen Build");
+            var base_gen = base_gen_builder();
+            var delegate_gen: DeltaGen = yield *base_gen;
+            if (delegate_gen != null) {
+                console.log("Received interruption: ", delegate_gen)
+                yield *delegate_gen;
+            }
+        }
+    }
+}
 
-    * delta_x(): DeltaGen {
+class BaseAnimation implements IAnimation {
+    * _delta_x(): DeltaGen {
+        while(true) {
+            var gen = yield 0;
+            if (gen != null) {
+                return gen;
+            }
+        }
+    }
+
+    get delta_x() {
+        return interruptable_generator(this._delta_x.bind(this));
+    }
+
+    * _delta_y(): DeltaGen {
+        while(true) {
+            yield 0;
+            var gen = yield 0;
+            if (gen != null) {
+                return gen;
+            }
+        }
+    }
+
+    get delta_y() {
+        return interruptable_generator(this._delta_y.bind(this));
+    }
+
+    * _delta_s(): DeltaGen {
+        while(true) {
+            yield 1;
+            var gen = yield 1;
+            if (gen != null) {
+                return gen;
+            }
+        }
+    }
+
+    get delta_s() {
+        return interruptable_generator(this._delta_s.bind(this));
+    }
+}
+
+export class CircleInPlace extends BaseAnimation { 
+    rand: number;
+
+    * _delta_x(): DeltaGen {
         while(true){
-            yield Math.cos(Date.now()/100 + this.rand);
+            var gen = yield Math.cos(Date.now()/100 + this.phase_shift);
+            if (gen != null) {
+                return gen;
+            }
         } 
     }
 
-    * delta_y(): DeltaGen {
+    * _delta_y(): DeltaGen {
         while(true){
-            yield Math.sin(Date.now()/100 + this.rand);
+            var gen = yield Math.sin(Date.now()/100 + this.phase_shift);
+            if (gen != null) {
+                return gen;
+            }
         }
     }
 
-    * delta_size(): DeltaGen {
-        while(true){
-            yield Math.sin(Date.now()/100 + this.rand);
+    // TODO: Couldn't construct `this.rand` in constructor so had to do in gens.
+    // TODO: This was actually because I didn't bind correctly.
+    get phase_shift(): number {
+        if (this.rand === undefined) {
+            this.rand = Math.PI*(2*Math.random() - 1);
         }
+        return this.rand;
     }
 }
 
@@ -87,7 +154,6 @@ function shuffle(arr: Array<number>) {
   }
 
 export class Flinch implements IAnimation { 
-    rand: number = 2*Math.random() - 1;
     x_walk: Array<number>;
     y_walk: Array<number>;
     x: number;
@@ -106,7 +172,9 @@ export class Flinch implements IAnimation {
         this.finished = false;
     }
 
+    // @ts-ignore
     * delta_x(): DeltaGen {
+        console.log("Flinch DX Build")
         while(this.x_walk.length > 0) {
             this.x += this.x_walk.pop();
             yield this.x;
@@ -114,6 +182,7 @@ export class Flinch implements IAnimation {
         this.finished = true;
     }
 
+    // @ts-ignore
     * delta_y(): DeltaGen {
         while(this.y_walk.length > 0) {
             this.y += this.y_walk.pop();
@@ -122,7 +191,8 @@ export class Flinch implements IAnimation {
         this.finished = true;
     }
 
-    * delta_size(): DeltaGen {
+    // @ts-ignore
+    * delta_s(): DeltaGen {
         while(this.finished) {
             yield 1;
         }
@@ -131,20 +201,32 @@ export class Flinch implements IAnimation {
 
 // NOTE: TS Mixins are some sicko stuff.
 type Animatable = ConstrainedMixinable<ILocatable>;
-function Animate<TBase extends Animatable>(Base: TBase, animation: IAnimation){
+function Animate<TBase extends Animatable>(Base: TBase, BaseAnimation: new() => BaseAnimation){
     return class Animated extends Base {  
-        _animation = animation;
+        _animation: BaseAnimation = new BaseAnimation();
+        delta_x: DeltaGen = this._animation.delta_x();
+        delta_y: DeltaGen = this._animation.delta_y();
+        delta_s: DeltaGen = this._animation.delta_s();
+
+        interrupt_animation(animation: IAnimation) {
+            this.delta_x.next(animation.delta_x());
+            this.delta_y.next(animation.delta_y());
+            this.delta_s.next(animation.delta_s());
+        }
 
         get xOffset(): number {
-            return this._xOffset + this._animation.delta_x();
+            // @ts-ignore possible generator termination
+            return this._xOffset + this.delta_x.next().value;
         }
 
         get yOffset(): number {
-            return this._yOffset + this._animation.delta_y();
+            // @ts-ignore possible generator termination
+            return this._yOffset + this.delta_y.next().value;
         }
 
         get size(): number {
-            return this._size*this._animation.delta_size();
+            // @ts-ignore possible generator termination
+            return this._size * this.delta_s.next().value;
         }
 
 
@@ -426,7 +508,7 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable{
     }
 }
 
-export const UnitDisplay = Animate(_UnitDisplay, new CircleInPlace());
+export const UnitDisplay = Animate(_UnitDisplay, CircleInPlace);
 // export const UnitDisplay = Animate(_UnitDisplay, new Flinch(100, 0, 1000));
 // export const UnitDisplay = Animate(_UnitDisplay, new Flinch(0, 0, 0));
 
