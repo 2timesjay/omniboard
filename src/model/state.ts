@@ -18,7 +18,7 @@ import {
 import { GridSpace } from "./space";
 import { Unit } from "./unit";
 
-import {Awaited} from "./utilities";
+import {Awaited, sleep} from "./utilities";
 
 export interface IState {
     get_selectables: () => Array<ISelectable>;
@@ -48,14 +48,17 @@ export class BoardState implements IState {
     units: Array<Unit>;
     confirmation: Confirmation; // NOTE: Single Confirmation for all cases.
 
-    process(
+    async process(
         effects: Array<Effect<BoardState>>
-    ): BoardState {
+    ): Promise<BoardState> {
         // TODO: Handle effect-tree and observers
         for (var effect of effects) {
             if (effect.animate != null){
+                console.log("Animating")
                 effect.animate();
+                await sleep(1000)
             }
+            console.log("Executing")
             effect(this);
         }
         return this;
