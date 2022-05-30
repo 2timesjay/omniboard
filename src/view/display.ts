@@ -168,6 +168,7 @@ export class Flinch implements IAnimation {
     finished: boolean;
 
     // TODO: Harmonize with Move (use grid locs instead of pixel args)
+    // TODO: Include "bump" outwards.
     constructor(initial_x: number, initial_y: number, duration: number) {
         this.x = initial_x;
         this.x_walk = new Array(Math.round((duration - initial_x)/2)).fill(1);
@@ -225,6 +226,53 @@ export class Move implements IAnimation {
         if (!this.finished){        
             this.finished = true;
             this.parent.update_pos();
+        }
+    }
+
+    // @ts-ignore
+    * delta_x(): DeltaGen {
+        console.log("Move DX")
+        while(this.x_walk.length > 0) {
+            yield this.x_walk.shift();
+        }
+        this.finish();
+    }
+
+    // @ts-ignore
+    * delta_y(): DeltaGen {
+        while(this.y_walk.length > 0) {
+            yield this.y_walk.shift();
+        }
+        this.finish();
+    }
+
+    // @ts-ignore
+    * delta_s(): DeltaGen {
+        while(!this.finished) {
+            yield 1;
+        }
+        this.finish();
+    }
+}
+
+export class Bump implements IAnimation { 
+    x_walk: Array<number>;
+    y_walk: Array<number>;
+    finished: boolean;
+
+    constructor(
+        dx:number, dy: number, duration: number
+    ) {
+        this.x_walk = [ ...Array(Math.round(duration/2)).keys() ].map( i => (i)*dx*size/duration*2);
+        this.x_walk.push(...this.x_walk.slice().reverse());
+        this.y_walk = [ ...Array(Math.round(duration/2)).keys() ].map( i => (i)*dy*size/duration*2);
+        this.y_walk.push(...this.y_walk.slice().reverse());
+        this.finished = false;
+    }
+
+    finish(): void {
+        if (!this.finished){        
+            this.finished = true;
         }
     }
 

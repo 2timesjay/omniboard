@@ -1,4 +1,4 @@
-import { Flinch, Move } from "../view/display";
+import { Bump, Flinch, Move } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
@@ -45,11 +45,18 @@ function construct_attack(unit: Unit, state: BoardState) {
             // TODO: Reconsider Effect as callable.
             effect.description = "attack target";
             effect.set_animate = (display_handler:DisplayHandler) => {
-                var unit_display = display_handler.display_map.get(target);
+                var target_display = display_handler.display_map.get(target);
+                var unit_display = display_handler.display_map.get(unit);
                 // TODO: Relate to graphical size.
-                var animation = new Flinch(vector.x*20, vector.y*20, 50);
+                var target_animation = new Flinch(vector.x*20, vector.y*20, 50);
+                var unit_animation = new Bump(vector.x*.4, vector.y*.4, 50);
                 // @ts-ignore
-                effect.animate = () => (unit_display.interrupt_animation(animation));
+                effect.animate = () => {
+                    // @ts-ignore
+                    target_display.interrupt_animation(target_animation);
+                    // @ts-ignore
+                    unit_display.interrupt_animation(unit_animation);
+                };
             }
             effect.pre_effect = null;
             effect.post_effect = null;

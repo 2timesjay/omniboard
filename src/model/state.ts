@@ -63,7 +63,6 @@ export class BoardState implements IState {
                 // NOTE: Sleep Duration MUST exceed frames duration (#frames * 10) by safe margin.
                 await sleep(600);
             } else {
-                console.log("Executing")
                 await sleep(600);
                 effect(self);
             }
