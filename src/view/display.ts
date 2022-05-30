@@ -46,7 +46,9 @@ interface IAnimation {
     delta_s(): DeltaGen; // TODO: Implement on ILocatable
 }
 
-function interruptable_generator(base_gen_builder: () => DeltaGen): () => DeltaGen {
+function interruptable_generator(
+    base_gen_builder: () => DeltaGen
+): () => DeltaGen {
     return function*(): DeltaGen {
         while(true) {
             console.log("Interruptable Generator Base Gen Build");
@@ -61,6 +63,11 @@ function interruptable_generator(base_gen_builder: () => DeltaGen): () => DeltaG
 }
 
 class BaseAnimation implements IAnimation {
+    parent: AbstractDisplay<ILocatable>;
+
+    constructor(parent: AbstractDisplay<ILocatable>) {
+        this.parent = parent;
+    }
 
     * _delta_x(): DeltaGen {
         while(true) {
@@ -203,11 +210,22 @@ export class Move implements IAnimation {
     x_walk: Array<number>;
     y_walk: Array<number>;
     finished: boolean;
+    parent: AbstractDisplay<ISelectable> & ILocatable;
 
-    constructor(dx:number, dy: number, duration: number) {
+    constructor(
+        dx:number, dy: number, duration: number, parent: AbstractDisplay<ISelectable> & ILocatable
+    ) {
+        this.parent = parent;
         this.x_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dx*size/duration);
         this.y_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dy*size/duration);
         this.finished = false;
+    }
+
+    finish(): void {
+        if (!this.finished){        
+            this.finished = true;
+            this.parent.update_pos();
+        }
     }
 
     // @ts-ignore
@@ -216,7 +234,7 @@ export class Move implements IAnimation {
         while(this.x_walk.length > 0) {
             yield this.x_walk.shift();
         }
-        this.finished = true;
+        this.finish();
     }
 
     // @ts-ignore
@@ -224,7 +242,7 @@ export class Move implements IAnimation {
         while(this.y_walk.length > 0) {
             yield this.y_walk.shift();
         }
-        this.finished = true;
+        this.finish();
     }
 
     // @ts-ignore
@@ -232,14 +250,18 @@ export class Move implements IAnimation {
         while(!this.finished) {
             yield 1;
         }
+        this.finish();
     }
 }
 
 // NOTE: TS Mixins are some sicko stuff.
 type Animatable = ConstrainedMixinable<ILocatable>;
-function Animate<TBase extends Animatable>(Base: TBase, BaseAnimation: new() => BaseAnimation){
+function Animate<TBase extends Animatable>(
+    Base: TBase, BaseAnimation: new(parent: AbstractDisplay<ILocatable>) => BaseAnimation
+){
     return class Animated extends Base {  
-        _animation: BaseAnimation = new BaseAnimation();
+        // @ts-ignore
+        _animation: BaseAnimation = new BaseAnimation(this);
         delta_x: DeltaGen = this._animation.delta_x();
         delta_y: DeltaGen = this._animation.delta_y();
         delta_s: DeltaGen = this._animation.delta_s();
@@ -324,7 +346,8 @@ export class AbstractDisplay<T extends ISelectable> {
     }
 
     display(context: CanvasRenderingContext2D) {
-        this.update_pos();
+        // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
+        // this.update_pos();
         if (this.state == DisplayState.Select) {
             this.selectDisplay(context);
         } else if (this.state == DisplayState.Preview) {

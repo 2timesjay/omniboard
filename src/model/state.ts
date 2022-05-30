@@ -55,22 +55,17 @@ export class BoardState implements IState {
         // TODO: Handle effect-tree and observers
         var execution_promise = sleep(0);
         for (var effect of effects) {
-            if (false) {
-            // if (effect.animate != null){
-                console.log("Animating + Executing")
-                execution_promise = execution_promise
-                    .then(() => effect.animate())
-                    .then(() => sleep(1000))
-                    .then(() => effect(self))
-                    .then(() => console.log("Tempo"));
+            // if (false) {
+            if (effect.animate != null){
+                effect.animate();
+                effect(self);
+                // TODO: Consistent sleep milliseconds vs frames animation dur.
+                // NOTE: Sleep Duration MUST exceed frames duration (#frames * 10) by safe margin.
+                await sleep(600);
             } else {
                 console.log("Executing")
-                // execution_promise = execution_promise
-                //     .then(() => sleep(1000))
-                //     .then(() => effect(self))  
-                //     .then(() => console.log("Tempo"));
-                // effect(self);
-                sleep(0).then(() => effect.bind(self)(self));
+                await sleep(600);
+                effect(self);
             }
         }
         return this;

@@ -47,7 +47,7 @@ function construct_attack(unit: Unit, state: BoardState) {
             effect.set_animate = (display_handler:DisplayHandler) => {
                 var unit_display = display_handler.display_map.get(target);
                 // TODO: Relate to graphical size.
-                var animation = new Flinch(vector.x*20, vector.y*20, 100);
+                var animation = new Flinch(vector.x*20, vector.y*20, 50);
                 // @ts-ignore
                 effect.animate = () => (unit_display.interrupt_animation(animation));
             }
@@ -79,22 +79,31 @@ function construct_move(unit: Unit, state: BoardState) {
     )
     var digest_fn = (locs: Stack<GridLocation>): Array<Effect<BoardState>> => {
         var locs_arr = locs.to_array();
+        // TODO: don't include initial "current" loc as part of locs.
+        locs_arr.shift();
         console.log("Attempting to Digest: ", locs_arr);
         function effect_constructor(loc: GridLocation){
-            console.log("Attempting to generate move Effect", loc);
-            function effect(state: BoardState): BoardState {
-                console.log("Attempting to execute Move: ", unit.loc, loc);
+            var target_loc = loc;
+            var hash = (loc.x*100+loc.y).toString(16);
+            console.log("Attempting to generate move Effect", target_loc);
+            // @ts-ignore
+            var effect: Effect<BoardState> = (state: BoardState) => {
+                console.log("Attempting to execute Move: ", unit.loc, target_loc);
                 unit.setLoc(loc);
                 return state;
             };
-            var vector: Point = state.grid.getVector(unit.loc, loc);
-            // TODO: Reconsider Effect as callable.
+            // TODO: Reconsider Effect as callable. Really!
             effect.description = "move unit";
             effect.set_animate = (display_handler:DisplayHandler) => {
-                var unit_display = display_handler.display_map.get(unit);
-                var animation = new Move(vector.x, vector.y, 100);
-                // @ts-ignore
-                effect.animate = () => (unit_display.interrupt_animation(animation));
+                effect.animate = () => {
+                    var vector: Point = state.grid.getVector(unit.loc, target_loc);
+                    console.log("Vector: ", vector)
+                    var unit_display = display_handler.display_map.get(unit);
+                    // @ts-ignore Doesn't know unit_display is a UnitDisplay
+                    var animation = new Move(vector.x, vector.y, 40, unit_display);
+                    // @ts-ignore Can't even use UnitDisplay as a normal type.
+                    unit_display.interrupt_animation(animation)
+                };
             }
             effect.pre_effect = null;
             effect.post_effect = null;
@@ -142,7 +151,7 @@ function construct_chain_lightning(unit: Unit, state: BoardState) {
             effect.set_animate = (display_handler: DisplayHandler) => {
                 console.log("Animation for target: ", target);
                 var unit_display = display_handler.display_map.get(target);
-                var animation = new Flinch(.4*(2*Math.random()-1), .4*(2*Math.random()-1), 100);
+                var animation = new Flinch(.4*(2*Math.random()-1), .4*(2*Math.random()-1), 50);
                 // @ts-ignore
                 effect.animate = () => {console.log("CL Anim"); unit_display.interrupt_animation(animation)};
             }
