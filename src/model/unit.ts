@@ -5,6 +5,12 @@ import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAc
 import { GridLocation, GridSpace, Point } from "./space";
 import { Action, BoardState, Effect, IState } from "./state";
 
+// Actions constants
+export const MOVE = "Move";
+export const ATTACK = "Attack";
+export const CHAIN = "Chain Lightning";
+export const END = "End Turn";
+
 // TODO: Move somewhere more appropriate
 export const GLOBAL_CONFIRMATION = new  Confirmation(); 
 
@@ -174,6 +180,30 @@ function construct_chain_lightning(unit: Unit, state: BoardState) {
 }
 
 export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, state: BoardState){
+    return construct_actions(unit, state, [MOVE, ATTACK, CHAIN, END])
+} 
+
+export function construct_actions(unit: Unit, state: BoardState, action_list: Array<string>){
+    var actions = [];
+    for (var i = 0; i < action_list.length; i++) {
+        // TODO: Pass index to action construction
+        var action_str = action_list[i];
+        switch(action_str) {
+            case MOVE:
+                actions.push(construct_move(unit, state));
+                break;
+            case ATTACK:
+                actions.push(construct_attack(unit, state));
+                break;
+            case CHAIN:
+                actions.push(construct_chain_lightning(unit, state));
+                break;
+            case END:
+                actions.push(construct_end_turn(GLOBAL_CONFIRMATION, state));
+                break;
+        }
+        return actions;
+    }
     var move = construct_move(unit, state);
     var attack = construct_attack(unit, state);
     var chain_lightning = construct_chain_lightning(unit, state);
