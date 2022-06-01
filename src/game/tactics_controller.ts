@@ -3,7 +3,7 @@ import { Confirmation, InputOptions, InputRequest, InputSelection } from "../mod
 import { IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, Effect, Action, IState } from "../model/state";
-import { Unit } from "../model/unit";
+import { ATTACK, CHAIN, CHANNELED_ATTACK, END, MOVE, Unit } from "../model/unit";
 import { DisplayState } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { DisplayMap } from "../view/input";
@@ -162,16 +162,19 @@ export class TacticsPhase implements IPhase {
         // TODO: Use enum or other better action identification
         // TODO: Handle as data that's part of action?
         // TODO: use match syntax or case syntax
-        if (action.text == "Move") {
+        if (action.text == MOVE) {
             var location_stack_root = new Stack(unit.loc);
             root = location_stack_root;
-        } else if (action.text == "Attack") {
+        } else if (action.text == ATTACK) {
             var unit_root = unit;
             root = unit_root;
-        } else if (action.text == "Chain Lightning") {
+        } else if (action.text == CHANNELED_ATTACK) {
             var unit_stack_root = new Stack(unit);
             root = unit_stack_root;
-        } else if (action.text == "End Turn") {
+        } else if (action.text == CHAIN) {
+            var unit_stack_root = new Stack(unit);
+            root = unit_stack_root;
+        } else if (action.text == END) {
             var confirmation_root = new Confirmation();
             root = confirmation_root;
         }

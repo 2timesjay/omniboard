@@ -20,6 +20,8 @@ import { Unit } from "./unit";
 
 import {Awaited, sleep} from "./utilities";
 
+export const DURATION_MS = 600;
+
 export interface IState {
     get_selectables: () => Array<ISelectable>;
 };
@@ -61,9 +63,9 @@ export class BoardState implements IState {
                 effect(self);
                 // TODO: Consistent sleep milliseconds vs frames animation dur.
                 // NOTE: Sleep Duration MUST exceed frames duration (#frames * 10) by safe margin.
-                await sleep(600);
+                await sleep(DURATION_MS);
             } else {
-                await sleep(600);
+                await sleep(DURATION_MS);
                 effect(self);
             }
         }

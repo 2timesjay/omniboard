@@ -171,6 +171,7 @@ export class Flinch implements IAnimation {
     // TODO: Include "bump" outwards.
     constructor(initial_x: number, initial_y: number, duration: number) {
         this.x = initial_x;
+        console.log(Math.round((duration - initial_x)/2));
         this.x_walk = new Array(Math.round((duration - initial_x)/2)).fill(1);
         this.x_walk.push(...(new Array(Math.round((initial_x + duration)/2))).fill(-1))
         shuffle(this.x_walk);

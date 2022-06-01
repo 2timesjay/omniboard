@@ -5,11 +5,14 @@ import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAc
 import { GridLocation, GridSpace, Point } from "./space";
 import { Action, BoardState, Effect, IState } from "./state";
 
+export const DURATION_FRAMES = 25
+
 // Actions constants
 export const MOVE = "Move";
 export const ATTACK = "Attack";
 export const CHAIN = "Chain Lightning";
 export const END = "End Turn";
+export const CHANNELED_ATTACK = "Channeled Attack";
 
 // TODO: Move somewhere more appropriate
 export const GLOBAL_CONFIRMATION = new  Confirmation(); 
@@ -20,7 +23,7 @@ function construct_end_turn(confirmation: Confirmation, state: BoardState) {
         console.log("Attempting to Digest: ", "End Turn");
         return [];
     }
-    var end_turn = new Action<Confirmation, BoardState>("End Turn", 4, acquirer, digest_fn)
+    var end_turn = new Action<Confirmation, BoardState>(END, 4, acquirer, digest_fn)
     return end_turn
 }
 
@@ -54,8 +57,8 @@ function construct_attack(unit: Unit, state: BoardState) {
                 var target_display = display_handler.display_map.get(target);
                 var unit_display = display_handler.display_map.get(unit);
                 // TODO: Relate to graphical size.
-                var target_animation = new Flinch(vector.x*20, vector.y*20, 50);
-                var unit_animation = new Bump(vector.x*.4, vector.y*.4, 50);
+                var target_animation = new Flinch(vector.x*20, vector.y*20, DURATION_FRAMES);
+                var unit_animation = new Bump(vector.x*.4, vector.y*.4, DURATION_FRAMES);
                 // @ts-ignore
                 effect.animate = () => {
                     // @ts-ignore
@@ -70,21 +73,21 @@ function construct_attack(unit: Unit, state: BoardState) {
         }
         return [effect_constructor(target)];
     }
-    var move = new Action<Unit, BoardState>("Attack", 2, acquirer, digest_fn)
+    var move = new Action<Unit, BoardState>(ATTACK, 2, acquirer, digest_fn)
     return move
 }
 
 function construct_move(unit: Unit, state: BoardState) {
-    var increment_fn = (loc_stack: Stack<GridLocation>): Array<GridLocation> => {
+    var increment_fn = (stack: Stack<GridLocation>): Array<GridLocation> => {
         var units = state.units;
         var grid_space = state.grid;
-        var neighborhood = grid_space.getGridNeighborhood(loc_stack.value);
+        var neighborhood = grid_space.getGridNeighborhood(stack.value);
         var occupied = new Set(units.map((u) => u.loc));
         var options = neighborhood.filter((l) => !occupied.has(l))
         return options;
     };
-    var termination_fn = (loc_stack: Stack<GridLocation>): boolean => {
-        return loc_stack.depth >= unit.speed + 1; // + 1 because stack starts at root.
+    var termination_fn = (stack: Stack<GridLocation>): boolean => {
+        return stack.depth >= unit.speed + 1; // + 1 because stack starts at root.
     }
     var acquirer = new SequentialInputAcquirer<GridLocation>(
         increment_fn,
@@ -113,7 +116,7 @@ function construct_move(unit: Unit, state: BoardState) {
                     console.log("Vector: ", vector)
                     var unit_display = display_handler.display_map.get(unit);
                     // @ts-ignore Doesn't know unit_display is a UnitDisplay
-                    var animation = new Move(vector.x, vector.y, 40, unit_display);
+                    var animation = new Move(vector.x, vector.y, DURATION_FRAMES, unit_display);
                     // @ts-ignore Can't even use UnitDisplay as a normal type.
                     unit_display.interrupt_animation(animation)
                 };
@@ -125,24 +128,96 @@ function construct_move(unit: Unit, state: BoardState) {
         return locs_arr.map(effect_constructor)
     }
     // TODO: Fix bad use of generics here.
-    var move = new Action<GridLocation, BoardState>("Move", 1, acquirer, digest_fn)
+    var move = new Action<GridLocation, BoardState>(MOVE, 1, acquirer, digest_fn)
+    return move
+}
+
+function construct_channeled_attack(unit: Unit, state: BoardState) {
+    // TODO: Create acquirer as fixed sequences of SimpleInputAcquirers
+    var increment_fn = (stack: Stack<Unit>): Array<Unit> => {
+        switch (stack.depth) {
+            case 1: // choose proxy
+                var proxy_options = state.units.filter((u) => (u.team == unit.team));
+                return proxy_options;
+            case 2: // proxy already chosen; choose target
+                var proxy = stack.value;
+                var units = state.units.filter((u) => (u.team != unit.team));
+                var attack_range = proxy.attack_range;
+                var attacker_loc = proxy.loc;
+                var options = units.filter(
+                    (u) => state.grid.getDistance(attacker_loc, u.loc) <= attack_range
+                );
+                return options;
+            default: // should never happen
+                return [];
+        }
+    };
+    var termination_fn = (stack: Stack<Unit>): boolean => {
+        return stack.depth == 3; // + 1 because stack starts at root.
+    }
+    var acquirer = new SequentialInputAcquirer<Unit>(
+        increment_fn, termination_fn
+    )
+    var digest_fn = (units: Stack<Unit>): Array<Effect<BoardState>> => {
+        console.log("Attempting to Digest: ", units);
+        function effect_constructor(unit: Unit, proxy: Unit, target: Unit){
+            console.log("Attempting to generate damage Effect: ", target);
+            function effect(state: BoardState): BoardState {
+                console.log("Attempting to channel Damage: ", proxy, target);
+                target.damage(proxy.strength);
+                return state;
+            };
+            var vector: Point = state.grid.getVector(proxy.loc, target.loc);
+            // TODO: Reconsider Effect as callable.
+            effect.description = "attack target";
+            effect.set_animate = (display_handler:DisplayHandler) => {
+                // TODO: get<T> method that returns AbstractDisplay<T>, safely.
+                var unit_display = display_handler.display_map.get(unit);
+                var target_display = display_handler.display_map.get(target);
+                var proxy_display = display_handler.display_map.get(proxy);
+                // TODO: Relate to graphical size.
+                var target_animation = new Flinch(vector.x*20, vector.y*20, DURATION_FRAMES);
+                var unit_animation = new Flinch(10*(2*Math.random()-1), 10*(2*Math.random()-1), DURATION_FRAMES);
+                var proxy_animation = new Bump(vector.x*.4, vector.y*.4, DURATION_FRAMES);
+                // @ts-ignore
+                effect.animate = () => {
+                    // @ts-ignore
+                    unit_display.interrupt_animation(unit_animation);
+                    // @ts-ignore
+                    proxy_display.interrupt_animation(proxy_animation)
+                    // @ts-ignore
+                    target_display.interrupt_animation(target_animation);
+                };
+            }
+            effect.pre_effect = null;
+            effect.post_effect = null;
+            return effect;
+        }
+
+        var units_arr = units.to_array(); // Length 3 array
+        var unit = units_arr[0];
+        var proxy = units_arr[1];
+        var target = units_arr[2];
+        return [effect_constructor(unit, proxy, target)];
+    }
+    var move = new Action<Unit, BoardState>(CHANNELED_ATTACK, 3, acquirer, digest_fn)
     return move
 }
 
 // TODO: option to select unit twice shown but triggers "confirm". Either forbid or fix.
 function construct_chain_lightning(unit: Unit, state: BoardState) {
-    var increment_fn = (unit_stack: Stack<Unit>): Array<Unit> => {
+    var increment_fn = (stack: Stack<Unit>): Array<Unit> => {
         var grid = state.grid;
         var units = state.units;
-        var origin_loc = unit_stack.value.loc;
+        var origin_loc = stack.value.loc;
         var options = units.filter((u) => {
             var dist = grid.getDistance(origin_loc, u.loc);
             return 0 < dist && dist <= 3;
         });
         return options;
     };
-    var termination_fn = (loc_stack: Stack<Unit>): boolean => {
-        return loc_stack.depth >= 4; // + 1 because stack starts at root.
+    var termination_fn = (stack: Stack<Unit>): boolean => {
+        return stack.depth >= 4; // + 1 because stack starts at root.
     }
     var acquirer = new SequentialInputAcquirer<Unit>(
         increment_fn,
@@ -164,7 +239,7 @@ function construct_chain_lightning(unit: Unit, state: BoardState) {
             effect.set_animate = (display_handler: DisplayHandler) => {
                 console.log("Animation for target: ", target);
                 var unit_display = display_handler.display_map.get(target);
-                var animation = new Flinch(.4*(2*Math.random()-1), .4*(2*Math.random()-1), 50);
+                var animation = new Flinch(20*(2*Math.random()-1), 20*(2*Math.random()-1), DURATION_FRAMES);
                 // @ts-ignore
                 effect.animate = () => {console.log("CL Anim"); unit_display.interrupt_animation(animation)};
             }
@@ -175,7 +250,7 @@ function construct_chain_lightning(unit: Unit, state: BoardState) {
         return units_arr.map(effect_constructor)
     }
     // TODO: Fix bad use of generics here.
-    var move = new Action<Unit, BoardState>("Chain Lightning", 3, acquirer, digest_fn)
+    var move = new Action<Unit, BoardState>(CHAIN, 3, acquirer, digest_fn)
     return move
 }
 
@@ -192,6 +267,9 @@ export function construct_actions(unit: Unit, state: BoardState, action_list: Ar
             case MOVE:
                 actions.push(construct_move(unit, state));
                 break;
+            case CHANNELED_ATTACK:
+                actions.push(construct_channeled_attack(unit, state));
+                break;
             case ATTACK:
                 actions.push(construct_attack(unit, state));
                 break;
@@ -202,18 +280,8 @@ export function construct_actions(unit: Unit, state: BoardState, action_list: Ar
                 actions.push(construct_end_turn(GLOBAL_CONFIRMATION, state));
                 break;
         }
-        return actions;
     }
-    var move = construct_move(unit, state);
-    var attack = construct_attack(unit, state);
-    var chain_lightning = construct_chain_lightning(unit, state);
-    var end_turn = construct_end_turn(GLOBAL_CONFIRMATION, state);
-    return [
-        move,
-        attack,
-        chain_lightning,
-        end_turn,
-    ]
+    return actions;
 } 
 
 export class Unit implements ISelectable {

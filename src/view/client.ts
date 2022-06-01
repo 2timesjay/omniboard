@@ -6,6 +6,8 @@ import { display_setup } from "../game/tactics_display_setup";
 import { Canvas2DBroker } from "./broker";
 import { DisplayHandler } from "./display_handler";
 
+export const TICK_DURATION_MS = 20
+
 // State Setup
 var k = 6;
 var state = tactics_setup(k)
@@ -25,7 +27,7 @@ var input_request = broker.input_request;
 // Create Controller
 var tp = new TacticsPhase();
 var display_handler = new DisplayHandler(context, display_map, state);
-var tick = setInterval(display_handler.on_tick.bind(display_handler), 10);
+var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
 var tc = new TacticsController(state);
 
 // Start main game loop
