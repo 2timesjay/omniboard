@@ -288,27 +288,49 @@ export class Unit implements ISelectable {
     team: number;
     loc: GridLocation;
     actions: Array<Action<ISelectable, BoardState>>;
-    hp: number;
-    max_hp: number;
+    _hp: Array<number>;
+    _max_hp: Array<number>;
     speed: number;
     strength: number;
     attack_range: number;
 
     constructor(team: number){
         this.team = team;
-        this.max_hp = 5;
-        this.hp = this.max_hp;
+        this._max_hp = [10];
+        this._hp = [...this._max_hp];
         this.speed = 3;
         this.strength = 5;
         this.attack_range = 1;
     }
 
+    get hp(): number {
+        return this._hp[0];
+    }
+
+    get all_hp(): Array<number> {
+        return this._hp;
+    }
+    
+    // TODO: Do I always want just first max hp?
+    get max_hp(): number {
+        return this._max_hp[0];
+    }
+    
+    get all_max_hp(): Array<number> {
+        return this._max_hp;
+    }
+
     damage(damage_amount: number){
-        this.setHp(this.hp - damage_amount)
+        this.setHp(this._hp[0] - damage_amount)
     }
 
     setHp(hp: number) {
-        this.hp = Math.max(hp, 0);
+        this._hp[0] = Math.max(hp, 0);
+        // Pop life bar
+        if (this._hp[0] == 0 && this._hp.length > 1) {
+            this._hp.shift();
+            this._max_hp.shift();
+        }
     }
 
     is_alive(): boolean {
