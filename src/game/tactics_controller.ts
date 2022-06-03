@@ -42,20 +42,24 @@ export class TacticsPhase implements IPhase {
     // TODO: Replace with a BoardState solution.
     update_exhausted(unit: Unit, action: Action<ISelectable, BoardState>) {
         // TODO: If can't attack, need "End Turn" option. Otherwise phase can't end.
-        this.available_actions.delete(action);
-        this.available_units.delete(unit);
+        // this.available_actions.delete(action);
+        // this.available_units.delete(unit);
     }
 
     // TODO: Efficient way to represent "sequential state machine" without GOTO
-    * run_phase(state: BoardState, cur_team: number
-    ): Generator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
+    async * run_phase(state: BoardState, cur_team: number
+    ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         console.log("TacticsPhase.run_phase");
         var team_units = state.units
             .filter((u) => u.team == cur_team)
             .filter((u) => u.is_alive());
         this.available_units = new Set(team_units); 
-        this.available_actions = new Set(team_units.flatMap((u) => u.actions));       
-        while(this.available_units.size) {
+        // TODO: Replace available_actions with Exhaustion
+        this.available_actions = new Set(
+            team_units
+                .flatMap((u) => u.actions)
+        );       
+        while(Array.from(this.available_units).filter((u) => !u.is_exhausted()).length) {
             var data_dict = new Map<string, any>([["state", state]]);
             // TODO: Mutable data_dict is someone messy; hidden here.
             var data_dict = yield *this.run_subphase(data_dict);
@@ -77,12 +81,14 @@ export class TacticsPhase implements IPhase {
                     }
                 }
             );
-            state.process(effects);
+            // TODO: Side effect that queue display doesn't clear before effect execution
+            await state.process(effects).then(() => {});
             this.current_inputs.length = 0;
             console.log("BoardState: ", state);
             console.log("Units: ", state.units);
             // TODO: yield a special "subphase end" signal.
         }
+        team_units.forEach((u) => u.reset_actions());
     }
 
     // TODO: Looks like type checking completely breaks down here. Replace with State Machine.
@@ -138,7 +144,8 @@ export class TacticsPhase implements IPhase {
         state: BoardState,
     ): Generator<Array<Unit>, Unit, Unit> {
         var unit_options = state.units
-            .filter((u) => this.available_units.has(u));
+            .filter((u) => this.available_units.has(u) && !u.is_exhausted());
+        console.log("Unit options : ", unit_options);
         var unit_sel: Unit = yield unit_options;
         var unit = unit_sel;
         return unit;
@@ -147,7 +154,8 @@ export class TacticsPhase implements IPhase {
     * action_selection (
         unit: Unit
     ): Generator<Array<Action<ISelectable, BoardState>>, Action<ISelectable, BoardState>, Action<ISelectable, BoardState>> {
-        var action_options = unit.actions.filter((a) => this.available_actions.has(a));
+        var action_options = unit.actions
+            .filter((a) => this.available_actions.has(a) && a.enabled);
         var action_sel: Action<ISelectable, BoardState> = yield action_options;
         var action = action_sel;
         return action;
@@ -210,10 +218,11 @@ export class TacticsController {
         var team = 0;
         while (true) {
             var phase_runner = phase.run_phase(this.state, team);
-            var input_options = phase_runner.next().value;
-            while(input_options){
-                var input_selection = await input_request(input_options);
-                input_options = phase_runner.next(input_selection).value;
+            // TODO: lol what a mess
+            var input_options = await phase_runner.next();
+            while(input_options.value){
+                var input_selection = await input_request(input_options.value);
+                input_options = await phase_runner.next(input_selection);
                 display_handler.on_selection(input_selection, phase);
             }
             display_handler.on_phase_end(phase);

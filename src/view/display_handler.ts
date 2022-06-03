@@ -68,19 +68,11 @@ export class BaseDisplayHandler {
      */ 
     on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
         console.log(this.stateful_selectables);
-        // TODO: Just an animation placeholder
-        // if (this.stateful_selectables.length > 0) {
-        //     var unit_display = this.display_map.get(this.stateful_selectables[0]);
-        //     console.log(unit_display); 
-        //     // var anim = new Flinch(Math.random()*20 - 10, Math.random()*20 - 10, 100);
-        //     var anim = new Move(1, 1, 100);
-        //     // @ts-ignore AbstractDisplay; but also can't cast unit_display to Mixin'd UnitDisplay?
-        //     unit_display.interrupt_animation(anim);
-        // }
 
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         var current_inputs = [...phase.current_inputs]; // Shallow Copy
+        // TODO: Set ALL previous state to neutral.
         // Set previous selection_state to neutral;
         for(let stateful_selectable of this.stateful_selectables) {
             var display = this.display_map.get(stateful_selectable);
