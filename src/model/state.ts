@@ -1,3 +1,4 @@
+import { TrueLiteral } from "typescript";
 import { DisplayHandler } from "../view/display_handler";
 import { 
     Stack, 
@@ -98,8 +99,13 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
     index: number;
     acquirer: IInputAcquirer<T>;
     digest_fn: DigestFn<T>;
-    
-    constructor(
+    enabled: boolean;
+   
+    constructor() {
+
+    }
+
+    build(
         text: string,
         index: number,
         acquirer: IInputAcquirer<T>,
@@ -109,6 +115,7 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         this.index = index;
         this.acquirer = acquirer;
         this.digest_fn = digest_fn;
+        this.enabled = true
     }
 
     peek_final_input(): InputSelection<T> {

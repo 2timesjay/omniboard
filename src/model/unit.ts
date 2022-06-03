@@ -1,3 +1,4 @@
+import { TrueLiteral } from "typescript";
 import { Bump, Flinch, Move } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
@@ -17,17 +18,43 @@ export const CHANNELED_ATTACK = "Channeled Attack";
 // TODO: Move somewhere more appropriate
 export const GLOBAL_CONFIRMATION = new  Confirmation(); 
 
-function construct_end_turn(confirmation: Confirmation, state: BoardState) {
+
+function exhaust_effect_constructor(unit: Unit, action: Action<ISelectable, BoardState>) {
+    function effect(state: BoardState): BoardState {
+        console.log("Exhausting action: ", action);
+        unit.exhaust_action(action);
+        return state;
+    };
+    effect.description = "exhaust action";
+    effect.pre_effect = null;
+    effect.post_effect = null;
+    return effect;
+}
+
+function construct_end_turn(confirmation: Confirmation, unit: Unit, state: BoardState) {
     var acquirer = new AutoInputAcquirer<Confirmation>(confirmation);
     var digest_fn = (confirmation: Confirmation): Array<Effect<BoardState>> => {
+        function effect_constructor() { 
+            function effect(state: BoardState): BoardState {
+                console.log("Exhausting Unit: ", unit);
+                unit.action_points = 0;
+                return state;
+            };
+            effect.description = "exhaust unit";
+            effect.pre_effect = null;
+            effect.post_effect = null;
+            return effect;
+        }
         console.log("Attempting to Digest: ", "End Turn");
-        return [];
+        return [effect_constructor()];
     }
-    var end_turn = new Action<Confirmation, BoardState>(END, 4, acquirer, digest_fn)
+    var end_turn = new Action<Confirmation, BoardState>();
+    end_turn.build(END, 4, acquirer, digest_fn)
     return end_turn
 }
 
 function construct_attack(unit: Unit, state: BoardState) {
+    var action = new Action<Unit, BoardState>();
     var option_fn = (): Array<Unit> => {
         // TODO: Somehow allowed to click self. Worse, this autoconfirms (input gen bug)
         var units = state.units.filter((u) => (u.team != unit.team));
@@ -71,13 +98,14 @@ function construct_attack(unit: Unit, state: BoardState) {
             effect.post_effect = null;
             return effect;
         }
-        return [effect_constructor(target)];
+        return [effect_constructor(target), exhaust_effect_constructor(unit, action)];
     }
-    var move = new Action<Unit, BoardState>(ATTACK, 2, acquirer, digest_fn)
-    return move
+    action.build(ATTACK, 2, acquirer, digest_fn);
+    return action;
 }
 
 function construct_move(unit: Unit, state: BoardState) {
+    var action = new Action<GridLocation, BoardState>();
     var increment_fn = (stack: Stack<GridLocation>): Array<GridLocation> => {
         var units = state.units;
         var grid_space = state.grid;
@@ -125,14 +153,17 @@ function construct_move(unit: Unit, state: BoardState) {
             effect.post_effect = null;
             return effect;
         }
-        return locs_arr.map(effect_constructor)
+        var effects = locs_arr.map(effect_constructor);
+        effects.push(exhaust_effect_constructor(unit, action));
+        return effects;
     }
     // TODO: Fix bad use of generics here.
-    var move = new Action<GridLocation, BoardState>(MOVE, 1, acquirer, digest_fn)
-    return move
+    action.build(MOVE, 1, acquirer, digest_fn);
+    return action;
 }
 
 function construct_channeled_attack(unit: Unit, state: BoardState) {
+    var action = new Action<Unit, BoardState>();
     // TODO: Create acquirer as fixed sequences of SimpleInputAcquirers
     var increment_fn = (stack: Stack<Unit>): Array<Unit> => {
         switch (stack.depth) {
@@ -198,14 +229,15 @@ function construct_channeled_attack(unit: Unit, state: BoardState) {
         var unit = units_arr[0];
         var proxy = units_arr[1];
         var target = units_arr[2];
-        return [effect_constructor(unit, proxy, target)];
+        return [effect_constructor(unit, proxy, target), exhaust_effect_constructor(unit, action)];
     }
-    var move = new Action<Unit, BoardState>(CHANNELED_ATTACK, 3, acquirer, digest_fn)
-    return move
+    action.build(CHANNELED_ATTACK, 3, acquirer, digest_fn);
+    return action;
 }
 
 // TODO: option to select unit twice shown but triggers "confirm". Either forbid or fix.
 function construct_chain_lightning(unit: Unit, state: BoardState) {
+    var action = new Action<Unit, BoardState>();
     var increment_fn = (stack: Stack<Unit>): Array<Unit> => {
         var grid = state.grid;
         var units = state.units;
@@ -227,7 +259,7 @@ function construct_chain_lightning(unit: Unit, state: BoardState) {
         var units_arr = units.to_array();
         var unit = units_arr.shift();
         console.log("Attempting to Digest: ", units_arr);
-        function effect_constructor(target: Unit){
+        function effect_constructor(target: Unit): Effect<BoardState>{
             console.log("Attempting to generate Chain Lightning Effect", unit, target);
             function effect(state: BoardState): BoardState {
                 console.log("Attempting to execute Damage: ", unit, target);
@@ -247,11 +279,13 @@ function construct_chain_lightning(unit: Unit, state: BoardState) {
             effect.post_effect = null;
             return effect;
         }
-        return units_arr.map(effect_constructor)
+        var effects = units_arr.map(effect_constructor);
+        effects.push(exhaust_effect_constructor(unit, action));
+        return effects;
     }
     // TODO: Fix bad use of generics here.
-    var move = new Action<Unit, BoardState>(CHAIN, 3, acquirer, digest_fn)
-    return move
+    action.build(CHAIN, 3, acquirer, digest_fn);
+    return action;
 }
 
 export function CONSTRUCT_BASIC_ACTIONS(unit: Unit, state: BoardState){
@@ -277,7 +311,7 @@ export function construct_actions(unit: Unit, state: BoardState, action_list: Ar
                 actions.push(construct_chain_lightning(unit, state));
                 break;
             case END:
-                actions.push(construct_end_turn(GLOBAL_CONFIRMATION, state));
+                actions.push(construct_end_turn(GLOBAL_CONFIRMATION, unit, state));
                 break;
         }
     }
@@ -288,6 +322,8 @@ export class Unit implements ISelectable {
     team: number;
     loc: GridLocation;
     actions: Array<Action<ISelectable, BoardState>>;
+    action_points: number;
+    max_action_points: number;
     _hp: Array<number>;
     _max_hp: Array<number>;
     speed: number;
@@ -296,11 +332,16 @@ export class Unit implements ISelectable {
 
     constructor(team: number){
         this.team = team;
+        
         this._max_hp = [10];
         this._hp = [...this._max_hp];
+        
         this.speed = 3;
         this.strength = 5;
         this.attack_range = 1;
+
+        this.max_action_points = 2;
+        this.action_points = 2;
     }
 
     get hp(): number {
@@ -335,6 +376,20 @@ export class Unit implements ISelectable {
 
     is_alive(): boolean {
         return this.hp > 0;
+    }
+
+    is_exhausted(): boolean {
+        return this.action_points == 0;
+    }
+
+    exhaust_action(action: Action<ISelectable, BoardState>) {
+        this.action_points -=  1;
+        action.enabled = false;
+    }
+
+    reset_actions() {
+        this.action_points = this.max_action_points;
+        this.actions.forEach((a) => a.enabled = true);
     }
 
     setLoc(loc: GridLocation){
