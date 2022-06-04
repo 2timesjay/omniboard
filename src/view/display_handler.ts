@@ -67,18 +67,12 @@ export class BaseDisplayHandler {
      *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
      */ 
     on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
-        console.log(this.stateful_selectables);
-
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
+        // TODO: Rework with "SelectionView", outlined in Notebook.
+        this.clear_queued();
+
         var current_inputs = [...phase.current_inputs]; // Shallow Copy
-        // TODO: Set ALL previous state to neutral.
-        // Set previous selection_state to neutral;
-        for(let stateful_selectable of this.stateful_selectables) {
-            var display = this.display_map.get(stateful_selectable);
-            display.selection_state = DisplayState.Neutral;
-            display.state = DisplayState.Neutral;
-        }
         this.stateful_selectables = current_inputs;
 
         // Update and queue-display selection state
@@ -86,31 +80,21 @@ export class BaseDisplayHandler {
         // Action_inputs are a special case because they're currently the 
         // application of SequentialInputAcquirer.
         // TODO: Replace this with generic handling of SequentialInputAcquirer
-        var action_inputs = (top_sel instanceof Action) ? top_sel.acquirer.current_input : null;
-        var action_inputs_arr = action_inputs instanceof Stack ? action_inputs.to_array() : (
-            action_inputs == null ? [] : [action_inputs]
+        var acquirer = (top_sel instanceof Action) ? top_sel.acquirer : null;
+        var acquirer_inputs = acquirer == null ? null : acquirer.current_input ;
+        var acquirer_inputs_arr = acquirer_inputs instanceof Stack ? acquirer_inputs.to_array() : (
+            acquirer_inputs == null ? [] : [acquirer.current_input]
         )
-        this.pathy_inputs = action_inputs_arr;
-        this.stateful_selectables.push(...action_inputs_arr);
-        
-        for(let stateful_selectable of this.stateful_selectables) {
-            var display = this.display_map.get(stateful_selectable);
-            display.selection_state = DisplayState.Queue;
-        }
+        console.log(acquirer_inputs);
+        this.pathy_inputs = acquirer_inputs_arr;
+
+        this.stateful_selectables.push(...acquirer_inputs_arr);
     }
 
     on_phase_end(phase: TacticsPhase){
         console.log("Phase End");
         // Clear states and clear stateful_selectables
-        // TODO: Clumsy Clear
-        for(let stateful_selectable of this.stateful_selectables) {
-            var display = this.display_map.get(stateful_selectable);
-            display.selection_state = DisplayState.Neutral;
-            display.state = DisplayState.Neutral;
-        }
-        while(this.stateful_selectables.length > 0) {
-            this.stateful_selectables.pop();
-        }
+        this.clear_queued();
     }
 
     on_game_end(){
@@ -122,6 +106,26 @@ export class BaseDisplayHandler {
             display.state = DisplayState.Neutral;
         }
         console.log(this.display_map);
+    }
+
+    update_queued() {  
+        for(let stateful_selectable of this.stateful_selectables) {
+            if (!(stateful_selectable instanceof Action)) {
+                var display = this.display_map.get(stateful_selectable);
+                display.selection_state = DisplayState.Queue;
+            }
+        }
+    }
+
+    clear_queued() {
+        for(let stateful_selectable of this.stateful_selectables) {
+            var display = this.display_map.get(stateful_selectable);
+            display.selection_state = DisplayState.Neutral;
+            display.state = DisplayState.Neutral;
+        }
+        while(this.stateful_selectables.length > 0) {
+            this.stateful_selectables.pop();
+        }
     }
 
     refresh(){
