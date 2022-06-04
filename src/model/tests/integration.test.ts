@@ -1,8 +1,9 @@
 import * as test from "tape";
 import { NumberState, SelectableNumber } from "../../tests/utilities";
+import { Action } from "../action";
 import {bfs, ISelectable, Stack, Tree} from "../core";
 import {InputSelection, SelectionFn, SequentialInputAcquirer, synthetic_input_getter} from "../input";
-import {Action, Effect, IState} from "../state";
+import {Effect, IState} from "../state";
 import {Awaited} from "../utilities";
 
 function select_last<T>(arr: Array<T>): T {
@@ -72,6 +73,7 @@ test("Integration test", (t) => {
             // @ts-ignore InputSelection
             var effects = action.digest_fn(sel.to_array());
             t.equal(effects.length, 1);
+            // @ts-ignore obselete Effect
             var transformed_state = effects[0](number_state);
             t.true(transformed_state.num.equals(new SelectableNumber(31)));
             t.end();

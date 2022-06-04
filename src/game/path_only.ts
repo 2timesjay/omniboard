@@ -1,8 +1,9 @@
+import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
 import { InputOptions, InputRequest, InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
 import { GridSpace } from "../model/space";
-import { Action, BoardState, Effect } from "../model/state";
+import { BoardState, Effect } from "../model/state";
 import { DisplayState } from "../view/display";
 import { refreshDisplay } from "../view/display_handler";
 import { DisplayMap } from "../view/input";

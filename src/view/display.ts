@@ -5,7 +5,6 @@ import { getMousePos, Position } from "./input";
 import { Awaited } from "../model/utilities";
 import { GridLocation } from "../model/space";
 import { Unit } from "../model/unit";
-import { Action } from "../model/state";
 import { createWatchCompilerHost } from "typescript";
 
 export enum DisplayState {

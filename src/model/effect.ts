@@ -1,4 +1,4 @@
-import { Flinch, Bump } from "../view/display";
+import { Flinch, Bump, Move } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { Action } from "./action";
 import { ISelectable } from "./core";
@@ -58,11 +58,17 @@ export class DamageEffect implements Effect {
         return this.kernel.execute(state);
     }
 
+    // TODO: Support different animations (non-directional, no bump for Chain?).
     animate(state: IState, display_handler: DisplayHandler) {   
         var source = this.source;
         var target = this.target;
         // @ts-ignore
         var vector: Point = state.grid.getVector(source.loc, target.loc);
+        var x = vector.x;
+        var y = vector.y;
+        var vector_norm = Math.sqrt(x*x + y*y);
+        vector.x = x/vector_norm;
+        vector.y = y/vector_norm;
         var target_display = display_handler.display_map.get(target);
         var source_display = display_handler.display_map.get(source);
         // TODO: Relate to graphical size.

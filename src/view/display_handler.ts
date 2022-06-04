@@ -1,8 +1,9 @@
 import { TacticsPhase } from "../game/tactics_controller";
+import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
 import { InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
-import { BoardState, Action, IState } from "../model/state";
+import { BoardState, IState } from "../model/state";
 import { DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
 import { DisplayMap } from "./input";
 import { makeLine } from "./rendering";

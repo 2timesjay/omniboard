@@ -52,7 +52,7 @@ export class BoardState implements IState {
     confirmation: Confirmation; // NOTE: Single Confirmation for all cases.
 
     async process(
-        effects: Array<Effect<BoardState>>
+        effects: Array<Effect<BoardState>>, display_handler: DisplayHandler
     ): Promise<BoardState> {
         var self = this;
         // TODO: Handle effect-tree and observers
@@ -60,14 +60,17 @@ export class BoardState implements IState {
         for (var effect of effects) {
             // if (false) {
             if (effect.animate != null){
-                effect.animate();
-                effect(self);
+                // @ts-ignore Obselete Effect
+                effect.animate(this, display_handler);
+                // @ts-ignore Obselete Effect
+                effect.execute(self);
                 // TODO: Consistent sleep milliseconds vs frames animation dur.
                 // NOTE: Sleep Duration MUST exceed frames duration (#frames * 10) by safe margin.
                 await sleep(DURATION_MS);
             } else {
                 await sleep(DURATION_MS);
-                effect(self);
+                // @ts-ignore
+                effect.execute(self);
             }
         }
         return this;
@@ -93,41 +96,41 @@ export class BoardState implements IState {
 };
 
 // T is the type of input expected
-export class Action<T extends ISelectable, U extends IState> implements ISelectable {
-    // Class managing combination of input acquisition and effect generation.
-    text: string;
-    index: number;
-    acquirer: IInputAcquirer<T>;
-    digest_fn: DigestFn<T>;
-    enabled: boolean;
+// export class Action<T extends ISelectable, U extends IState> implements ISelectable {
+//     // Class managing combination of input acquisition and effect generation.
+//     text: string;
+//     index: number;
+//     acquirer: IInputAcquirer<T>;
+//     digest_fn: DigestFn<T>;
+//     enabled: boolean;
    
-    constructor() {
+//     constructor() {
 
-    }
+//     }
 
-    build(
-        text: string,
-        index: number,
-        acquirer: IInputAcquirer<T>,
-        digest_fn: DigestFn<InputSelection<T>>,
-    ) {
-        this.text = text;
-        this.index = index;
-        this.acquirer = acquirer;
-        this.digest_fn = digest_fn;
-        this.enabled = true
-    }
+//     build(
+//         text: string,
+//         index: number,
+//         acquirer: IInputAcquirer<T>,
+//         digest_fn: DigestFn<InputSelection<T>>,
+//     ) {
+//         this.text = text;
+//         this.index = index;
+//         this.acquirer = acquirer;
+//         this.digest_fn = digest_fn;
+//         this.enabled = true
+//     }
 
-    peek_final_input(): InputSelection<T> {
-        return this.acquirer.current_input;
-    }
+//     peek_final_input(): InputSelection<T> {
+//         return this.acquirer.current_input;
+//     }
 
-    * get_final_input(
-        base: InputSelection<T>
-    ): Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>> {
-        // @ts-ignore expects 'Stack<T> & T', but the containing gen sends 'InputSelection<T>'
-        var input = yield *this.acquirer.input_option_generator(base);
-        // TODO: More elegant propagation? Probably solved by separating digest.
-        return input;
-    }
-};
+//     * get_final_input(
+//         base: InputSelection<T>
+//     ): Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>> {
+//         // @ts-ignore expects 'Stack<T> & T', but the containing gen sends 'InputSelection<T>'
+//         var input = yield *this.acquirer.input_option_generator(base);
+//         // TODO: More elegant propagation? Probably solved by separating digest.
+//         return input;
+//     }
+// };

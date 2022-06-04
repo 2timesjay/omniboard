@@ -22,14 +22,14 @@ export function tactics_setup(k: number): BoardState {
     state.grid = grid_space;
     var unit_0_a = new Unit(0);
     unit_0_a.setLoc(grid_space.get(2, 2));
-    unit_0_a.setActions(construct_actions(unit_0_a, state, [MOVE, ATTACK, END]))
+    unit_0_a.setActions(construct_actions(unit_0_a, state, [MOVE, ATTACK, CHAIN, END]))
     var unit_0_b = new Unit(0);
     unit_0_b.setLoc(grid_space.get(0, 0));
     unit_0_b.setActions(construct_actions(unit_0_b, state, [MOVE, CHANNELED_ATTACK, END]))
 
     var unit_1_a = new Unit(1);
     unit_1_a.setLoc(grid_space.get(3, 2));
-    unit_1_a.setActions(construct_actions(unit_1_a, state, [MOVE, ATTACK, END]))
+    unit_1_a.setActions(construct_actions(unit_1_a, state, [MOVE, ATTACK, CHAIN, END]))
     var unit_1_b = new Unit(1);
     unit_1_b.setLoc(grid_space.get(2, 3));
     unit_1_b.setActions(construct_actions(unit_1_b, state, [MOVE, ATTACK, END]))

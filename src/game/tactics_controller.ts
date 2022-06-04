@@ -1,8 +1,9 @@
+import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
 import { Confirmation, InputOptions, InputRequest, InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
-import { BoardState, Effect, Action, IState } from "../model/state";
+import { BoardState, Effect, IState } from "../model/state";
 import { ATTACK, CHAIN, CHANNELED_ATTACK, END, MOVE, Unit } from "../model/unit";
 import { DisplayState } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
@@ -74,15 +75,15 @@ export class TacticsPhase implements IPhase {
 
             console.log("Effects: ", effects);
             // TODO: Stop questionably smuggling in display handlers
-            effects.forEach(
-                (e: Effect<BoardState>) => {
-                    if (e.set_animate != null) {
-                        e.set_animate(this.display_handler)
-                    }
-                }
-            );
+            // effects.forEach(
+            //     (e: Effect<BoardState>) => {
+            //         if (e.set_animate != null) {
+            //             e.set_animate(this.display_handler)
+            //         }
+            //     }
+            // );
             // TODO: Side effect that queue display doesn't clear before effect execution
-            await state.process(effects).then(() => {});
+            await state.process(effects, this.display_handler).then(() => {});
             this.current_inputs.length = 0;
             console.log("BoardState: ", state);
             console.log("Units: ", state.units);
