@@ -37,7 +37,7 @@ function construct_end_turn(confirmation: Confirmation, unit: Unit, state: Board
         function effect_constructor() { 
             function effect(state: BoardState): BoardState {
                 console.log("Exhausting Unit: ", unit);
-                unit.action_points = 0;
+                unit.ap = 0;
                 return state;
             };
             effect.description = "exhaust unit";
@@ -322,8 +322,8 @@ export class Unit implements ISelectable {
     team: number;
     loc: GridLocation;
     actions: Array<Action<ISelectable, BoardState>>;
-    action_points: number;
-    max_action_points: number;
+    ap: number;
+    max_ap: number;
     _hp: Array<number>;
     _max_hp: Array<number>;
     speed: number;
@@ -340,8 +340,8 @@ export class Unit implements ISelectable {
         this.strength = 5;
         this.attack_range = 1;
 
-        this.max_action_points = 2;
-        this.action_points = 2;
+        this.max_ap = 2;
+        this.ap = 2;
     }
 
     get hp(): number {
@@ -379,16 +379,21 @@ export class Unit implements ISelectable {
     }
 
     is_exhausted(): boolean {
-        return this.action_points == 0;
+        return this.ap == 0;
     }
 
     exhaust_action(action: Action<ISelectable, BoardState>) {
-        this.action_points -=  1;
+        this.ap -=  1;
         action.enabled = false;
     }
 
+    unexhaust_action(action: Action<ISelectable, BoardState>) {
+        this.ap +=  1;
+        action.enabled = true;
+    }
+
     reset_actions() {
-        this.action_points = this.max_action_points;
+        this.ap = this.max_ap;
         this.actions.forEach((a) => a.enabled = true);
     }
 

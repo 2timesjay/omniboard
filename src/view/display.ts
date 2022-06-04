@@ -391,7 +391,7 @@ export class AbstractDisplay<T extends ISelectable> {
     }
 
     update_pos() {
-        // Not Implemented in base class
+        throw new Error('Method not implemented.');
     }
 
     display(context: CanvasRenderingContext2D) {
