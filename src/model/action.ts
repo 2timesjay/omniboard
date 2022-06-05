@@ -31,12 +31,11 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         this.enabled = true;   
     }
 
-    // TODO: Change "Final input" name
-    peek_final_input(): InputSelection<T> {
+    peek_action_input(): InputSelection<T> {
         return this.acquirer.current_input;
     }
 
-    * get_final_input(
+    * get_action_input(
         base: InputSelection<T>
     ): Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>> {
         // @ts-ignore expects 'Stack<T> & T', but the containing gen sends 'InputSelection<T>'

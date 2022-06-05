@@ -65,7 +65,7 @@ test("Integration test", (t) => {
     // TODO: A lot simpler to test with synchronous input_getter. Needed for AI?
     var select_last_input_getter = synthetic_input_getter<SelectableNumber>(select_last);
     var action = new AddAction();
-    var input_option_generator = action.get_final_input(root_stack);
+    var input_option_generator = action.get_action_input(root_stack);
     var number_state = new NumberState(10);
     var options = input_option_generator.next().value;
     var process_options = function(

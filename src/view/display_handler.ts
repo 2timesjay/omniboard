@@ -73,13 +73,14 @@ export class BaseDisplayHandler {
         // TODO: Rework with "SelectionView", outlined in Notebook.
         this.clear_queued();
 
-        var current_inputs = [...phase.current_inputs]; // Shallow Copy
+        // TODO: Update to reflect phase.current_inputs change to `Input` object-like
+        var current_inputs = [...Object.values(phase.current_inputs)]; // Shallow Copy
         this.stateful_selectables = current_inputs;
 
         // Update and queue-display selection state
         var top_sel = current_inputs[current_inputs.length - 1];
-        // Action_inputs are a special case because they're currently the 
-        // application of SequentialInputAcquirer.
+        // Action_input is a special case because they're currently the 
+        // only application of SequentialInputAcquirer.
         // TODO: Replace this with generic handling of SequentialInputAcquirer
         var acquirer = (top_sel instanceof Action) ? top_sel.acquirer : null;
         var acquirer_inputs = acquirer == null ? null : acquirer.current_input ;

@@ -13,7 +13,19 @@ const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
 export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>>
 
-// TODO: Clean up
+enum InputState {
+    NoneSelected = 0,
+    UnitSelected = 1,
+    ActionSelected = 2,
+    ActionInputSelected = 3,
+}
+
+type TacticsInputs = {
+    unit?: Unit,
+    action?: Action<ISelectable, BoardState>,
+    action_input?: InputSelection<ISelectable>,
+}
+
 /**
  * Phase is same as typical board game sense.
  * Tactics phase proceeds as follows for a given team:
@@ -21,17 +33,16 @@ export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, In
  *  2) Select a action
  *  3) follow action's input requests
  *  4) execute action's effects
- *  5) repeat 2 until team member's actions are exhausted
- *  6) repeat 1 until all team members have moved.
- * Alternative:
- *  Re-selection allowed - 5 loops to 1.
+ *  5) repeat 1 until team member's actions are exhausted.
  */
 export class TacticsPhase implements IPhase {
-    current_inputs: Array<InputSelection<ISelectable>>;
+    current_inputs: TacticsInputs;
+    input_state: InputState;
     display_handler: DisplayHandler;
 
     constructor() {
-        this.current_inputs = []
+        this.current_inputs = {}
+        this.input_state = InputState.NoneSelected;
     }
 
     set_display_handler(display_handler: DisplayHandler) {
@@ -46,22 +57,22 @@ export class TacticsPhase implements IPhase {
             .filter((u) => u.team == cur_team)
             .filter((u) => u.is_alive());
         while(Array.from(team_units).filter((u) => !u.is_exhausted()).length) {
-            var data_dict = new Map<string, any>([["state", state]]);
+            var data_dict = new Map<string, InputSelection<ISelectable>>([["state", state]]);
             // TODO: Mutable data_dict is someone messy; hidden here.
-            var data_dict = yield *this.run_subphase(data_dict);
+            var inputs: TacticsInputs = yield *this.run_subphase(state, cur_team);
+            console.log("Inputs: ", inputs);
 
-            // TODO: Should "exhaust" be control or Effect? Latter eventually.
-            // TODO: Destroyed type info with this approach - fix.
-            var unit = data_dict.get("unit");
-            var action = data_dict.get("action");
-            var final = data_dict.get("final");
-            var effects = action.digest_fn(final);
+            // @ts-ignore How can we safely cast from InputSelection<ISelectable>?
+            var action: Action<ISelectable, BoardState> = inputs.action;
+            var action_input = inputs.action_input;
+            var effects = action.digest_fn(action_input);
 
             console.log("Effects: ", effects);
 
             // TODO: Side effect that queue display doesn't clear before effect execution
             await state.process(effects, this.display_handler).then(() => {});
-            this.current_inputs.length = 0;
+            // TODO: Slightly messy to couple this with state.
+            this.current_inputs = {};
             console.log("BoardState: ", state);
             console.log("Units: ", state.units);
             // TODO: yield a special "subphase end" signal.
@@ -69,59 +80,82 @@ export class TacticsPhase implements IPhase {
         team_units.forEach((u) => u.reset_actions());
     }
 
-    // TODO: Looks like type checking completely breaks down here. Replace with State Machine.
-    * run_subphase( // TODO: Can this be streamlined? Also, document!
-        data_dict: Map<string, any>,
-    ): Generator<InputOptions<ISelectable>, Map<string, any>, InputSelection<ISelectable>> {
-        // Immutable
-        var pending = [
-            {
-                result_label: "unit",
-                args_list: ["state"],
-                gen_fn: this.unit_selection,
-            },
-            {
-                result_label: "action",
-                args_list: ["unit"],
-                gen_fn: this.action_selection,
-            },
-            {
-                result_label: "final",
-                args_list: ["unit", "action"],
-                gen_fn: this.final_input_selection,
+    // TODO: Explicit and well-typed, but some generic patterns could be abstracted. 
+    * run_subphase(
+        state: BoardState, cur_team: number
+    ): Generator<InputOptions<ISelectable>, TacticsInputs, InputSelection<ISelectable>> {
+        /**
+         * Occupies one of three states:
+         *  Acquiring Unit,
+         *  Acquiring Actions,
+         *  Acquiring ActionInputs,
+         * 
+         * Increment state on selection.
+         * Decrement state on rejection.
+         */        
+        while (true) {
+            // Note: Fine to hit these all in one loop
+            if (this.input_state == InputState.NoneSelected){
+                // @ts-ignore
+                var unit = yield *this.unit_selection(state, cur_team);
+                if (unit != null) {
+                    this.current_inputs.unit = unit;
+                    this.increment_state();
+                } else {
+                    delete this.current_inputs.unit;
+                    this.decrement_state();
+                }
             }
-        ]
-        var input_pointer = 0;
-        while (input_pointer < pending.length) {
-            var cur_ia_dict = pending[input_pointer];
-            var gen_fn = cur_ia_dict.gen_fn;
-            var args_list = cur_ia_dict.args_list;
-            var data_list = args_list.map((arg) => data_dict.get(arg));
-            var result_label = cur_ia_dict.result_label;
-            var cur_ia = gen_fn.apply(this, data_list);
-            var result = yield *cur_ia; // TODO: Harmonize naming w/InputAcquirer
-            var REJECT_SIGNAL = result == null;
-            if (REJECT_SIGNAL) { // NULL INPUT
-                console.log("Subphase Backward")
-                // NOTE: data_dict isn't cleared - may be important
-                input_pointer = Math.max(input_pointer - 1, 0); 
-                this.current_inputs.pop();
-            } else { // VALID INPUT
-                // TODO: Can I fully render current_input (including in-progress) here?
-                console.log("Subphase Forward")
-                data_dict.set(result_label, result);
-                this.current_inputs.push(result);
-                input_pointer += 1;
+            if (this.input_state == InputState.UnitSelected){
+                // @ts-ignore
+                var action = yield *this.action_selection(unit);
+                if (action != null) {
+                    this.current_inputs.action = action;
+                    this.increment_state();
+                } else {
+                    delete this.current_inputs.action;
+                    this.decrement_state();
+                }
+            }
+            if (this.input_state == InputState.ActionSelected){
+                var action_input = yield *this.action_input_selection(unit, action);
+                if (action_input != null) {
+                    this.current_inputs.action_input = action_input;
+                    this.increment_state();
+                } else {
+                    delete this.current_inputs.action_input;
+                    this.decrement_state();
+                }
+            }
+            if(this.input_state == InputState.ActionInputSelected) {
+                break;
             }
         }
-        return data_dict;
+        this.reset_state();
+        return this.current_inputs;
+    }
+
+    reset_state() {
+        this.input_state = 0;
+    }
+
+    increment_state() {
+        this.input_state += 1;
+        this.input_state = Math.min(3, this.input_state);
+    }
+
+    decrement_state() {
+        this.input_state -= 1;
+        this.input_state = Math.max(0, this.input_state);
     }
 
     // TODO: Unify with SimpleInputAcquirer
     * unit_selection (
-        state: BoardState,
+        state: BoardState, cur_team: number
     ): Generator<Array<Unit>, Unit, Unit> {
         var unit_options = state.units
+            .filter((u) => u.team == cur_team)
+            .filter((u) => u.is_alive())
             .filter((u) => !u.is_exhausted());
         var acquirer = new SimpleInputAcquirer<Unit>(() => unit_options, false);
         var unit_sel = yield *acquirer.input_option_generator();
@@ -140,7 +174,7 @@ export class TacticsPhase implements IPhase {
         return action;
     }
 
-    * final_input_selection (
+    * action_input_selection (
         unit: Unit,
         action: Action<ISelectable, BoardState>,
     ): Generator<InputOptions<ISelectable>, InputSelection<ISelectable>, InputSelection<ISelectable>> {
@@ -167,8 +201,8 @@ export class TacticsPhase implements IPhase {
         }
         // TODO: Revise action to simply return selected input stack; handle digest in sub-phase.
         // @ts-ignore Unit | Stack<GridLocation>
-        var final_inputs = yield *action.get_final_input(root);
-        return final_inputs;
+        var action_input = yield *action.get_action_input(root);
+        return action_input;
     }
 }
 
