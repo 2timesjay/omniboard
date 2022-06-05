@@ -7,5 +7,10 @@ module.exports = {
     extends: [
       'eslint:recommended',
       'plugin:@typescript-eslint/recommended',
+      'plugin:import/recommended',
     ],
+    rules: {
+        'no-var': 'off',
+        'ban-ts-comment': 'off',
+    }
   };
