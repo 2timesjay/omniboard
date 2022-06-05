@@ -1,9 +1,10 @@
 import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
+import { Effect } from "../model/effect";
 import { InputOptions, InputRequest, InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
 import { GridSpace } from "../model/space";
-import { BoardState, Effect } from "../model/state";
+import { BoardState } from "../model/state";
 import { DisplayState } from "../view/display";
 import { refreshDisplay } from "../view/display_handler";
 import { DisplayMap } from "../view/input";
@@ -21,7 +22,7 @@ export class PathOnlyPhase implements IPhase {
 
     * run_subphase (
         action: Action<ISelectable, BoardState>, root_stack: Stack<ISelectable>
-    ): Generator<InputOptions<ISelectable>, Array<Effect<BoardState>>, InputSelection<ISelectable>> {
+    ): Generator<InputOptions<ISelectable>, Array<Effect>, InputSelection<ISelectable>> {
         // @ts-ignore Expects Stack - here and other places InputSelection was a reach.
         var effects = yield *action.input_option_generator(root_stack);
         console.log("PathOnlyPhase.run_subphase");

@@ -21,7 +21,7 @@ export type DigestFn<T extends ISelectable> = (selection: InputSelection<T>) => 
 export class Action<T extends ISelectable, U extends IState> implements ISelectable {
     // Class managing combination of input acquisition and effect generation.
     text: string;
-    index: number;
+    index: number; // TODO: index should not be part of base Action; only used for UI.
     acquirer: IInputAcquirer<T>;
     enabled: boolean;
    
@@ -203,6 +203,10 @@ export class ChanneledAttackAction extends Action<Unit, BoardState> {
     digest_fn(selection: Stack<Unit>): Array<Effect> {
         // TODO: InputSelection wrap/unwrap
         var units_arr = selection.to_array(); // Length 3 array
+        // TODO: Less hacky way to prevent bug from double-clicking source.
+        if (units_arr.length != 3) {
+            return [];
+        }
         // TODO: Don't populate first element of array with source
         var source = this.source;
         var proxy = units_arr[1];

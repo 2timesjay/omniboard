@@ -5,7 +5,7 @@ import { Action, AttackAction, ChainLightningAction, ChanneledAttackAction, EndT
 import { ISelectable, Stack } from "./core";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
 import { GridLocation, GridSpace, Point } from "./space";
-import { BoardState, Effect, IState } from "./state";
+import { BoardState, IState } from "./state";
 
 export const DURATION_FRAMES = 25
 

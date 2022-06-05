@@ -119,8 +119,9 @@ export class BaseDisplayHandler {
     }
 
     clear_queued() {
-        for(let stateful_selectable of this.stateful_selectables) {
-            var display = this.display_map.get(stateful_selectable);
+        for (var display of this.display_map.values()) {
+        // for(let stateful_selectable of this.stateful_selectables) {
+            // var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Neutral;
             display.state = DisplayState.Neutral;
         }

@@ -1,4 +1,3 @@
-import { TrueLiteral } from "typescript";
 import { DisplayHandler } from "../view/display_handler";
 import { 
     Stack, 
@@ -9,6 +8,7 @@ import {
     bfs,
     OptionFn
 } from "./core";
+import { Effect } from "./effect";
 
 import {
     Confirmation,
@@ -27,32 +27,14 @@ export interface IState {
     get_selectables: () => Array<ISelectable>;
 };
 
-// Implement as Callable for now
-// https://www.typescriptlang.org/docs/handbook/2/functions.html#call-signatures
-export type Effect<T extends IState> = {
-    description: string;
-    set_animate?: (display_handler: DisplayHandler) => void;
-    animate?: () => void;
-    pre_effect: Observer<T>;
-    post_effect: Observer<T>;
-    (state: T): T;
-};
-
-export type Observer<T extends IState> = {
-    description: string;
-    (effect: Effect<T>, state: T): Array<Effect<T>>;
-};
-
-// TODO: The `any` here is a bit wacky. Could https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-types help?
-export type DigestFn<T extends ISelectable> = (selection: InputSelection<T>) => Array<Effect<any>>;
-
 export class BoardState implements IState {
     grid: GridSpace;
     units: Array<Unit>;
     confirmation: Confirmation; // NOTE: Single Confirmation for all cases.
 
+    // Proces shouldn't live on state since it requires display_handler too.
     async process(
-        effects: Array<Effect<BoardState>>, display_handler: DisplayHandler
+        effects: Array<Effect>, display_handler: DisplayHandler
     ): Promise<BoardState> {
         var self = this;
         // TODO: Handle effect-tree and observers
@@ -94,43 +76,3 @@ export class BoardState implements IState {
         return selectables;
     }
 };
-
-// T is the type of input expected
-// export class Action<T extends ISelectable, U extends IState> implements ISelectable {
-//     // Class managing combination of input acquisition and effect generation.
-//     text: string;
-//     index: number;
-//     acquirer: IInputAcquirer<T>;
-//     digest_fn: DigestFn<T>;
-//     enabled: boolean;
-   
-//     constructor() {
-
-//     }
-
-//     build(
-//         text: string,
-//         index: number,
-//         acquirer: IInputAcquirer<T>,
-//         digest_fn: DigestFn<InputSelection<T>>,
-//     ) {
-//         this.text = text;
-//         this.index = index;
-//         this.acquirer = acquirer;
-//         this.digest_fn = digest_fn;
-//         this.enabled = true
-//     }
-
-//     peek_final_input(): InputSelection<T> {
-//         return this.acquirer.current_input;
-//     }
-
-//     * get_final_input(
-//         base: InputSelection<T>
-//     ): Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>> {
-//         // @ts-ignore expects 'Stack<T> & T', but the containing gen sends 'InputSelection<T>'
-//         var input = yield *this.acquirer.input_option_generator(base);
-//         // TODO: More elegant propagation? Probably solved by separating digest.
-//         return input;
-//     }
-// };
