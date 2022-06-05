@@ -1,0 +1,4 @@
+*.json
+src\*.js
+src\index.ts
+src\types.ts
