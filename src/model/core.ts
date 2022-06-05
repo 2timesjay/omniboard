@@ -56,10 +56,13 @@ export class Stack<T> implements Iterable<T>{
     }
 
     to_array(): Array<T> {
-        // TODO: Should this be reversed?
         var arr = Array<T>();
         for (var value of this) {
-            arr.unshift(value);
+            // Don't include null values (specifically roots)
+            // TODO: Make safer if nulls present in stack?
+            if (value != null) {
+                arr.unshift(value);
+            }
         };
         return arr;
     }
@@ -82,6 +85,15 @@ export class Tree<T> extends Stack<T> {
         if (stack.parent) { 
             tree.add_parent(Tree.from_stack(stack.parent));
             stack = stack.parent;
+        }
+        return tree;
+    }
+
+    static from_array<U>(arr: Array<U>): Tree<U> {
+        var root = new Tree<U>(null);
+        for (var elem of arr) { 
+            var tree = new Tree<U>(elem);
+            tree.add_parent(root);
         }
         return tree;
     }

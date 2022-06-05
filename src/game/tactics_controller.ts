@@ -1,6 +1,6 @@
 import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
-import { Confirmation, InputOptions, InputRequest, InputSelection } from "../model/input";
+import { Confirmation, InputOptions, InputRequest, InputSelection, SimpleInputAcquirer } from "../model/input";
 import { IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, IState } from "../model/state";
@@ -27,8 +27,6 @@ export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, In
  *  Re-selection allowed - 5 loops to 1.
  */
 export class TacticsPhase implements IPhase {
-    available_units: Set<Unit>;
-    available_actions: Set<Action<ISelectable, BoardState>>;
     current_inputs: Array<InputSelection<ISelectable>>;
     display_handler: DisplayHandler;
 
@@ -40,13 +38,6 @@ export class TacticsPhase implements IPhase {
         this.display_handler = display_handler;
     }
 
-    // TODO: Replace with a BoardState solution.
-    update_exhausted(unit: Unit, action: Action<ISelectable, BoardState>) {
-        // TODO: If can't attack, need "End Turn" option. Otherwise phase can't end.
-        // this.available_actions.delete(action);
-        // this.available_units.delete(unit);
-    }
-
     // TODO: Efficient way to represent "sequential state machine" without GOTO
     async * run_phase(state: BoardState, cur_team: number
     ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
@@ -54,13 +45,7 @@ export class TacticsPhase implements IPhase {
         var team_units = state.units
             .filter((u) => u.team == cur_team)
             .filter((u) => u.is_alive());
-        this.available_units = new Set(team_units); 
-        // TODO: Replace available_actions with Exhaustion
-        this.available_actions = new Set(
-            team_units
-                .flatMap((u) => u.actions)
-        );       
-        while(Array.from(this.available_units).filter((u) => !u.is_exhausted()).length) {
+        while(Array.from(team_units).filter((u) => !u.is_exhausted()).length) {
             var data_dict = new Map<string, any>([["state", state]]);
             // TODO: Mutable data_dict is someone messy; hidden here.
             var data_dict = yield *this.run_subphase(data_dict);
@@ -71,7 +56,6 @@ export class TacticsPhase implements IPhase {
             var action = data_dict.get("action");
             var final = data_dict.get("final");
             var effects = action.digest_fn(final);
-            this.update_exhausted(unit, action);
 
             console.log("Effects: ", effects);
 
@@ -138,9 +122,9 @@ export class TacticsPhase implements IPhase {
         state: BoardState,
     ): Generator<Array<Unit>, Unit, Unit> {
         var unit_options = state.units
-            .filter((u) => this.available_units.has(u) && !u.is_exhausted());
-        console.log("Unit options : ", unit_options);
-        var unit_sel: Unit = yield unit_options;
+            .filter((u) => !u.is_exhausted());
+        var acquirer = new SimpleInputAcquirer<Unit>(() => unit_options, false);
+        var unit_sel = yield *acquirer.input_option_generator();
         var unit = unit_sel;
         return unit;
     }
@@ -149,8 +133,9 @@ export class TacticsPhase implements IPhase {
         unit: Unit
     ): Generator<Array<Action<ISelectable, BoardState>>, Action<ISelectable, BoardState>, Action<ISelectable, BoardState>> {
         var action_options = unit.actions
-            .filter((a) => this.available_actions.has(a) && a.enabled);
-        var action_sel: Action<ISelectable, BoardState> = yield action_options;
+            .filter((a) => a.enabled);
+        var acquirer = new SimpleInputAcquirer<Action<ISelectable, BoardState>>(() => action_options, false);
+        var action_sel = yield *acquirer.input_option_generator();
         var action = action_sel;
         return action;
     }

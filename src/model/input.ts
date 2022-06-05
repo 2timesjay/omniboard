@@ -1,3 +1,4 @@
+import { FalseLiteral } from "typescript";
 import { IMenuable } from "../view/display";
 import { 
     bfs,
@@ -148,13 +149,16 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     // TODO: Cleanup - Simplify coupling with controller loop.
     option_fn: OptionFn<T>;
     current_input: T;
+    require_confirmation: boolean;
     
     constructor(
-        option_fn: OptionFn<T>
+        option_fn: OptionFn<T>,
+        require_confirmation = true,
     ) {
         this.option_fn = option_fn;
         // NOTE: State has to return after any complete pop off the stack.
         this.current_input = null;
+        this.require_confirmation = require_confirmation;
     }
 
     public static from_options<U>(options: Array<U>): SimpleInputAcquirer<U> {
@@ -169,22 +173,26 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
         this.current_input = base;
         var options = this.option_fn(this.current_input);
         var input_resp = yield options;
-        do {
-            var REJECT_CASE = !input_resp;
-            var CONFIRM_CASE = (input_resp != null && input_resp == this.current_input)
-            // TODO: Currently treats "null" response as special flag to pop.
-            if (REJECT_CASE) {
-                // var input_resp = yield options;
-                return null; // NOTE: Propagates POP Signal to subphase
-            } else if (CONFIRM_CASE){
-                console.log("Confirm Simple InputSelection");
-                break;
-            } else {
-                console.log("InputSelection: ", input_resp);
-                this.current_input = input_resp;
-                input_resp = yield options;
-            }
-        } while(true);
+        if (this.require_confirmation) {
+            do {
+                var REJECT_CASE = !input_resp;
+                var CONFIRM_CASE = (input_resp != null && input_resp == this.current_input)
+                // TODO: Currently treats "null" response as special flag to pop.
+                if (REJECT_CASE) {
+                    // var input_resp = yield options;
+                    return null; // NOTE: Propagates POP Signal to subphase
+                } else if (CONFIRM_CASE){
+                    console.log("Confirm Simple InputSelection");
+                    break;
+                } else {
+                    console.log("InputSelection: ", input_resp);
+                    this.current_input = input_resp;
+                    input_resp = yield options;
+                }
+            } while(true);
+        } else {
+            return input_resp;
+        }
         return this.current_input;
     }
 }
@@ -242,5 +250,20 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
             }
         } while(true);
         return this.current_input;
+    }
+}
+
+export class SetInputAcquirer<T> extends SequentialInputAcquirer<T> {
+    constructor(
+        increment_fn: IncrementFn<T>, 
+        termination_fn: TerminationFn<T>, 
+    ) {
+        super(increment_fn, termination_fn);
+    }
+
+    get_options(input: Stack<T>): Tree<T> {
+        // Replace BFS from sequentialInputAcquirer
+        // TODO: Support Null root
+        return Tree.from_array(this.increment_fn(input));
     }
 }
