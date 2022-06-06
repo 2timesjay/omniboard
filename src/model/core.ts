@@ -1,3 +1,5 @@
+import { InputSelection } from "./input";
+
 export interface ISelectable {}
 
 class StackIterator<T> implements Iterator<T> {
@@ -145,7 +147,7 @@ export class Tree<T> extends Stack<T> {
     }
 }
 
-export type OptionFn<T extends ISelectable> = (selection?: T) => Array<T>;
+export type OptionFn<T extends ISelectable> = (selection?: InputSelection<T>) => Array<T>;
 
 export type IncrementFn<T extends ISelectable> = (selection?: Stack<T>) => Array<T>;
 

@@ -166,12 +166,11 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     }
 
     * input_option_generator(
-        base?: T
+        base?: InputSelection<T>
     ): Generator<Array<T>, T, T> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
-        this.current_input = base;
-        var options = this.option_fn(this.current_input);
+        var options = this.option_fn(base);
         var input_resp = yield options;
         if (this.require_confirmation) {
             do {
@@ -253,7 +252,32 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
     }
 }
 
-export class SetInputAcquirer<T> extends SequentialInputAcquirer<T> {
+export class ChainedInputAcquirer<T> extends SequentialInputAcquirer<T> {
+    // static from_input_acquirer_list<U>(
+    //     input_acquirer_list: Array<IInputAcquirer<U>>
+    // ): ChainedInputAcquirer<U> {
+    constructor(option_fn_list: Array<OptionFn<T>>) {
+        var increment_fn = (stack: Stack<T>): Array<T> => {
+            var option_fn_index = stack.depth - 1;
+            var option_fn = option_fn_list[option_fn_index];
+            return option_fn(stack);
+        };
+        var termination_fn = (stack: Stack<T>): boolean => {
+            return stack.depth > option_fn_list.length;
+        };
+        super(
+            increment_fn,
+            termination_fn,
+        )
+    }
+}
+
+/**
+ * Experimental Acquirers
+ */
+
+// TODO: Probably need new `Pool` or `Set` type for InputSelection to make this smooth.
+class SetInputAcquirer<T> extends SequentialInputAcquirer<T> {
     constructor(
         increment_fn: IncrementFn<T>, 
         termination_fn: TerminationFn<T>, 

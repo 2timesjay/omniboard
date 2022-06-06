@@ -2,7 +2,7 @@ import { Flinch, Bump } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
 import { DamageEffect, Effect, ExhaustEffect, MoveEffect } from "./effect";
-import { IInputAcquirer, InputSelection, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer } from "./input";
+import { IInputAcquirer, InputSelection, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer, ChainedInputAcquirer } from "./input";
 import { GridLocation, Point } from "./space";
 import { IState, BoardState} from "./state";
 import { Unit, DURATION_FRAMES } from "./unit";
@@ -171,32 +171,23 @@ export class ChanneledAttackAction extends Action<Unit, BoardState> {
         super(CHANNELED_ATTACK, 3);
         this.source = source;
 
-        // TODO: Create acquirer as fixed sequences of SimpleInputAcquirers
-        var increment_fn = (stack: Stack<Unit>): Array<Unit> => {
-            switch (stack.depth) {
-                case 1: // choose proxy
-                    var proxy_options = state.units.filter((u) => (u.team == source.team));
-                    return proxy_options;
-                case 2: // proxy already chosen; choose target
-                    var proxy = stack.value;
-                    var units = state.units.filter((u) => (u.team != source.team));
-                    var attack_range = proxy.attack_range;
-                    var attacker_loc = proxy.loc;
-                    var options = units.filter(
-                        (u) => state.grid.getDistance(attacker_loc, u.loc) <= attack_range
-                    );
-                    return options;
-                default: // should never happen
-                    return [];
+        var option_fn_list = [
+            (stack: Stack<Unit>) => { // Proxy options
+                var source = stack.value; 
+                return state.units.filter((u) => (u.team == source.team));
+            }, 
+            (stack: Stack<Unit>) => { // Unit options
+                var proxy = stack.value;
+                var units = state.units.filter((u) => (u.team != source.team));
+                var attack_range = proxy.attack_range;
+                var attacker_loc = proxy.loc;
+                // TODO: Replace with more sophisticated "valid target" fn.
+                return units.filter(
+                    (u) => state.grid.getDistance(attacker_loc, u.loc) <= attack_range
+                );
             }
-        };
-        var termination_fn = (stack: Stack<Unit>): boolean => {
-            return stack.depth == 3; // + 1 because stack starts at root.
-        }
-        var acquirer = new SequentialInputAcquirer<Unit>(
-            increment_fn, termination_fn
-        )
-        this.acquirer = acquirer;
+        ];
+        this.acquirer = new ChainedInputAcquirer<Unit>(option_fn_list);
     }
 
     digest_fn(selection: Stack<Unit>): Array<Effect> {
