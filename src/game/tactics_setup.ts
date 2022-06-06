@@ -1,14 +1,10 @@
+import { MOVE, ATTACK, CHAIN, END, CHANNELED_ATTACK } from "../model/action";
 import { GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
 import { 
     construct_actions, 
     GLOBAL_CONFIRMATION, 
     Unit, 
-    MOVE, 
-    ATTACK, 
-    CHAIN, 
-    END, 
-    CHANNELED_ATTACK
 } from "../model/unit";
 
 /**

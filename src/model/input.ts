@@ -45,6 +45,7 @@ export function synthetic_input_getter<T extends ISelectable>(
     return async function get_input( 
         input_options: InputOptions<T>
     ): Promise<InputSelection<T>> {
+        console.log("synthetic_input_getter options: ", input_options);
         if (input_options instanceof Array) {
             return selection_fn(input_options);
         } else {

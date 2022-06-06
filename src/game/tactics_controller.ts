@@ -1,13 +1,14 @@
-import { Action } from "../model/action";
+import { Action, ATTACK, CHAIN, CHANNELED_ATTACK, END, MOVE } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
 import { Confirmation, InputOptions, InputRequest, InputSelection, SimpleInputAcquirer } from "../model/input";
 import { IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, IState } from "../model/state";
-import { ATTACK, CHAIN, CHANNELED_ATTACK, END, MOVE, Unit } from "../model/unit";
+import { Unit } from "../model/unit";
 import { DisplayState } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { DisplayMap } from "../view/input";
+import { AI } from "./tactics_ai";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
@@ -25,6 +26,9 @@ type TacticsInputs = {
     action?: Action<ISelectable, BoardState>,
     action_input?: InputSelection<ISelectable>,
 }
+
+// TODO: Replace everywhere
+export type BoardAction = Action<ISelectable, BoardState>;
 
 /**
  * Phase is same as typical board game sense.
@@ -127,7 +131,7 @@ export class TacticsPhase implements IPhase {
                     this.decrement_state();
                 }
             }
-            if(this.input_state == InputState.ActionInputSelected) {
+            if (this.input_state == InputState.ActionInputSelected) {
                 break;
             }
         }
@@ -212,9 +216,12 @@ export class TacticsPhase implements IPhase {
  */
 export class TacticsController {
     state: BoardState;
+    ai: AI;
 
     constructor(state: BoardState) {
         this.state = state;
+        // Set up enemy team (team 1) AI
+        this.ai = new AI(1, state);
     }
 
     /**
@@ -228,25 +235,50 @@ export class TacticsController {
     ) {
         phase.set_display_handler(display_handler);
         display_handler.on_selection(null, phase);
-        var team = 0;
+        var team = 1;
         while (true) {
             var phase_runner = phase.run_phase(this.state, team);
             // TODO: lol what a mess
             var input_options = await phase_runner.next();
-            while(input_options.value){
-                var input_selection = await input_request(input_options.value);
-                input_options = await phase_runner.next(input_selection);
-                display_handler.on_selection(input_selection, phase);
-            }
+
+            if (team != this.ai.team) { // Human
+                while(input_options.value){
+                    var input_selection = await input_request(input_options.value);
+                    input_options = await phase_runner.next(input_selection);
+                    display_handler.on_selection(input_selection, phase);
+                }
+            } else if (team == this.ai.team) { // AI
+                while (input_options.value) {                    
+                    // Note: Fine to hit these all in one loop
+                    if (phase.input_state == InputState.NoneSelected){
+                        // @ts-ignore
+                        var input_selection = await this.ai.unit_getter(input_options.value);
+                    }
+                    else if (phase.input_state == InputState.UnitSelected){
+                        // @ts-ignore
+                        var input_selection = await this.ai.action_getter(input_options.value);
+                    }
+                    else if (phase.input_state == InputState.ActionSelected){
+                        // @ts-ignore
+                        var input_selection = await this.ai.action_input_getter(input_options.value);
+                    }
+                    else if (phase.input_state == InputState.ActionInputSelected) {
+                        console.log("SHOULD NOT REACH");
+                        break;
+                    }
+                    input_options = await phase_runner.next(input_selection);
+                    display_handler.on_selection(input_selection, phase);
+                }
+            } 
+
             display_handler.on_phase_end(phase);
             if (this.victory_condition(team)) {
-                console.log("VICTORY!!!");
+                console.log("VICTORY!!!: ", team);
                 break;
             } else if (this.defeat_condition(team)) {
-                console.log("DEFEAT!!!");
+                console.log("DEFEAT!!! ", team);
                 break;
             }
-            // TODO: Enemy becomes selectable after this for some reason?
             team = (team + 1) % 2; // Switch teams
         }  
         // NOTE: Don't forget, input_request also influences display state!

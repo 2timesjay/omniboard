@@ -1,20 +1,13 @@
 import { TrueLiteral } from "typescript";
 import { Bump, Flinch, Move } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
-import { Action, AttackAction, ChainLightningAction, ChanneledAttackAction, EndTurnAction, MoveAction } from "./action";
+import { Action, ATTACK, AttackAction, CHAIN, ChainLightningAction, ChanneledAttackAction, CHANNELED_ATTACK, END, EndTurnAction, MOVE, MoveAction } from "./action";
 import { ISelectable, Stack } from "./core";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
 import { GridLocation, GridSpace, Point } from "./space";
 import { BoardState, IState } from "./state";
 
 export const DURATION_FRAMES = 25
-
-// Actions constants
-export const MOVE = "Move";
-export const ATTACK = "Attack";
-export const CHAIN = "Chain Lightning";
-export const END = "End Turn";
-export const CHANNELED_ATTACK = "Channeled Attack";
 
 // TODO: Move somewhere more appropriate
 export const GLOBAL_CONFIRMATION = new  Confirmation(); 

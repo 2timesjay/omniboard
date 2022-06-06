@@ -24,6 +24,7 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
     index: number; // TODO: index should not be part of base Action; only used for UI.
     acquirer: IInputAcquirer<T>;
     enabled: boolean;
+    source: Unit;
    
     constructor(text: string, index: number) {
         this.text = text;
@@ -53,7 +54,6 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
  * Move
  */
 export class MoveAction extends Action<GridLocation, BoardState> {
-    source: Unit;
 
     constructor(source: Unit, state: BoardState) {
         super(MOVE, 1);
@@ -91,7 +91,6 @@ export class MoveAction extends Action<GridLocation, BoardState> {
  * Attack
  */
 export class AttackAction extends Action<Unit, BoardState> {
-    source: Unit;
 
     constructor(source: Unit, state: BoardState) {
         super(ATTACK, 2);
@@ -126,7 +125,6 @@ export class AttackAction extends Action<Unit, BoardState> {
 
 
 export class ChainLightningAction extends Action<Unit, BoardState> {
-    source: Unit;
 
     constructor(source: Unit, state: BoardState) {
         super(CHAIN, 3);
@@ -165,7 +163,6 @@ export class ChainLightningAction extends Action<Unit, BoardState> {
 }
 
 export class ChanneledAttackAction extends Action<Unit, BoardState> {
-    source: Unit;
 
     constructor(source: Unit, state: BoardState) {
         super(CHANNELED_ATTACK, 3);
@@ -214,7 +211,6 @@ export class ChanneledAttackAction extends Action<Unit, BoardState> {
  */
 
 export class EndTurnAction extends Action<Confirmation, BoardState> {
-    source: Unit;
 
     constructor(confirmation: Confirmation, source: Unit, state: BoardState) {
         super(END, 4);
