@@ -14,7 +14,7 @@ const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
 export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>>
 
-enum InputState {
+export enum InputState {
     NoneSelected = 0,
     UnitSelected = 1,
     ActionSelected = 2,
@@ -248,24 +248,9 @@ export class TacticsController {
                     display_handler.on_selection(input_selection, phase);
                 }
             } else if (team == this.ai.team) { // AI
-                while (input_options.value) {                    
-                    // Note: Fine to hit these all in one loop
-                    if (phase.input_state == InputState.NoneSelected){
-                        // @ts-ignore
-                        var input_selection = await this.ai.unit_getter(input_options.value);
-                    }
-                    else if (phase.input_state == InputState.UnitSelected){
-                        // @ts-ignore
-                        var input_selection = await this.ai.action_getter(input_options.value);
-                    }
-                    else if (phase.input_state == InputState.ActionSelected){
-                        // @ts-ignore
-                        var input_selection = await this.ai.action_input_getter(input_options.value);
-                    }
-                    else if (phase.input_state == InputState.ActionInputSelected) {
-                        console.log("SHOULD NOT REACH");
-                        break;
-                    }
+                while (input_options.value) {      
+                    // @ts-ignore input_options from gen with void return type.             
+                    var input_selection = await this.ai.get_input(phase, input_options);
                     input_options = await phase_runner.next(input_selection);
                     display_handler.on_selection(input_selection, phase);
                 }

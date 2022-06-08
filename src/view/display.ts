@@ -1,6 +1,6 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
-import { makeCanvas, makeCircle, makeLine, makeRect, makeSquare } from "./rendering";
+import { makeArc, makeCanvas, makeCircle, makeLine, makeRect, makeSquare } from "./rendering";
 import { getMousePos, Position } from "./input";
 import { Awaited } from "../model/utilities";
 import { GridLocation } from "../model/space";
@@ -26,6 +26,7 @@ interface ILocatable {
     _xOffset: number;
     _yOffset: number;
     _size: number;
+    children: Array<AbstractVisual>;
     get xOffset(): number;
     get yOffset(): number;
     get size(): number;
@@ -347,11 +348,82 @@ export class AbstractVisual {
     }
 }
 
-export class LinearVisual {
+export class UnitaryVisual extends AbstractVisual{
+    parent: ILocatable;
+
+    constructor(parent: ILocatable) {
+        super();
+        this.add_parent(parent);
+    }
+
+    add_parent(parent: ILocatable) {
+        this.parent = parent;
+        parent.children.push(this);
+    }
+
+    display(context: CanvasRenderingContext2D) {
+        this.render(context, null)
+    }
+
+    render(context: CanvasRenderingContext2D, clr: string) {
+        throw new Error('Method not implemented.');
+    }
+}
+
+export class HealthVisual extends UnitaryVisual {
+    parent: _UnitDisplay;
+    index: number;
+    color: string;
+
+    constructor(parent: _UnitDisplay, index: number) {
+        super(parent);
+        this.index = index;
+    }
+
+    display(context: CanvasRenderingContext2D) {
+        this.render(context, this.color)
+    }
+
+    // See https://www.rapidtables.com/web/color/html-color-codes.html
+    get_health_color(): string {
+        switch (this.index) {
+            case 0: return 'teal';
+            case 1: return 'lightseagreen';
+            case 2: return 'mediumturquoise';
+            case 3: return 'turquoise';
+            default: return 'cyan';
+        }
+    }
+
+    render(context: CanvasRenderingContext2D, clr: string) {
+        // TODO: Rename radius; halve.
+        const SIZE_INCR = 10;
+        var size_up: number = ((this.index + 1) * SIZE_INCR);
+
+        var parent = this.parent;
+        var x = parent.xOffset - size_up/2;
+        var y = parent.yOffset - size_up/2;
+        var size = parent.size + size_up;
+        var max = this.parent.selectable.all_max_hp[this.index];
+        var cur = this.parent.selectable.all_hp[this.index];
+        var frac_filled = cur/max
+        makeArc(
+            x, 
+            y, 
+            context, 
+            size, 
+            frac_filled, 
+            this.get_health_color(),
+        );
+    }
+}
+
+export class LinearVisual extends AbstractVisual {
     from: ILocatable;
     to: ILocatable;
 
     constructor(from: ILocatable, to: ILocatable) {
+        super();
         this.from = from;
         this.to = to;    
     }
@@ -382,11 +454,13 @@ export class AbstractDisplay<T extends ISelectable> {
     // TODO: Clean up this crazy state/selection_state
     state: DisplayState;
     selection_state: DisplayState
+    children: Array<AbstractVisual>;
 
     constructor(selectable: T) {
         this.selectable = selectable;
         this.state = DisplayState.Neutral;
         this.selection_state = DisplayState.Neutral;
+        this.children = [];
     }
 
     update_pos() {
@@ -408,6 +482,9 @@ export class AbstractDisplay<T extends ISelectable> {
 
         if (this.selection_state == DisplayState.Queue) {
             this.queueDisplay(context);
+        }
+        for (var visual of this.children) {
+            visual.display(context);
         }
     }
 
@@ -616,8 +693,6 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable{
 }
 
 export const UnitDisplay = Animate(_UnitDisplay, CircleInPlace);
-// export const UnitDisplay = Animate(_UnitDisplay, new Flinch(100, 0, 1000));
-// export const UnitDisplay = Animate(_UnitDisplay, new Flinch(0, 0, 0));
 
 export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     selectable: IMenuable;

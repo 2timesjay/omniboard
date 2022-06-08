@@ -101,3 +101,31 @@ export function makeLine(
     context.globalAlpha = 1.0;
     context.strokeStyle = 'black';
 }
+
+export function makeArc(
+    x: number, 
+    y: number, 
+    context: CanvasRenderingContext2D, 
+    size: number, 
+    frac_filled?: number | null,
+    clr?: string | null, 
+    lfa?: number | null
+): void {
+    const fraction_filled = frac_filled == undefined ? 1.0: frac_filled;
+    const alpha = lfa == undefined ? 1.0 : lfa;
+    const color = clr == undefined ? "#000000" : clr;
+    var centerX = x + size/2.0;
+    var centerY = y + size/2.0;
+    var radius = size/2.0;
+
+    context.globalAlpha = alpha;
+    context.beginPath();
+    context.arc(centerX, centerY, radius, 0, fraction_filled * 2 * Math.PI, false);
+    // context.fillStyle = color;
+    // context.fill();
+    context.lineWidth = 5;
+    // context.strokeStyle = 'black';
+    context.strokeStyle = color;
+    context.stroke();
+    context.globalAlpha = 1.0;
+}
