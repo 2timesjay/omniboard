@@ -384,9 +384,13 @@ export class HealthVisual extends UnitaryVisual {
         this.render(context, this.color)
     }
 
+    get num_health_bars(): number {
+        return this.parent.selectable.all_max_hp.length;
+    }
+
     // See https://www.rapidtables.com/web/color/html-color-codes.html
     get_health_color(): string {
-        switch (this.index) {
+        switch (this.num_health_bars - this.index - 1) {
             case 0: return 'teal';
             case 1: return 'lightseagreen';
             case 2: return 'mediumturquoise';
@@ -396,14 +400,13 @@ export class HealthVisual extends UnitaryVisual {
     }
 
     render(context: CanvasRenderingContext2D, clr: string) {
-        // TODO: Rename radius; halve.
-        const SIZE_INCR = 10;
-        var size_up: number = ((this.index + 1) * SIZE_INCR);
+        const RADIUS_INCR = 5;
+        var radius_delta: number = (this.num_health_bars - this.index)  * RADIUS_INCR;
 
         var parent = this.parent;
-        var x = parent.xOffset - size_up/2;
-        var y = parent.yOffset - size_up/2;
-        var size = parent.size + size_up;
+        var x = parent.xOffset - radius_delta;
+        var y = parent.yOffset - radius_delta;
+        var size = parent.size + 2*radius_delta;
         var max = this.parent.selectable.all_max_hp[this.index];
         var cur = this.parent.selectable.all_hp[this.index];
         var frac_filled = cur/max
@@ -652,8 +655,12 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable{
 
     render(context: CanvasRenderingContext2D, clr: string) {
         var unit: Unit = this.selectable;
-        var unit_transparency = 0.2 + 0.8 * unit.hp / unit.max_hp;
-        makeSquare(this.xOffset, this.yOffset, context, this.size, clr, unit_transparency);
+        var unit_alpha = (
+            unit.all_max_hp.length == 1 ? 
+            0.2 + 0.8 * unit.hp / unit.max_hp :
+            1
+        );
+        makeSquare(this.xOffset, this.yOffset, context, this.size, clr, unit_alpha);
     }
 
     alt_render(context: CanvasRenderingContext2D, clr: string) {
