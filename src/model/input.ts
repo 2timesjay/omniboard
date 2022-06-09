@@ -124,6 +124,7 @@ export class Confirmation implements ISelectable, IMenuable {
 export interface IInputAcquirer<T> {
     current_input: InputSelection<T>;
     input_option_generator: SelectionGen<T>;
+    // TODO: Use get_options instead of direct option_fn access?
     get_options: (input: InputSelection<T>) => InputOptions<T>;
 }
 
