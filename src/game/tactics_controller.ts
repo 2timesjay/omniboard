@@ -1,7 +1,7 @@
 import { Action, ATTACK, CHAIN, CHANNELED_ATTACK, END, MOVE } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
 import { Confirmation, InputOptions, InputRequest, InputSelection, SimpleInputAcquirer } from "../model/input";
-import { IPhase } from "../model/phase";
+import { Inputs, IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, IState } from "../model/state";
 import { Unit } from "../model/unit";
@@ -21,7 +21,7 @@ export enum InputState {
     ActionInputSelected = 3,
 }
 
-type TacticsInputs = {
+export interface TacticsInputs extends Inputs {
     unit?: Unit,
     action?: Action<ISelectable, BoardState>,
     action_input?: InputSelection<ISelectable>,
@@ -122,7 +122,7 @@ export class TacticsPhase implements IPhase {
                 }
             }
             if (this.input_state == InputState.ActionSelected){
-                var action_input = yield *this.action_input_selection(unit, action);
+                var action_input = yield *this.action_input_selection(this.current_inputs, action);
                 if (action_input != null) {
                     this.current_inputs.action_input = action_input;
                     this.increment_state();
@@ -179,33 +179,10 @@ export class TacticsPhase implements IPhase {
     }
 
     * action_input_selection (
-        unit: Unit,
+        tactics_inputs: TacticsInputs,
         action: Action<ISelectable, BoardState>,
     ): Generator<InputOptions<ISelectable>, InputSelection<ISelectable>, InputSelection<ISelectable>> {
-        // input_option_generator requires Stack, not just any InputSelection
-        var root = null;
-        // TODO: Use enum or other better action identification
-        // TODO: Handle as data that's part of action?
-        // TODO: use match syntax or case syntax
-        if (action.text == MOVE) {
-            var location_stack_root = new Stack(unit.loc);
-            root = location_stack_root;
-        } else if (action.text == ATTACK) {
-            var unit_root = unit;
-            root = unit_root;
-        } else if (action.text == CHANNELED_ATTACK) {
-            var unit_stack_root = new Stack(unit);
-            root = unit_stack_root;
-        } else if (action.text == CHAIN) {
-            var unit_stack_root = new Stack(unit);
-            root = unit_stack_root;
-        } else if (action.text == END) {
-            var confirmation_root = new Confirmation();
-            root = confirmation_root;
-        }
-        // TODO: Revise action to simply return selected input stack; handle digest in sub-phase.
-        // @ts-ignore Unit | Stack<GridLocation>
-        var action_input = yield *action.get_action_input(root);
+        var action_input = yield *action.get_action_input(action.get_root(tactics_inputs));
         return action_input;
     }
 }

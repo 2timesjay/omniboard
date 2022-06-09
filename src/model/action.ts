@@ -1,8 +1,10 @@
+import { TacticsInputs } from "../game/tactics_controller";
 import { Flinch, Bump } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
 import { DamageEffect, Effect, ExhaustEffect, MoveEffect } from "./effect";
 import { IInputAcquirer, InputSelection, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer, ChainedInputAcquirer } from "./input";
+import { Inputs } from "./phase";
 import { GridLocation, Point } from "./space";
 import { IState, BoardState} from "./state";
 import { Unit, DURATION_FRAMES } from "./unit";
@@ -48,6 +50,10 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
     digest_fn(selection: InputSelection<T>): Array<Effect> {
         throw new Error('Method not implemented.');
     }
+
+    get_root(inputs: Inputs): InputSelection<ISelectable> {
+        throw new Error('Method not implemented.');
+    }
 };
 
 /**
@@ -85,6 +91,10 @@ export class MoveAction extends Action<GridLocation, BoardState> {
         effects.push(new ExhaustEffect(this.source, this));
         return effects;
     }
+
+    get_root(tactics_inputs: TacticsInputs): Stack<GridLocation> {
+        return new Stack(tactics_inputs.unit.loc);
+    }
 }
 
 /**
@@ -120,6 +130,10 @@ export class AttackAction extends Action<Unit, BoardState> {
             new ExhaustEffect(this.source, this)
         ];
         return effects;
+    }
+
+    get_root(tactics_inputs: TacticsInputs): Unit {
+        return tactics_inputs.unit;
     }
 }
 
@@ -159,6 +173,10 @@ export class ChainLightningAction extends Action<Unit, BoardState> {
             new ExhaustEffect(this.source, this)
         );
         return effects;
+    }    
+
+    get_root(tactics_inputs: TacticsInputs): Stack<Unit> {
+        return new Stack(tactics_inputs.unit);
     }
 }
 
@@ -204,6 +222,10 @@ export class ChanneledAttackAction extends Action<Unit, BoardState> {
         ];
         return effects;
     }
+    
+    get_root(tactics_inputs: TacticsInputs): Stack<Unit> {
+        return new Stack(tactics_inputs.unit);
+    }
 }
 
 /**
@@ -211,9 +233,11 @@ export class ChanneledAttackAction extends Action<Unit, BoardState> {
  */
 
 export class EndTurnAction extends Action<Confirmation, BoardState> {
+    confirmation: Confirmation;
 
     constructor(confirmation: Confirmation, source: Unit, state: BoardState) {
         super(END, 4);
+        this.confirmation = confirmation;
         this.source = source;
         var acquirer = new AutoInputAcquirer<Confirmation>(confirmation);
         this.acquirer = acquirer;
@@ -224,5 +248,9 @@ export class EndTurnAction extends Action<Confirmation, BoardState> {
         // @ts-ignore
         var effects = this.source.actions.map((a) => new ExhaustEffect(this.source, a))
         return effects;
+    }
+
+    get_root(tactics_inputs: TacticsInputs): Confirmation {
+        return this.confirmation;
     }
 }
