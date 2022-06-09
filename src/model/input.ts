@@ -124,6 +124,7 @@ export class Confirmation implements ISelectable, IMenuable {
 export interface IInputAcquirer<T> {
     current_input: InputSelection<T>;
     input_option_generator: SelectionGen<T>;
+    get_options: (input: InputSelection<T>) => InputOptions<T>;
 }
 
 export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
@@ -136,6 +137,10 @@ export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
         this.auto_input = auto_input;
         // NOTE: Pre-queues auto_input; NEVER CHANGED.
         this.current_input = auto_input;
+    }
+
+    get_options(input: InputSelection<T>): Array<T> {
+        return [this.auto_input];
     }
 
     * input_option_generator(
@@ -164,6 +169,10 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
 
     public static from_options<U>(options: Array<U>): SimpleInputAcquirer<U> {
         return new SimpleInputAcquirer<U>(() => options);
+    }
+
+    get_options(input: InputSelection<T>): Array<T> {
+        return this.option_fn(input);
     }
 
     * input_option_generator(
@@ -212,8 +221,8 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
         this.current_input = null;
     }
 
-    get_options(input: Stack<T>): Tree<T> {
-        return bfs(input, this.increment_fn, this.termination_fn);
+    get_options(input: Stack<T>): PreviewMap<T> {
+        return bfs(input, this.increment_fn, this.termination_fn).to_map();
     }
 
     * input_option_generator(
@@ -222,7 +231,7 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
         this.current_input = base;
-        var preview_map = this.get_options(this.current_input).to_map();
+        var preview_map = this.get_options(this.current_input);
         var input_resp = yield preview_map;
         do {
             var REJECT_CASE = !input_resp;
@@ -233,7 +242,7 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
                 if (this.current_input.parent) {
                     this.current_input = this.current_input.pop();
                     console.log("Pop Sequential InputSelection")
-                    preview_map = this.get_options(this.current_input).to_map();                        
+                    preview_map = this.get_options(this.current_input);                        
                 } else {
                     console.log("Cannot Pop Sequential InputSelection");
                     return null; // NOTE: Propagates POP Signal to subphase
@@ -245,7 +254,7 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
             } else {
                 console.log("InputSelection: ", input_resp);
                 this.current_input = input_resp;
-                preview_map = this.get_options(this.current_input).to_map(); 
+                preview_map = this.get_options(this.current_input); 
                 input_resp = yield preview_map;
             }
         } while(true);
@@ -286,9 +295,9 @@ class SetInputAcquirer<T> extends SequentialInputAcquirer<T> {
         super(increment_fn, termination_fn);
     }
 
-    get_options(input: Stack<T>): Tree<T> {
+    get_options(input: Stack<T>): PreviewMap<T> {
         // Replace BFS from sequentialInputAcquirer
         // TODO: Support Null root
-        return Tree.from_array(this.increment_fn(input));
+        return Tree.from_array(this.increment_fn(input)).to_map();
     }
 }

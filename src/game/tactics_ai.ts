@@ -49,16 +49,19 @@ export class AI {
     }
 
     _select_action(arr: Array<BoardAction>): BoardAction {
-        // TODO: Validate the action has valid input; do in phase.action_selection()
+        // TODO: Validate the action has valid input; filter in phase.action_selection()
+        // TODO: Validate using get_options generically (w/ get_root)
+        // TODO: Chain lightning doesn't work when enabled
         var valid_actions: Array<BoardAction> = [];
         for (var action of arr) {
             var is_valid = false;
             if (action.text == MOVE) {
                 // @ts-ignore
-                is_valid = action.acquirer.get_options(new Stack<GridLocation>(action.source.loc));
+                is_valid = action.acquirer.get_options(new Stack<GridLocation>(action.source.loc)).size > 0;
+                console.log("Move options: ", action.acquirer.get_options(new Stack<GridLocation>(action.source.loc)))
             } else if (action.text == ATTACK) {
                 // @ts-ignore
-                is_valid = action.acquirer.option_fn().length > 0;
+                is_valid = action.acquirer.get_options(null).length > 0;
             } else if (action.text == END) {
                 is_valid = true;
             }
@@ -67,6 +70,7 @@ export class AI {
                 valid_actions.push(action);
             }
         }
+        console.log("selecting action : ", valid_actions[0].text)
         return valid_actions[0];
     }
 

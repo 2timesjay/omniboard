@@ -212,7 +212,7 @@ export class TacticsController {
     ) {
         phase.set_display_handler(display_handler);
         display_handler.on_selection(null, phase);
-        var team = 0;
+        var team = 1;
         while (true) {
             var phase_runner = phase.run_phase(this.state, team);
             // TODO: lol what a mess
