@@ -227,7 +227,11 @@ export class TacticsController {
             } else if (team == this.ai.team) { // AI
                 while (input_options.value) {      
                     // @ts-ignore input_options from gen with void return type.             
-                    var input_selection = await this.ai.get_input(phase, input_options);
+                    var input_selection = await this.ai.get_input(
+                        phase, 
+                        input_options.value, 
+                        phase.current_inputs,
+                    );
                     input_options = await phase_runner.next(input_selection);
                     display_handler.on_selection(input_selection, phase);
                 }

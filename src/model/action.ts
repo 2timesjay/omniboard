@@ -51,9 +51,19 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         throw new Error('Method not implemented.');
     }
 
-    get_root(inputs: Inputs): InputSelection<ISelectable> {
+    get_root(inputs: Inputs): InputSelection<T> {
         throw new Error('Method not implemented.');
     }
+
+    has_options(inputs: Inputs): boolean {
+        var options = this.acquirer.get_options(this.get_root(inputs));
+        if (options instanceof Array) {
+            return options.length > 0;
+        } else { // PreviewMap; can't check with instanceof because it is a type.
+            return options.size > 0;
+        }
+    }
+                
 };
 
 /**

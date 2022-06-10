@@ -4,7 +4,7 @@ import { InputOptions, InputRequest, InputSelection, synthetic_input_getter } fr
 import { GridLocation } from "../model/space";
 import { BoardState } from "../model/state";
 import { Unit } from "../model/unit";
-import { BoardAction, InputState, TacticsPhase } from "./tactics_controller";
+import { BoardAction, InputState, TacticsInputs, TacticsPhase } from "./tactics_controller";
 
 
 export class AI {
@@ -13,30 +13,35 @@ export class AI {
     unit_getter: InputRequest<Unit>;
     action_getter: InputRequest<BoardAction>;
     action_input_getter: InputRequest<ISelectable>;
+    tactics_inputs: TacticsInputs;
 
     constructor(team: number, state: BoardState) {
         this.team = team;
         this.state = state;
-        this.unit_getter = synthetic_input_getter<Unit>(this._select_unit);
-        this.action_getter = synthetic_input_getter<BoardAction>(this._select_action);
-        this.action_input_getter = synthetic_input_getter<ISelectable>(this._select_action_input);
+        this.unit_getter = synthetic_input_getter<Unit>(this._select_unit.bind(this));
+        this.action_getter = synthetic_input_getter<BoardAction>(this._select_action.bind(this));
+        this.action_input_getter = synthetic_input_getter<ISelectable>(this._select_action_input.bind(this));
     }
 
     get_input(
-        phase: TacticsPhase, input_options: InputOptions<ISelectable>
+        phase: TacticsPhase, 
+        input_options: InputOptions<ISelectable>, 
+        tactics_inputs: TacticsInputs,
     ): Promise<InputSelection<ISelectable>> {
+        // TODO: Is it better to inject tactics_inputs another way?
+        this.tactics_inputs = tactics_inputs;
         // Note: Fine to hit these all in one loop
         if (phase.input_state == InputState.NoneSelected){
             // @ts-ignore
-            return this.unit_getter(input_options.value);
+            return this.unit_getter(input_options);
         }
         else if (phase.input_state == InputState.UnitSelected){
             // @ts-ignore
-            return this.action_getter(input_options.value);
+            return this.action_getter(input_options);
         }
         else if (phase.input_state == InputState.ActionSelected){
             // @ts-ignore
-            return this.action_input_getter(input_options.value);
+            return this.action_input_getter(input_options);
         }
         else if (phase.input_state == InputState.ActionInputSelected) {
             console.log("SHOULD NOT REACH");
@@ -55,15 +60,8 @@ export class AI {
         var valid_actions: Array<BoardAction> = [];
         for (var action of arr) {
             var is_valid = false;
-            if (action.text == MOVE) {
-                // @ts-ignore
-                is_valid = action.acquirer.get_options(new Stack<GridLocation>(action.source.loc)).size > 0;
-                console.log("Move options: ", action.acquirer.get_options(new Stack<GridLocation>(action.source.loc)))
-            } else if (action.text == ATTACK) {
-                // @ts-ignore
-                is_valid = action.acquirer.get_options(null).length > 0;
-            } else if (action.text == END) {
-                is_valid = true;
+            if (action.text == MOVE || action.text == ATTACK || action.text == END) {
+                is_valid = action.has_options(this.tactics_inputs);
             }
 
             if (is_valid) {
@@ -74,8 +72,19 @@ export class AI {
         return valid_actions[0];
     }
 
-    // TODO: Get smart - optimization criteria for action input.
     _select_action_input(arr: Array<ISelectable>): ISelectable {
+        var unit = this.tactics_inputs.unit;
+        var action = this.tactics_inputs.action;
+        // TODO: Add Greedy AI
+        if (action.text == MOVE) {
+            
+        }
+        else if (action.text == ATTACK) {
+
+        }
+        else if (action.text == END) {
+
+        } 
         return arr[arr.length-1];
     }
 }

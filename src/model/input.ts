@@ -124,7 +124,6 @@ export class Confirmation implements ISelectable, IMenuable {
 export interface IInputAcquirer<T> {
     current_input: InputSelection<T>;
     input_option_generator: SelectionGen<T>;
-    // TODO: Use get_options instead of direct option_fn access?
     get_options: (input: InputSelection<T>) => InputOptions<T>;
 }
 
@@ -147,14 +146,14 @@ export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
     * input_option_generator(
         base?: T
     ): Generator<Array<T>, T, T> {
-        var selection = yield [this.auto_input]; // For confirmation only.
+        var selection = yield this.get_options(base); // For confirmation only.
         return selection;
     }
 }
 
 export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     // TODO: Cleanup - Simplify coupling with controller loop.
-    option_fn: OptionFn<T>;
+    _option_fn: OptionFn<T>;
     current_input: T;
     require_confirmation: boolean;
     
@@ -162,7 +161,7 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
         option_fn: OptionFn<T>,
         require_confirmation = true,
     ) {
-        this.option_fn = option_fn;
+        this._option_fn = option_fn;
         // NOTE: State has to return after any complete pop off the stack.
         this.current_input = null;
         this.require_confirmation = require_confirmation;
@@ -173,7 +172,7 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     }
 
     get_options(input: InputSelection<T>): Array<T> {
-        return this.option_fn(input);
+        return this._option_fn(input);
     }
 
     * input_option_generator(
@@ -181,7 +180,7 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     ): Generator<Array<T>, T, T> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
-        var options = this.option_fn(base);
+        var options = this.get_options(base);
         var input_resp = yield options;
         if (this.require_confirmation) {
             do {
