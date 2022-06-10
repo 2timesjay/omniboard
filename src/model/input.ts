@@ -286,18 +286,65 @@ export class ChainedInputAcquirer<T> extends SequentialInputAcquirer<T> {
  * Experimental Acquirers
  */
 
-// TODO: Probably need new `Pool` or `Set` type for InputSelection to make this smooth.
-class SetInputAcquirer<T> extends SequentialInputAcquirer<T> {
+// NOTE: Supports set acquisition with DAGish constraints.
+// TODO: Actually harder to make an arbitrarily constrained SetInputAcquirer.
+// TODO: Replace Stack.to_array with new InputSelection type? ("set" or "pool").
+class TreeInputAcquirer<T> implements IInputAcquirer<T> {
+    increment_fn: IncrementFn<T>;
+    termination_fn: TerminationFn<T>;
+    current_input: Stack<T>;
+
     constructor(
         increment_fn: IncrementFn<T>, 
         termination_fn: TerminationFn<T>, 
     ) {
-        super(increment_fn, termination_fn);
+        this.increment_fn = increment_fn;
+        this.termination_fn = termination_fn;
+        this.current_input = null;
     }
 
     get_options(input: Stack<T>): PreviewMap<T> {
-        // Replace BFS from sequentialInputAcquirer
-        // TODO: Support Null root
-        return Tree.from_array(this.increment_fn(input)).to_map();
+        return bfs(input, this.increment_fn, this.termination_fn).to_map();
+    }
+
+    * input_option_generator(
+        base?: Stack<T>
+    ): Generator<PreviewMap<T>, Stack<T>, Stack<T>> {
+        // Handles cases where intermediate input is required by yielding it.
+        // Coroutine case.
+        this.current_input = base;
+        var preview_map = this.get_options(this.current_input);
+        var input_resp = yield preview_map;
+        do {
+            // TODO: Currently treats "null" response as special flag to pop.
+            var REJECT_CASE = input_resp == null;
+            if (REJECT_CASE) {
+                // TODO: Propagate null selection better - current state + "pop signal" tuple?
+                if (this.current_input.parent) {
+                    this.current_input = this.current_input.pop();
+                    console.log("Pop Sequential InputSelection")
+                    preview_map = this.get_options(this.current_input);                        
+                } else {
+                    console.log("Cannot Pop Sequential InputSelection");
+                    return null; // NOTE: Propagates POP Signal to subphase
+                }
+                input_resp = yield preview_map;
+            } else {
+                var already_selected = input_resp.value in this.current_input.to_array()
+                var SELECT_CASE = input_resp != null && !already_selected;
+                var DESELECT_CASE = input_resp != null && already_selected;
+                var CONFIRM_CASE = false; // TODO: Implement.
+                if (CONFIRM_CASE){
+                    console.log("Confirm Sequential InputSelection");
+                    break;
+                } else {
+                    console.log("InputSelection: ", input_resp);
+                    this.current_input = input_resp;
+                    preview_map = this.get_options(this.current_input); 
+                    input_resp = yield preview_map;
+                }
+            }
+        } while(true);
+        return this.current_input;
     }
 }
