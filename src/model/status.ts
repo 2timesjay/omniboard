@@ -1,15 +1,14 @@
-import { DigestFn } from "./action";
 import { ISelectable } from "./core";
-import { Effect } from "./effect";
 
-type TriggerCond = (e: Effect) => boolean;
-
+export enum StatusType {
+    Frozen = 0;
+}
 class Status {
-    trigger_condition: TriggerCond;
-    digest_fn: DigestFn<ISelectable>;
+    parent: ISelectable;
+    status_type: StatusType;
 
-    constructor(trigger_condition: TriggerCond, digest_fn: DigestFn<ISelectable>) {
-        this.trigger_condition = trigger_condition;
-        this.digest_fn = digest_fn;
+    constructor(parent: ISelectable, status_type: StatusType) {
+        this.parent = parent;
+        this.status_type = status_type;
     }   
 }
