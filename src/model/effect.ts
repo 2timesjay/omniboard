@@ -14,17 +14,19 @@ export interface EffectKernel {
 export class DamageKernel implements EffectKernel {
     source: Unit;
     target: Unit;
+    damage_amount: number;
 
     _target_hp: Array<number>;
 
-    constructor(source: Unit, target: Unit) {
+    constructor(source: Unit, target: Unit, damage_amount: number) {
         this.source = source;
         this.target = target;
+        this.damage_amount = damage_amount;
     }
 
     execute(state: IState): IState {
         this._target_hp = this.target._hp;
-        this.target.damage(this.source.strength);
+        this.target.damage(this.damage_amount);
         return state;
     }
 
@@ -47,10 +49,11 @@ export class DamageEffect implements Effect {
     kernel: EffectKernel;
     description: string;
 
-    constructor(source: Unit, target: Unit) {
+    constructor(source: Unit, target: Unit, damage_amount?: number) {
         this.source = source;
         this.target = target;
-        this.kernel = new DamageKernel(source, target);
+        damage_amount = damage_amount == null ? source.strength : damage_amount; 
+        this.kernel = new DamageKernel(source, target, damage_amount);
         this.description = "attack target";
     }
 

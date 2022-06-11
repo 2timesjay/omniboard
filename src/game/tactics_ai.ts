@@ -23,6 +23,7 @@ export class AI {
     constructor(team: number, state: BoardState) {
         this.team = team;
         this.state = state;
+        // TODO: A mess - operate directly on tactics_input.
         this.unit_getter = synthetic_input_getter<Unit>(this._select_unit.bind(this));
         this.action_getter = synthetic_input_getter<BoardAction>(this._select_action.bind(this));
         this.action_input_getter = synthetic_input_getter<ISelectable>(this._select_action_input.bind(this));
@@ -61,7 +62,9 @@ export class AI {
         // TODO: Validate the action has valid input; filter in phase.action_selection()
         // TODO: Chain lightning doesn't work when enabled
         var unit = this.tactics_inputs.unit;
-        var enemy_units = this.state.units.filter(u => u.team != unit.team);
+        var enemy_units = this.state.units
+            .filter(u => u.team != unit.team)
+            .filter(u => u.is_alive());
         var valid_actions: Array<BoardAction> = [];
         for (var action of arr) {
             var is_valid = false;
@@ -88,7 +91,9 @@ export class AI {
         var unit = this.tactics_inputs.unit;
         var action = this.tactics_inputs.action;
 
-        var enemy_units = this.state.units.filter(u => u.team != unit.team);
+        var enemy_units = this.state.units
+            .filter(u => u.team != unit.team)
+            .filter(u => u.is_alive());
         if (action.text == MOVE) {
             var best_loc: GridLocation = null; // Note: Guaranteed to have one option to replace this.
             var best_dist: number = Infinity;

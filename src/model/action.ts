@@ -181,10 +181,14 @@ export class ChainLightningAction extends Action<Unit, BoardState> {
     }
 
     digest_fn(selection: Stack<Unit>): Array<Effect> {
+        var damage_amount = 1;
+
         // TODO: InputSelection wrap/unwrap
         var target_arr = selection.to_array();
         target_arr.shift();
-        var effects: Array<Effect> = target_arr.map((target) => new DamageEffect(this.source, target));
+        var effects: Array<Effect> = target_arr.map(
+            target => new DamageEffect(this.source, target, damage_amount)
+        );
         effects.push(
             new ExhaustEffect(this.source, this)
         );
