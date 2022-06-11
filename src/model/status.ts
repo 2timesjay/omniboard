@@ -1,7 +1,7 @@
 import { ISelectable } from "./core";
 
 export enum StatusType {
-    Frozen = 0;
+    Frozen = 0,
 }
 class Status {
     parent: ISelectable;
