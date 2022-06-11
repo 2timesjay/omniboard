@@ -1,11 +1,16 @@
 import { Action, ATTACK, END, MOVE } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
 import { InputOptions, InputRequest, InputSelection, synthetic_input_getter } from "../model/input";
-import { GridLocation } from "../model/space";
+import { GridLocation, GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
 import { Unit } from "../model/unit";
 import { BoardAction, InputState, TacticsInputs, TacticsPhase } from "./tactics_controller";
 
+
+function _min_distance(grid: GridSpace, base_loc: GridLocation, other_locs: Array<GridLocation>) {
+    var distances = other_locs.map(o => grid.getDistance(base_loc, o));
+    return Math.min(...distances);
+}
 
 export class AI {
     team: number;
@@ -77,7 +82,7 @@ export class AI {
         var action = this.tactics_inputs.action;
         // TODO: Add Greedy AI
         if (action.text == MOVE) {
-            
+
         }
         else if (action.text == ATTACK) {
 
