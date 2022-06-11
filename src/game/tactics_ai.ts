@@ -67,9 +67,12 @@ export class AI {
         for (var action of arr) {
             var is_valid = false;
             if (action.text == MOVE) {
+                console.log("MIN DIST: ", _min_distance(
+                    this.state.grid, unit.loc, enemy_units.map(u => u.loc)
+                ))
                 is_valid = _min_distance(
                     this.state.grid, unit.loc, enemy_units.map(u => u.loc)
-                ) > 0;
+                ) > 1;
             } else if (action.text == ATTACK || action.text == END) {
                 is_valid = action.has_options(this.tactics_inputs);
             }
@@ -85,9 +88,23 @@ export class AI {
     _select_action_input(arr: Array<ISelectable>): ISelectable {
         var unit = this.tactics_inputs.unit;
         var action = this.tactics_inputs.action;
-        // TODO: Add Greedy AI
-        if (action.text == MOVE) {
 
+        var enemy_units = this.state.units.filter(u => u.team != unit.team);
+        if (action.text == MOVE) {
+            var best_loc: GridLocation = null; // Note: Guaranteed to have one option to replace this.
+            var best_dist: number = Infinity;
+            // @ts-ignore - we know it's the correct type because of MOVE
+            var loc_arr: Array<GridLocation> = arr;
+            for (var loc of loc_arr) {
+                var dist = _min_distance(
+                    this.state.grid, loc, enemy_units.map(u => u.loc)
+                )
+                if (dist < best_dist) {
+                    best_loc = loc;
+                    best_dist = dist;
+                }
+            }
+            return best_loc;
         }
         else if (action.text == ATTACK) {
 
@@ -95,6 +112,6 @@ export class AI {
         else if (action.text == END) {
 
         } 
-        return arr[arr.length-1];
+        return arr[0];
     }
 }
