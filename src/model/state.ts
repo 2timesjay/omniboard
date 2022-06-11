@@ -50,7 +50,7 @@ export class BoardState implements IState {
                 // NOTE: Sleep Duration MUST exceed frames duration (#frames * 10) by safe margin.
                 await sleep(DURATION_MS);
             } else {
-                await sleep(DURATION_MS);
+                // await sleep(DURATION_MS);
                 // @ts-ignore
                 effect.execute(self);
             }

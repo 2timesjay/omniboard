@@ -117,8 +117,9 @@ export class AttackAction extends Action<Unit, BoardState> {
         this.source = source;
 
         var option_fn = (): Array<Unit> => {
-            // TODO: Somehow allowed to click self. Worse, this autoconfirms (input gen bug)
-            var units = state.units.filter((u) => (u.team != this.source.team));
+            var units = state.units
+                .filter((u) => (u.team != this.source.team))
+                .filter((u) => (u.is_alive()));
             var attack_range = this.source.attack_range;
             var attacker_loc = this.source.loc
             var options = units.filter(
@@ -148,6 +149,8 @@ export class AttackAction extends Action<Unit, BoardState> {
 }
 
 
+// TODO: Somehow allowed to click self. Worse, this autoconfirms (input gen bug)
+// TODO: Doesn't damage self.
 export class ChainLightningAction extends Action<Unit, BoardState> {
 
     constructor(source: Unit, state: BoardState) {
@@ -158,10 +161,13 @@ export class ChainLightningAction extends Action<Unit, BoardState> {
             var grid = state.grid;
             var units = state.units;
             var origin_loc = stack.value.loc;
-            var options = units.filter((u) => {
-                var dist = grid.getDistance(origin_loc, u.loc);
-                return 0 < dist && dist <= 3;
-            });
+            // NOTE: Can target own team.
+            var options = units
+                .filter((u) => {
+                    var dist = grid.getDistance(origin_loc, u.loc);
+                    return 0 < dist && dist <= 3;
+                })
+                .filter((u) => (u.is_alive()));
             return options;
         };
         var termination_fn = (stack: Stack<Unit>): boolean => {

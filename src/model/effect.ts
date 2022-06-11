@@ -67,8 +67,13 @@ export class DamageEffect implements Effect {
         var x = vector.x;
         var y = vector.y;
         var vector_norm = Math.sqrt(x*x + y*y);
-        vector.x = x/vector_norm;
-        vector.y = y/vector_norm;
+        if (vector_norm > 0) {
+            vector.x = x/vector_norm;
+            vector.y = y/vector_norm;
+        } else {
+            vector.x = 0;
+            vector.y = 0;
+        }
         var target_display = display_handler.display_map.get(target);
         var source_display = display_handler.display_map.get(source);
         // TODO: Relate to graphical size.
