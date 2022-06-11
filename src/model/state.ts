@@ -22,7 +22,7 @@ import { Unit } from "./unit";
 import {Awaited, sleep} from "./utilities";
 
 export const DURATION_MS = 600;
-export const DURATION_MS_NO_ANIM = 600;
+export const DURATION_MS_NO_ANIM = 10;
 
 export interface IState {
     get_selectables: () => Array<ISelectable>;
