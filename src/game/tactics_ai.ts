@@ -60,12 +60,17 @@ export class AI {
 
     _select_action(arr: Array<BoardAction>): BoardAction {
         // TODO: Validate the action has valid input; filter in phase.action_selection()
-        // TODO: Validate using get_options generically (w/ get_root)
         // TODO: Chain lightning doesn't work when enabled
+        var unit = this.tactics_inputs.unit;
+        var enemy_units = this.state.units.filter(u => u.team != unit.team);
         var valid_actions: Array<BoardAction> = [];
         for (var action of arr) {
             var is_valid = false;
-            if (action.text == MOVE || action.text == ATTACK || action.text == END) {
+            if (action.text == MOVE) {
+                is_valid = _min_distance(
+                    this.state.grid, unit.loc, enemy_units.map(u => u.loc)
+                ) > 0;
+            } else if (action.text == ATTACK || action.text == END) {
                 is_valid = action.has_options(this.tactics_inputs);
             }
 
