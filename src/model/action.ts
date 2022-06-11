@@ -261,7 +261,6 @@ export class EndTurnAction extends Action<Confirmation, BoardState> {
 
     digest_fn(selection: Confirmation): Array<Effect> {
         // TODO: InputSelection wrap/unwrap
-        // @ts-ignore
         var effects = this.source.actions.map((a) => new ExhaustEffect(this.source, a))
         return effects;
     }

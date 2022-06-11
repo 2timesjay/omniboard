@@ -45,7 +45,6 @@ export class AI {
             return this.action_getter(input_options);
         }
         else if (phase.input_state == InputState.ActionSelected){
-            // @ts-ignore
             return this.action_input_getter(input_options);
         }
         else if (phase.input_state == InputState.ActionInputSelected) {

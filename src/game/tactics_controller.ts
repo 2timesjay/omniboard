@@ -66,7 +66,6 @@ export class TacticsPhase implements IPhase {
             var inputs: TacticsInputs = yield *this.run_subphase(state, cur_team);
             console.log("Inputs: ", inputs);
 
-            // @ts-ignore How can we safely cast from InputSelection<ISelectable>?
             var action: Action<ISelectable, BoardState> = inputs.action;
             var action_input = inputs.action_input;
             var effects = action.digest_fn(action_input);
@@ -226,7 +225,6 @@ export class TacticsController {
                 }
             } else if (team == this.ai.team) { // AI
                 while (input_options.value) {      
-                    // @ts-ignore input_options from gen with void return type.             
                     var input_selection = await this.ai.get_input(
                         phase, 
                         input_options.value, 
