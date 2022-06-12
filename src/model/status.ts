@@ -6,6 +6,11 @@ export interface StatusContainer {
     statuses: Set<Status>;
 }
 
+// https://stackoverflow.com/questions/14425568/interface-type-check-with-typescript
+export function instanceOfStatusContainer(object: any): object is StatusContainer {
+    return "statuses" in object;
+}
+
 export enum StatusType {
     CounterReady = 0,
 }

@@ -16,7 +16,9 @@ import {
     InputOptions,
     InputRequest, InputSelection, PreviewMap
 } from "./input";
+import { Observer } from "./observer";
 import { GridSpace } from "./space";
+import { instanceOfStatusContainer } from "./status";
 import { Unit } from "./unit";
 
 import {Awaited, sleep} from "./utilities";
@@ -39,6 +41,7 @@ export class BoardState implements IState {
     ): Promise<BoardState> {
         var self = this;
         // TODO: Handle effect-tree and observers
+        console.log("Observers: ", self.get_observers())
         var execution_promise = sleep(0);
         for (var effect of effects) {
             // if (false) {
@@ -72,5 +75,17 @@ export class BoardState implements IState {
         }
         selectables.push(this.confirmation);
         return selectables;
+    }
+
+    get_observers(): Array<Observer> {
+        var observers = new Array<Observer>();
+        for (let selectable of this.get_selectables()) {
+            // TODO: More explicit way of checking 'is StatusContainer'
+            if (instanceOfStatusContainer(selectable)) {
+                var contained_observers = (new Array(...selectable.statuses)).map(s => s.observer);
+                observers.push(...contained_observers);
+            }
+        }
+        return observers;
     }
 };
