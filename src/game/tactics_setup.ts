@@ -1,4 +1,4 @@
-import { MOVE, ATTACK, CHAIN, END, CHANNELED_ATTACK } from "../model/action";
+import { MOVE, ATTACK, CHAIN, END, CHANNELED_ATTACK, COUNTER } from "../model/action";
 import { GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
 import { 
@@ -18,7 +18,7 @@ export function tactics_setup(k: number): BoardState {
     state.grid = grid_space;
     var unit_0_a = new Unit(0);
     unit_0_a.setLoc(grid_space.get(2, 2));
-    unit_0_a.setActions(construct_actions(unit_0_a, state, [MOVE, ATTACK, CHAIN, END]))
+    unit_0_a.setActions(construct_actions(unit_0_a, state, [MOVE, ATTACK, COUNTER, END]))
     var unit_0_b = new Unit(0);
     unit_0_b.setLoc(grid_space.get(0, 0));
     unit_0_b.setActions(construct_actions(unit_0_b, state, [MOVE, CHANNELED_ATTACK, END]))

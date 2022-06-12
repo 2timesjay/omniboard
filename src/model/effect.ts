@@ -4,6 +4,7 @@ import { Action } from "./action";
 import { ISelectable } from "./core";
 import { GridLocation, Point } from "./space";
 import { IState, BoardState } from "./state";
+import { Status, StatusContainer } from "./status";
 import { DURATION_FRAMES, Unit } from "./unit";
 
 export interface EffectKernel {
@@ -212,7 +213,66 @@ export class MoveEffect extends AbstractEffect {
     }
 }
 
-export type Observer = {
+
+
+class AddStatusKernel implements EffectKernel {
+    source: Unit | null;
+    target: StatusContainer;
+    status: Status;
+
+    _prev_statuses: Set<Status>;
+
+    constructor(source: Unit, target: StatusContainer, status: Status) {
+        this.source = source;
+        this.target = target;
+        this.status = status;
+    }
+
+    execute(state: IState): IState {
+        // Shallow clone status set.
+        this._prev_statuses = new Set(this.target.statuses);
+        this.target.statuses.add(this.status);
+        return state;
+    };
+
+    reverse(state: IState): IState {
+        this.target.statuses = this._prev_statuses
+        return state;
+    }
+}
+
+export enum AlterType {
+    Add = 0,
+    Remove = 1,
+}
+
+export class AlterStatusEffect extends AbstractEffect {
+    source: Unit | null;
+    target: ISelectable;
+    status: Status;
+
+    kernel: EffectKernel;
     description: string;
-    effect: Effect;
-};
+
+    constructor(source: Unit, target: StatusContainer, status: Status, alter_type: AlterType) {
+        super();
+        this.source = source;
+        this.target = target;
+        this.status = status;
+        if (alter_type == AlterType.Add) {
+            this.kernel = new AddStatusKernel(source, target, status);
+        } else if (alter_type == AlterType.Remove) {
+            throw new Error('Method not implemented.');
+        }
+        this.description = "alter statuses on a target";
+    }
+
+    execute(state: IState): IState {
+        return this.kernel.execute(state);
+    }
+
+    // TODO: Add 'flash' animation - blink to indicate status.
+    // animate(state: IState, display_handler: DisplayHandler) {   
+    //     // Add Flash
+    // }
+}

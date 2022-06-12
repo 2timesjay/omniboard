@@ -7,13 +7,24 @@ import { Unit } from "./unit";
 
 type TriggerCond = (state: IState, effect: Effect) => boolean;
 
-class AbstractObserver {
+export interface Observer {
     trigger_condition: TriggerCond;
     digest_fn: DigestFn<ISelectable>;
+    process: (state: IState, effect: Effect) => void;
+    enabled: boolean;
+    enable: () => void;
+    disable: () => void;
+}
+
+class AbstractObserver implements Observer {
+    trigger_condition: TriggerCond;
+    digest_fn: DigestFn<ISelectable>;
+    enabled: boolean;
 
     constructor(trigger_condition: TriggerCond, digest_fn: DigestFn<ISelectable>) {
         this.trigger_condition = trigger_condition;
         this.digest_fn = digest_fn;
+        this.enable();
     }   
 
     /**
@@ -22,6 +33,14 @@ class AbstractObserver {
      */
     process(state: IState, effect: Effect) {
         throw new Error('Method not implemented.');
+    }
+
+    disable() {
+        this.enabled = false;
+    }
+
+    enable() {
+        this.enabled = true;
     }
 }
 
@@ -46,7 +65,7 @@ export class CounterAttackObserver extends AbstractObserver{
     }   
 
     process(state: BoardState, effect: Effect) {
-        if (this.trigger_condition(state, effect)) {
+        if (this.trigger_condition(state, effect) && this.enabled) {
             // @ts-ignore trigger_condition guarantees effect.source is a Unit.
             this.post_execute.push(this.digest_fn(effect.source));
         }

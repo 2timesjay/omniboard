@@ -1,11 +1,12 @@
 import { TrueLiteral } from "typescript";
 import { Bump, Flinch, Move } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
-import { Action, ATTACK, AttackAction, CHAIN, ChainLightningAction, ChanneledAttackAction, CHANNELED_ATTACK, END, EndTurnAction, MOVE, MoveAction } from "./action";
+import { Action, ATTACK, AttackAction, CHAIN, ChainLightningAction, ChanneledAttackAction, CHANNELED_ATTACK, COUNTER, CounterReadyAction, END, EndTurnAction, MOVE, MoveAction } from "./action";
 import { ISelectable, Stack } from "./core";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
 import { GridLocation, GridSpace, Point } from "./space";
 import { BoardState, IState } from "./state";
+import { Status, StatusContainer } from "./status";
 
 export const DURATION_FRAMES = 25
 
@@ -37,12 +38,15 @@ export function construct_actions(unit: Unit, state: BoardState, action_list: Ar
             case END:
                 actions.push(new EndTurnAction(GLOBAL_CONFIRMATION, unit, state));
                 break;
+            case COUNTER:
+                actions.push(new CounterReadyAction(GLOBAL_CONFIRMATION, unit, state));
+                break;
         }
     }
     return actions;
 } 
 
-export class Unit implements ISelectable {
+export class Unit implements ISelectable, StatusContainer{
     team: number;
     loc: GridLocation;
     actions: Array<Action<ISelectable, BoardState>>;
@@ -53,6 +57,7 @@ export class Unit implements ISelectable {
     speed: number;
     strength: number;
     attack_range: number;
+    statuses: Set<Status>;
 
     constructor(team: number){
         this.team = team;
@@ -66,6 +71,8 @@ export class Unit implements ISelectable {
 
         this.max_ap = 2;
         this.ap = 2;
+
+        this.statuses = new Set();
     }
 
     get hp(): number {

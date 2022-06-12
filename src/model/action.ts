@@ -2,11 +2,12 @@ import { TacticsInputs } from "../game/tactics_controller";
 import { Flinch, Bump } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
-import { DamageEffect, Effect, ExhaustEffect, MoveEffect } from "./effect";
+import { AlterStatusEffect, AlterType, DamageEffect, Effect, ExhaustEffect, MoveEffect } from "./effect";
 import { IInputAcquirer, InputSelection, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer, ChainedInputAcquirer } from "./input";
 import { Inputs } from "./phase";
 import { GridLocation, Point } from "./space";
 import { IState, BoardState} from "./state";
+import { CounterReadyStatus } from "./status";
 import { Unit, DURATION_FRAMES } from "./unit";
 
 
@@ -16,6 +17,7 @@ export const ATTACK = "Attack";
 export const CHAIN = "Chain Lightning";
 export const END = "End Turn";
 export const CHANNELED_ATTACK = "Channeled Attack";
+export const COUNTER = "Counter";
 
 export type DigestFn<T extends ISelectable> = (selection: InputSelection<T>) => Array<Effect>;
 
@@ -266,6 +268,33 @@ export class EndTurnAction extends Action<Confirmation, BoardState> {
     digest_fn(selection: Confirmation): Array<Effect> {
         // TODO: InputSelection wrap/unwrap
         var effects = this.source.actions.map((a) => new ExhaustEffect(this.source, a))
+        return effects;
+    }
+
+    get_root(tactics_inputs: TacticsInputs): Confirmation {
+        return this.confirmation;
+    }
+}
+
+/**
+ * Add Status
+ */
+
+export class CounterReadyAction extends Action<Confirmation, BoardState> {
+    confirmation: Confirmation;
+
+    constructor(confirmation: Confirmation, source: Unit, state: BoardState) {
+        super(COUNTER, 3);
+        this.confirmation = confirmation;
+        this.source = source;
+        var acquirer = new AutoInputAcquirer<Confirmation>(confirmation);
+        this.acquirer = acquirer;
+    }
+
+    digest_fn(selection: Confirmation): Array<Effect> {
+        // TODO: InputSelection wrap/unwrap
+        var status = new CounterReadyStatus(this.source);
+        var effects = [new AlterStatusEffect(this.source, this.source, status, AlterType.Add)];
         return effects;
     }
 
