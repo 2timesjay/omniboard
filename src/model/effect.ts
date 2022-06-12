@@ -11,6 +11,29 @@ export interface EffectKernel {
     reverse: (state: IState) => IState;
 }
 
+export interface Effect {
+    execute: (state: IState) => IState;
+    pre_execute?: Array<Effect>;
+    post_execute?: Array<Effect>;
+    description?: string;
+    animate?: (state: IState, display_handler: DisplayHandler) => void;
+};
+
+export class AbstractEffect implements Effect{
+    pre_execute: Array<Effect>;
+    post_execute: Array<Effect>;
+    
+    constructor () {
+        this.pre_execute = [];
+        this.post_execute = [];
+    }
+
+    execute(state: IState): IState {
+        throw new Error('Method not implemented.');
+    }
+
+}
+
 export class DamageKernel implements EffectKernel {
     source: Unit;
     target: Unit;
@@ -36,13 +59,7 @@ export class DamageKernel implements EffectKernel {
     }
 }
 
-export interface Effect {
-    execute: (state: IState) => IState;
-    description?: string;
-    animate?: (state: IState, display_handler: DisplayHandler) => void;
-};
-
-export class DamageEffect implements Effect {
+export class DamageEffect extends AbstractEffect {
     source: Unit;
     target: Unit;
 
@@ -50,6 +67,7 @@ export class DamageEffect implements Effect {
     description: string;
 
     constructor(source: Unit, target: Unit, damage_amount?: number) {
+        super();
         this.source = source;
         this.target = target;
         damage_amount = damage_amount == null ? source.strength : damage_amount; 
@@ -113,7 +131,7 @@ export class ExhaustKernel implements EffectKernel {
 }
 
 // TODO: Decouple AP exhaustion and Action Disable
-export class ExhaustEffect implements Effect {
+export class ExhaustEffect extends AbstractEffect {
     source: Unit;
     action: Action<ISelectable, BoardState>;
 
@@ -124,6 +142,7 @@ export class ExhaustEffect implements Effect {
         source: Unit, 
         action: Action<ISelectable, BoardState>
     ) {
+        super();
         this.source = source;
         this.action = action;
         this.kernel = new ExhaustKernel(source, action);
@@ -160,7 +179,7 @@ class MoveKernel implements EffectKernel {
     }
 }
 
-export class MoveEffect implements Effect {
+export class MoveEffect extends AbstractEffect {
     source: Unit;
     loc: GridLocation;
 
@@ -168,6 +187,7 @@ export class MoveEffect implements Effect {
     description: string;
 
     constructor(source: Unit, loc: GridLocation) {
+        super();
         this.source = source;
         this.loc = loc;
         this.kernel = new MoveKernel(source, loc);

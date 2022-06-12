@@ -14,6 +14,9 @@ const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
 export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>>
 
+// TODO: Replace everywhere
+export type BoardAction = Action<ISelectable, BoardState>;
+
 export enum InputState {
     NoneSelected = 0,
     UnitSelected = 1,
@@ -26,9 +29,6 @@ export interface TacticsInputs extends Inputs {
     action?: Action<ISelectable, BoardState>,
     action_input?: InputSelection<ISelectable>,
 }
-
-// TODO: Replace everywhere
-export type BoardAction = Action<ISelectable, BoardState>;
 
 /**
  * Phase is same as typical board game sense.

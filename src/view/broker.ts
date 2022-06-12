@@ -52,5 +52,12 @@ export class Canvas2DBroker implements IBroker {
         context.canvas.onmousemove = function (event) {
             selection_broker.onmousemove(event);
         }
+        window.addEventListener(
+            "keydown", 
+            function (event) {
+                selection_broker.onkeyboardevent(event);
+            }, 
+            false,
+        );
     }
 }

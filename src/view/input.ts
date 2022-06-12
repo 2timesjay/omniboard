@@ -70,6 +70,15 @@ export class SelectionBroker<T extends ISelectable> {
             onevent(e); // Ignore Selection output.
         }
     }
+
+    onkeyboardevent (e: KeyboardEvent) {
+        const ESCAPE = "Escape";
+        const X = "KeyX";
+        if (e.code == ESCAPE || e.code == X) {
+            console.log(this);
+            this.reject();
+        }
+    }
 }
 
 // CallbackSelectionFn

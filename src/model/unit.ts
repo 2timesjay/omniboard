@@ -57,7 +57,7 @@ export class Unit implements ISelectable {
     constructor(team: number){
         this.team = team;
         
-        this._max_hp = [3, 3];
+        this._max_hp = [1, 3];
         this._hp = [...this._max_hp];
         
         this.speed = 3;
