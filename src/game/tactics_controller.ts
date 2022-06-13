@@ -60,9 +60,9 @@ export class TacticsPhase implements IPhase {
         var team_units = state.units
             .filter((u) => u.team == cur_team)
             .filter((u) => u.is_alive());
-        while(Array.from(team_units).filter((u) => !u.is_exhausted()).length) {
-            var data_dict = new Map<string, InputSelection<ISelectable>>([["state", state]]);
-            // TODO: Mutable data_dict is someone messy; hidden here.
+        // NOTE: Re-confirm u.is_alive since unit can die while un-exhausted.
+        while(Array.from(team_units).filter((u) => !u.is_exhausted() && u.is_alive()).length) {
+            // TODO: yield a special "subphase end" signal.
             var inputs: TacticsInputs = yield *this.run_subphase(state, cur_team);
             console.log("Inputs: ", inputs);
 
@@ -77,8 +77,7 @@ export class TacticsPhase implements IPhase {
             // TODO: Slightly messy to couple this with state.
             this.current_inputs = {};
             console.log("BoardState: ", state);
-            console.log("Units: ", state.units);
-            // TODO: yield a special "subphase end" signal.
+            console.log("Units: ", team_units, " Team: ", cur_team);
         }
         team_units.forEach((u) => u.reset_actions());
     }

@@ -2,7 +2,7 @@ import { DigestFn } from "./action";
 import { ISelectable } from "./core";
 import { DamageEffect, Effect } from "./effect";
 import { BoardState, IState } from "./state";
-import { StatusType } from "./status";
+import { Status, StatusType } from "./status";
 import { Unit } from "./unit";
 
 type TriggerCond = (state: IState, effect: Effect) => boolean;
@@ -11,6 +11,7 @@ export interface Observer {
     trigger_condition: TriggerCond;
     digest_fn: DigestFn<ISelectable>;
     process: (state: IState, effect: Effect) => void;
+    status: Status;
     enabled: boolean;
     enable: () => void;
     disable: () => void;
@@ -19,11 +20,13 @@ export interface Observer {
 class AbstractObserver implements Observer {
     trigger_condition: TriggerCond;
     digest_fn: DigestFn<ISelectable>;
+    status: Status;
     enabled: boolean;
 
-    constructor(trigger_condition: TriggerCond, digest_fn: DigestFn<ISelectable>) {
+    constructor(trigger_condition: TriggerCond, digest_fn: DigestFn<ISelectable>, status: Status) {
         this.trigger_condition = trigger_condition;
         this.digest_fn = digest_fn;
+        this.status = status;
         this.enable();
     }   
 
@@ -38,6 +41,10 @@ class AbstractObserver implements Observer {
 
     disable() {
         this.enabled = false;
+        // TODO: Slightly ugly code for clearing observers/status
+        this.status.clear();
+        this.status.parent.statuses.delete(this.status);
+        delete this.status;
     }
 
     enable() {
@@ -47,7 +54,7 @@ class AbstractObserver implements Observer {
 
 export class CounterAttackObserver extends AbstractObserver{
 
-    constructor(unit: Unit) {
+    constructor(unit: Unit, status: Status) {
         // Trigger when damage cause by an adjacent unit (DamageEffect).
         // I guess you could counter yourself, or a teammate.
         var trigger_condition = function(state: BoardState, effect: Effect): boolean {
@@ -62,7 +69,7 @@ export class CounterAttackObserver extends AbstractObserver{
         var digest_fn = function(counter_target: Unit) {
             return [new DamageEffect(unit, counter_target)];
         }
-        super(trigger_condition, digest_fn);
+        super(trigger_condition, digest_fn, status);
     }   
 
     process(state: BoardState, effect: Effect) {

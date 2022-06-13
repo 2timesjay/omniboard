@@ -27,8 +27,7 @@ export class Status {
         this.description = description;
     }   
 
-    clear() {
-        this.observer.disable();
+    clear() { // NOTE: Called from observer.disable()
         delete this.observer;
         this.parent.statuses.delete(this);
     }
@@ -38,6 +37,7 @@ export class CounterReadyStatus extends Status {
     constructor(parent: Unit) {
         var description = "Unit has readied a counterattack to respond to a strike.";
         super(parent, StatusType.CounterReady, description);
-        this.observer = new CounterAttackObserver(parent);
+        var self = this;
+        this.observer = new CounterAttackObserver(parent, self);
     }
 }

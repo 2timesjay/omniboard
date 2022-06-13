@@ -294,7 +294,10 @@ export class CounterReadyAction extends Action<Confirmation, BoardState> {
     digest_fn(selection: Confirmation): Array<Effect> {
         // TODO: InputSelection wrap/unwrap
         var status = new CounterReadyStatus(this.source);
-        var effects = [new AlterStatusEffect(this.source, this.source, status, AlterType.Add)];
+        var effects = [
+            new AlterStatusEffect(this.source, this.source, status, AlterType.Add),
+            new ExhaustEffect(this.source, this),
+        ];
         return effects;
     }
 
