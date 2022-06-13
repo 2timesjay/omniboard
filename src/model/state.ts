@@ -41,10 +41,32 @@ export class BoardState implements IState {
     ): Promise<BoardState> {
         var self = this;
         // TODO: Handle effect-tree and observers
-        console.log("Observers: ", self.get_observers())
         var execution_promise = sleep(0);
-        for (var effect of effects) {
-            // if (false) {
+        while (effects.length > 0) {
+            var effect = effects.shift();
+            // Observers inject pre and post _execute effects
+            var observers = this.get_observers();
+            observers.forEach(o => o.process(self, effect));
+
+            // Explore "effect tree".
+            var has_pre_execute = (
+                effect.pre_execute != null && effect.pre_execute.length > 0
+            );
+            var has_post_execute = (
+                effect.pre_execute != null && effect.pre_execute.length > 0
+            );
+            if (has_pre_execute) { // Add original effects, pre_effects and return to start of loop
+                effects.unshift(effect);
+                effects.unshift(...effect.pre_execute);
+                effect.pre_execute = [];
+                continue;
+            } else { // Add post_effects and finish loop. 
+                if (has_post_execute) {
+                    effects.unshift(...effect.post_execute);
+                    effect.post_execute = [];
+                }
+            }
+            console.log("Effect: ", effect);
             if (effect.animate != null){
                 effect.animate(this, display_handler);
                 effect.execute(self);
@@ -55,7 +77,9 @@ export class BoardState implements IState {
                 await sleep(DURATION_MS_NO_ANIM);
                 effect.execute(self);
             }
+            effects.unshift(...effect.post_execute);
         }
+        console.log("Observers: ", self.get_observers())
         return this;
     };
 

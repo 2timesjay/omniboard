@@ -31,6 +31,7 @@ class AbstractObserver implements Observer {
      * 
      * @param effect Effect to edit with additional pre and post-effects.
      */
+    // TODO: Separate pre_effect and post_effect processing
     process(state: IState, effect: Effect) {
         throw new Error('Method not implemented.');
     }
@@ -66,8 +67,11 @@ export class CounterAttackObserver extends AbstractObserver{
 
     process(state: BoardState, effect: Effect) {
         if (this.trigger_condition(state, effect) && this.enabled) {
+            console.log("Adding counter post effect to : ", effect);
             // @ts-ignore trigger_condition guarantees effect.source is a Unit.
-            this.post_execute.push(this.digest_fn(effect.source));
+            effect.post_execute.push(...this.digest_fn(effect.source));
+            // TODO: Depend too much on this behavior right now.
+            this.disable();
         }
     }
 }
