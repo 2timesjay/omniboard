@@ -1,10 +1,10 @@
 import { TrueLiteral } from "typescript";
 import { Bump, Flinch, Move } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
-import { Action, ATTACK, AttackAction, CHAIN, ChainLightningAction, ChanneledAttackAction, CHANNELED_ATTACK, COUNTER, CounterReadyAction, END, EndTurnAction, MOVE, MoveAction } from "./action";
+import { Action, AlterTerrainAction, ATTACK, AttackAction, CHAIN, ChainLightningAction, ChanneledAttackAction, CHANNELED_ATTACK, COUNTER, CounterReadyAction, END, EndTurnAction, MOVE, MoveAction, TERRAIN } from "./action";
 import { ISelectable, Stack } from "./core";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
-import { GridLocation, GridSpace, Point } from "./space";
+import { GridLocation, GridSpace, Vector } from "./space";
 import { BoardState, IState } from "./state";
 import { Status, StatusContainer } from "./status";
 
@@ -41,6 +41,9 @@ export function construct_actions(unit: Unit, state: BoardState, action_list: Ar
             case COUNTER:
                 actions.push(new CounterReadyAction(GLOBAL_CONFIRMATION, unit, state));
                 break;
+            case TERRAIN:
+                actions.push(new AlterTerrainAction(unit, state));
+                break;
         }
     }
     return actions;
@@ -55,7 +58,8 @@ export class Unit implements ISelectable, StatusContainer{
     _hp: Array<number>;
     _max_hp: Array<number>;
     speed: number;
-    strength: number;
+    strength: number;  // Amount of damage attacks deal.
+    piercing_strength: number;  // Amount of damage that can spill through shields.
     attack_range: number;
     statuses: Set<Status>;
 
@@ -67,6 +71,7 @@ export class Unit implements ISelectable, StatusContainer{
         
         this.speed = 3;
         this.strength = 5;
+        this.piercing_strength = 0;
         this.attack_range = 1;
 
         this.max_ap = 2;

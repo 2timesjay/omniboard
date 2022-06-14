@@ -1,4 +1,4 @@
-import { Action, ATTACK, CHAIN, CHANNELED_ATTACK, END, MOVE } from "../model/action";
+import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
 import { Confirmation, InputOptions, InputRequest, InputSelection, SimpleInputAcquirer } from "../model/input";
 import { Inputs, IPhase } from "../model/phase";
@@ -263,7 +263,7 @@ export class TacticsController {
         var ally_units = this.state.units
             .filter((u) => u.team == team)
             .filter((u) => u.is_alive());
-        console.log("Num ally: ", ally_units.length)
+        console.log("Num ally: ", ally_units.length);
         return ally_units.length == 0;
     }
 }

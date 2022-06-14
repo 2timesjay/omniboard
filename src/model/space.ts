@@ -9,11 +9,7 @@ enum RelativeCoordinateOperator {
 // Replace with class-based approach. Operators and subclassing.
 class RelativeCoordinate {
     type: RelativeCoordinateOperator;
-    value: {
-        x: number | null; 
-        y: number | null; 
-        z: number | null;
-    };
+    value: Vector;
     children: Array<RelativeCoordinate>;
 
     constructor(
@@ -43,23 +39,21 @@ interface ILocation {}
 
 interface IDiscreteLocation extends ILocation {}
 
-interface ILocationAttributes {}
-
 // TODO: Quick and dirty: expand use?
-export interface Point {
+export interface Vector {
     x: number;
     y: number;
+    z?: number;
 }
 
 export class GridLocation implements IDiscreteLocation {
     x: number;
     y: number;
-    z: number;
+    z?: number;
 
     dim: number;
 
-    // TODO: Traversable
-    attrs: ILocationAttributes;
+    traversable: boolean;
 
     constructor(x: number, y: number, z?: number){
         this.x = x;
@@ -71,6 +65,7 @@ export class GridLocation implements IDiscreteLocation {
         else { 
             this.dim = 2;
         }
+        this.traversable = true;
     };
 }
 
@@ -103,16 +98,17 @@ export class GridSpace {
     getRelativeCoordinate(loc: GridLocation, rel_co: RelativeCoordinate): Array<GridLocation> {
         var nh = new Array<GridLocation>();
         if (rel_co.type == RelativeCoordinateOperator.BASE) {
-            var ne = this.get(loc.x + rel_co.value.x, loc.y + rel_co.value.y)
+            var ne = this.get(loc.x + rel_co.value.x, loc.y + rel_co.value.y);
             if (ne) {
                 nh.push(ne);
             }
         } else if (rel_co.type == RelativeCoordinateOperator.OR) {
-            rel_co.children.flatMap(
-                (child) => {
-                    this.getRelativeCoordinate(loc, child);
-                }
-            )
+            var ne_list = rel_co.children.flatMap(
+                (child) => this.getRelativeCoordinate(loc, child)
+            );
+            if (ne_list) {
+                nh.push(...ne_list);
+            }
         }
         return nh;
     }
@@ -125,12 +121,16 @@ export class GridSpace {
         return this.getNeighborhood(loc, GRID_ADJACENCY);
     }
 
-    getVector(loc: GridLocation, other_loc: GridLocation): Point {
+    getVector(loc: GridLocation, other_loc: GridLocation): Vector {
         return {x: other_loc.x - loc.x, y: other_loc.y - loc.y};
     }
 
     getDistance(loc: GridLocation, other_loc: GridLocation): number {
         var {x, y} = this.getVector(loc, other_loc);
         return Math.abs(loc.x - other_loc.x) + Math.abs(loc.y - other_loc.y);
+    }
+
+    to_array(): Array<GridLocation> {
+        return this.locs.flat(); // Default depth=1 sufficient.
     }
 }

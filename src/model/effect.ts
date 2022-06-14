@@ -2,7 +2,7 @@ import { Flinch, Bump, Move } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { Action } from "./action";
 import { ISelectable } from "./core";
-import { GridLocation, Point } from "./space";
+import { GridLocation, Vector } from "./space";
 import { IState, BoardState } from "./state";
 import { Status, StatusContainer } from "./status";
 import { DURATION_FRAMES, Unit } from "./unit";
@@ -39,6 +39,7 @@ export class DamageKernel implements EffectKernel {
     source: Unit;
     target: Unit;
     damage_amount: number;
+    piercing_damage_amount: number;
 
     _target_hp: Array<number>;
 
@@ -46,12 +47,26 @@ export class DamageKernel implements EffectKernel {
         this.source = source;
         this.target = target;
         this.damage_amount = damage_amount;
+        this.piercing_damage_amount = this.source.piercing_strength;
     }
 
     execute(state: IState): IState {
+        // NOTE: Basically, damage normally when layer is large, or pierce. Piercing = 1 is worthless.
         this._target_hp = this.target._hp;
-        this.target.damage(this.damage_amount);
-        return state;
+        if (this.piercing_damage_amount <= 0 || this.target.hp >= this.piercing_damage_amount) {
+            this.target.damage(this.damage_amount);
+            return state;
+        } else {
+            var piercing_damage_amount = this.piercing_damage_amount;
+            while(this.target.hp > 0 && piercing_damage_amount > 0) {
+                var layer_hp = this.target.hp;
+                this.target.damage(piercing_damage_amount);
+                console.log("DAMAGE: ", piercing_damage_amount)
+                piercing_damage_amount -= layer_hp;
+                console.log("PIERCING_REMAINING: ", piercing_damage_amount)
+            }
+            return state;
+        }
     }
 
     reverse(state: IState): IState {
@@ -85,7 +100,7 @@ export class DamageEffect extends AbstractEffect {
         var source = this.source;
         var target = this.target;
         // @ts-ignore
-        var vector: Point = state.grid.getVector(source.loc, target.loc);
+        var vector: Vector = state.grid.getVector(source.loc, target.loc);
         var x = vector.x;
         var y = vector.y;
         var vector_norm = Math.sqrt(x*x + y*y);
@@ -203,7 +218,7 @@ export class MoveEffect extends AbstractEffect {
         var source = this.source;
         var loc = this.loc;
         // @ts-ignore
-        var vector: Point = state.grid.getVector(source.loc, loc);
+        var vector: Vector = state.grid.getVector(source.loc, loc);
         console.log("Vector: ", vector)
         var source_display = display_handler.display_map.get(source);
         // @ts-ignore Doesn't know unit_display is a UnitDisplay
@@ -212,8 +227,6 @@ export class MoveEffect extends AbstractEffect {
         source_display.interrupt_animation(animation)
     }
 }
-
-
 
 class AddStatusKernel implements EffectKernel {
     source: Unit | null;
@@ -248,7 +261,7 @@ export enum AlterType {
 
 export class AlterStatusEffect extends AbstractEffect {
     source: Unit | null;
-    target: ISelectable;
+    target: StatusContainer;
     status: Status;
 
     kernel: EffectKernel;
@@ -272,6 +285,56 @@ export class AlterStatusEffect extends AbstractEffect {
     }
 
     // TODO: Add 'flash' animation - blink to indicate status.
+    // animate(state: IState, display_handler: DisplayHandler) {   
+    //     // Add Flash
+    // }
+}
+
+class AlterTerrainKernel implements EffectKernel {
+    source: Unit | null;
+    target: GridLocation;
+
+    _prev_traversable: boolean;
+
+    constructor(source: Unit, target: GridLocation) {
+        this.source = source;
+        this.target = target;
+    }
+
+    execute(state: IState): IState {
+        // Invert traversability
+        this._prev_traversable = this.target.traversable;
+        this.target.traversable = !this.target.traversable;
+        return state;
+    };
+
+    reverse(state: IState): IState {
+        this.target.traversable = this._prev_traversable;
+        return state;
+    }
+}
+
+export class AlterTerrainEffect extends AbstractEffect {
+    source: Unit | null;
+    target: GridLocation;
+
+    kernel: EffectKernel;
+    description: string;
+
+    constructor(source: Unit, target: GridLocation) {
+        super();
+        this.source = source;
+        this.target = target;
+        this.kernel = new AlterTerrainKernel(source, target);
+
+        this.description = "Invert terrain traversability at a location";
+    }
+
+    execute(state: IState): IState {
+        return this.kernel.execute(state);
+    }
+
+    // TODO: Add terrain shake animation
     // animate(state: IState, display_handler: DisplayHandler) {   
     //     // Add Flash
     // }

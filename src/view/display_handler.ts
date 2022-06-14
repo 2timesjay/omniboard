@@ -139,11 +139,11 @@ export class BaseDisplayHandler {
     render_pathy_inputs() {
         // TODO: turn into a function of Action or some object that encapsulates it.
         for (var i = 0; i < this.pathy_inputs.length - 1; i++) {
-            var from = this.display_map.get(this.pathy_inputs[i]);
-            var to = this.display_map.get(this.pathy_inputs[i+1]);
-            // @ts-ignore AbstractDisplay<ISelectable> is not ILocatable - fair
-            var line = new LinearVisual(from, to);
-            line.display(this.context);
+            // @ts-ignore TODO: Add type guard
+            var from: IPathable = this.display_map.get(this.pathy_inputs[i]);
+            // @ts-ignore TODO: Add type guard
+            var to: IPathable = this.display_map.get(this.pathy_inputs[i+1]);
+            from.pathDisplay(this.context, to);
         }
     }
 }

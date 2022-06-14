@@ -2,10 +2,10 @@ import { TacticsInputs } from "../game/tactics_controller";
 import { Flinch, Bump } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
-import { AlterStatusEffect, AlterType, DamageEffect, Effect, ExhaustEffect, MoveEffect } from "./effect";
+import { AlterStatusEffect, AlterTerrainEffect, AlterType, DamageEffect, Effect, ExhaustEffect, MoveEffect } from "./effect";
 import { IInputAcquirer, InputSelection, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer, ChainedInputAcquirer } from "./input";
 import { Inputs } from "./phase";
-import { GridLocation, Point } from "./space";
+import { GridLocation, Vector } from "./space";
 import { IState, BoardState} from "./state";
 import { CounterReadyStatus } from "./status";
 import { Unit, DURATION_FRAMES } from "./unit";
@@ -18,6 +18,7 @@ export const CHAIN = "Chain Lightning";
 export const END = "End Turn";
 export const CHANNELED_ATTACK = "Channeled Attack";
 export const COUNTER = "Counter";
+export const TERRAIN = "Alter Terrain";
 
 export type DigestFn<T extends ISelectable> = (selection: InputSelection<T>) => Array<Effect>;
 
@@ -82,7 +83,9 @@ export class MoveAction extends Action<GridLocation, BoardState> {
             var grid_space = state.grid;
             var neighborhood = grid_space.getGridNeighborhood(stack.value);
             var occupied = new Set(units.map((u) => u.loc));
-            var options = neighborhood.filter((l) => !occupied.has(l))
+            var options = neighborhood
+                .filter(l => !occupied.has(l))
+                .filter(l => l.traversable);
             return options;
         };
         var termination_fn = (stack: Stack<GridLocation>): boolean => {
@@ -303,5 +306,47 @@ export class CounterReadyAction extends Action<Confirmation, BoardState> {
 
     get_root(tactics_inputs: TacticsInputs): Confirmation {
         return this.confirmation;
+    }
+}
+
+/**
+ * Alter Terrain
+ */
+export class AlterTerrainAction extends Action<GridLocation, BoardState> {
+
+    constructor(source: Unit, state: BoardState) {
+        super(TERRAIN, 2);
+        this.source = source;
+
+        var option_fn = (): Array<GridLocation> => {
+            // All locations within distance 4 if not occupied.
+            var range = 4;
+            var grid = state.grid;
+            var units = state.units;
+            var occupied = new Set(units.map((u) => u.loc));
+            var options = grid.to_array()
+                .filter(l => grid.getDistance(l, source.loc) <= range)
+                .filter(l => !occupied.has(l));
+            return options;
+        };
+        var acquirer = new SimpleInputAcquirer<GridLocation>(
+            option_fn
+        );
+        this.acquirer = acquirer;
+    }
+
+    digest_fn(selection: GridLocation): Array<Effect> {
+        // TODO: InputSelection wrap/unwrap
+        var target = selection;
+        var effects = [
+            new AlterTerrainEffect(this.source, target),
+            new ExhaustEffect(this.source, this),
+        ];
+        return effects;
+    }
+
+    // TODO: Tactics_input overlaps with source almost always. Fix Redundancy.
+    get_root(tactics_inputs: TacticsInputs): GridLocation {
+        return tactics_inputs.unit.loc;
     }
 }

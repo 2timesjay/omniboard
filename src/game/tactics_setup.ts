@@ -1,4 +1,4 @@
-import { MOVE, ATTACK, CHAIN, END, CHANNELED_ATTACK, COUNTER } from "../model/action";
+import { MOVE, ATTACK, CHAIN, END, CHANNELED_ATTACK, COUNTER, TERRAIN } from "../model/action";
 import { GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
 import { 
@@ -11,17 +11,23 @@ import {
  * Create a KxK grid for Tactics game
  */
 export function tactics_setup(k: number): BoardState {
+    // Space Setup
     const grid_space = new GridSpace(k, k);
+    grid_space.get(3, 1).traversable = false;
 
-    // Tactics State setup
+    // State Setup
     var state = new BoardState();
+    // TODO: Do I need to assign grid here? Should not be needed. Call grid late in unit.
     state.grid = grid_space;
+    
+    // Unit setup
     var unit_0_a = new Unit(0);
     unit_0_a.setLoc(grid_space.get(2, 2));
     unit_0_a.setActions(construct_actions(unit_0_a, state, [MOVE, ATTACK, COUNTER, END]))
+    unit_0_a.piercing_strength = 2;
     var unit_0_b = new Unit(0);
     unit_0_b.setLoc(grid_space.get(0, 0));
-    unit_0_b.setActions(construct_actions(unit_0_b, state, [MOVE, CHANNELED_ATTACK, END]))
+    unit_0_b.setActions(construct_actions(unit_0_b, state, [MOVE, TERRAIN, CHANNELED_ATTACK, END]))
 
     var unit_1_a = new Unit(1);
     unit_1_a.setLoc(grid_space.get(3, 2));

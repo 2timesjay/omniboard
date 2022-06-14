@@ -32,6 +32,11 @@ interface ILocatable {
     get size(): number;
 }
 
+// TODO: Consider unifying ILocatable and IPathable
+interface IPathable extends ILocatable {
+    pathDisplay: (context: CanvasRenderingContext2D, to: IPathable) => void;
+}
+
 export interface IMenuable {// Action<ISelectable>, Confirmation
     index: number;
     text: string;
@@ -551,7 +556,7 @@ export class AbstractDisplay<T extends ISelectable> {
 
 }
 
-export class GridLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatable {
+export class GridLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatable, IPathable {
     selectable: GridLocation;
     _xOffset: number;
     _yOffset: number;
@@ -580,8 +585,8 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
         return this._size;
     }
 
-    render(context: CanvasRenderingContext2D, clr: string) {
-        makeSquare(this.xOffset, this.yOffset, context, this.size, clr);
+    render(context: CanvasRenderingContext2D, clr: string, lfa?: number) {
+        makeSquare(this.xOffset, this.yOffset, context, this.size, clr, lfa);
     }
 
     alt_render(context: CanvasRenderingContext2D, clr: string) {
@@ -589,7 +594,8 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 
     neutralDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'lightgrey');
+        var lfa = this.selectable.traversable ? 1.0 : 0.25
+        this.render(context, 'lightgrey', lfa);
     }
 
     optionDisplay(context: CanvasRenderingContext2D) {
@@ -617,10 +623,16 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
             return false;
         }
     }
+
+    pathDisplay(context: CanvasRenderingContext2D, to: IPathable) {
+        var from = this;
+        var line = new LinearVisual(from, to);
+        line.display(context);
+    }
 }
 
 
-class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable{
+class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathable {
     selectable: Unit;
     _xOffset: number;
     _yOffset: number;
@@ -696,6 +708,12 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable{
         } else {
             return false;
         }
+    }
+
+    pathDisplay(context: CanvasRenderingContext2D, to: IPathable) {
+        var from = this;
+        var line = new LinearVisual(from, to);
+        line.display(context);
     }
 }
 
