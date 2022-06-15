@@ -9,3 +9,4 @@ design/*
 dist/*
 src/*.js
 src/*.js.map
+.VSCodeCounter/*

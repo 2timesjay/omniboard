@@ -130,7 +130,11 @@ export class Unit implements ISelectable, StatusContainer{
 
     reset_actions() {
         this.ap = this.max_ap;
-        this.actions.forEach((a) => a.enabled = true);
+        this.actions.forEach(a => a.enabled = true);
+    }
+
+    clear_statuses() {
+        this.statuses.forEach(s => s.observer.disable())
     }
 
     setLoc(loc: GridLocation){

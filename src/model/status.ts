@@ -27,7 +27,6 @@ export class Status {
         this.description = description;
     }   
 
-    // TODO: Should be called on "reset_actions"
     clear() { // NOTE: Called from observer.disable()
         delete this.observer;
         this.parent.statuses.delete(this);

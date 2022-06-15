@@ -60,6 +60,8 @@ export class TacticsPhase implements IPhase {
         var team_units = state.units
             .filter((u) => u.team == cur_team)
             .filter((u) => u.is_alive());
+        // NOTE: Clear statuses on turn start.
+        team_units.forEach((u) => u.clear_statuses());
         // NOTE: Re-confirm u.is_alive since unit can die while un-exhausted.
         while(Array.from(team_units).filter((u) => !u.is_exhausted() && u.is_alive()).length) {
             // TODO: yield a special "subphase end" signal.
