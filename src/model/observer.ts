@@ -39,11 +39,8 @@ class AbstractObserver implements Observer {
         throw new Error('Method not implemented.');
     }
 
-    disable() {
+    disable() { // NOTE: Called from observer.disable()
         this.enabled = false;
-        // TODO: Slightly ugly code for clearing observers/status
-        this.status.clear();
-        this.status.parent.statuses.delete(this.status);
         delete this.status;
     }
 
@@ -78,7 +75,7 @@ export class CounterAttackObserver extends AbstractObserver{
             // @ts-ignore trigger_condition guarantees effect.source is a Unit.
             effect.post_execute.push(...this.digest_fn(effect.source));
             // TODO: Depend too much on this behavior right now.
-            this.disable();
+            this.status.clear();
         }
     }
 }

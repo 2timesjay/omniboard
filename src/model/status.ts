@@ -20,14 +20,22 @@ export class Status {
     status_type: StatusType;
     description: string;
     observer: Observer;
+    duration: number
 
     constructor(parent: StatusContainer, status_type: StatusType, description: string) {
         this.parent = parent;
         this.status_type = status_type;
         this.description = description;
+        this.duration = 1;
     }   
 
-    clear() { // NOTE: Called from observer.disable()
+    update() {
+        this.duration -= 1;
+        if (this.duration <= 0) this.clear();
+    }    
+
+    clear() {
+        this.observer.disable();
         delete this.observer;
         this.parent.statuses.delete(this);
     }
