@@ -7,6 +7,7 @@ import { Unit } from "./unit";
 
 type TriggerCond = (state: IState, effect: Effect) => boolean;
 
+// TODO: Make private implementer of Status
 export interface Observer {
     trigger_condition: TriggerCond;
     digest_fn: DigestFn<ISelectable>;

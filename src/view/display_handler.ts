@@ -1,4 +1,4 @@
-import { TacticsPhase } from "../game/tactics_controller";
+import { TacticsPhase } from "../tactics/tactics_controller";
 import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
 import { InputSelection } from "../model/input";

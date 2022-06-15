@@ -1,4 +1,4 @@
-import { BoardAction, TacticsInputs } from "../game/tactics_controller";
+import { BoardAction, TacticsInputs } from "../tactics/tactics_controller";
 import { Flinch, Bump } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, OptionFn, Stack } from "./core";

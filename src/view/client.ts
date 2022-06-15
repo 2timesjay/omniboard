@@ -1,8 +1,8 @@
 /* Imports */
 import { makeCanvas } from "./rendering";
-import { TacticsController, TacticsPhase } from "../game/tactics_controller";
-import { tactics_setup } from "../game/tactics_setup";
-import { display_setup } from "../game/tactics_display_setup";
+import { TacticsController, TacticsPhase } from "../tactics/tactics_controller";
+import { tactics_setup } from "../tactics/tactics_setup";
+import { display_setup } from "../tactics/tactics_display_setup";
 import { Canvas2DBroker } from "./broker";
 import { DisplayHandler } from "./display_handler";
 
