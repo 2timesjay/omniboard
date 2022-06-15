@@ -359,6 +359,7 @@ class ShoveKernel implements EffectKernel {
         this._prev_loc = target.loc;
         var vector: Vector = state.grid.getVector(source.loc, target.loc);
         var destination = state.grid.getSimpleRelativeCoordinate(target.loc, vector);
+        // TODO: Also check if occupied. Can overlap units now.
         if (destination != null && destination.traversable) {
             target.setLoc(destination);
         }
@@ -397,10 +398,10 @@ export class ShoveEffect extends AbstractEffect {
         var target = this.target;
         var vector: Vector = state.grid.getVector(source.loc, target.loc);
         console.log("Vector: ", vector)
-        var source_display = display_handler.display_map.get(source);
+        var target_display = display_handler.display_map.get(target);
         // @ts-ignore Doesn't know unit_display is a UnitDisplay
-        var animation = new Move(vector.x, vector.y, DURATION_FRAMES, source_display);
+        var animation = new Move(vector.x, vector.y, DURATION_FRAMES, target_display);
         // @ts-ignore Can't even use UnitDisplay as a normal type.
-        source_display.interrupt_animation(animation);
+        target_display.interrupt_animation(animation);
     }
 }
