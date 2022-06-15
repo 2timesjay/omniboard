@@ -112,6 +112,21 @@ export class GridSpace {
         }
         return nh;
     }
+    
+    // TODO: Optional return
+    // TODO: Less dumb name
+    getSimpleRelativeCoordinate(loc: GridLocation, vector: Vector): GridLocation {
+        var rel_co = new RelativeCoordinate(
+            vector.x, vector.y, vector.z, 
+            RelativeCoordinateOperator.BASE,
+        );
+        var nh = this.getRelativeCoordinate(loc, rel_co);
+        if (nh.length == 1) { 
+            return nh[0];
+        } else {
+            return null;
+        }
+    }
 
     getNeighborhood(loc: GridLocation, rel_ne: RelativeNeighborhood): Array<GridLocation> {
         return rel_ne.flatMap((rel_co) => this.getRelativeCoordinate(loc, rel_co));

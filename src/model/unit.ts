@@ -1,7 +1,4 @@
-import { TrueLiteral } from "typescript";
-import { Bump, Flinch, Move } from "../view/display";
-import { DisplayHandler } from "../view/display_handler";
-import { Action, AlterTerrainAction, ATTACK, AttackAction, CHAIN, ChainLightningAction, ChanneledAttackAction, CHANNELED_ATTACK, COUNTER, CounterReadyAction, END, EndTurnAction, MOVE, MoveAction, TERRAIN } from "./action";
+import { Action, AlterTerrainAction, ATTACK, AttackAction, CHAIN, ChainLightningAction, ChanneledAttackAction, CHANNELED_ATTACK, COUNTER, CounterReadyAction, END, EndTurnAction, MOVE, MoveAction, SHOVE, ShoveAction, TERRAIN } from "./action";
 import { ISelectable, Stack } from "./core";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
 import { GridLocation, GridSpace, Vector } from "./space";
@@ -43,6 +40,9 @@ export function construct_actions(unit: Unit, state: BoardState, action_list: Ar
                 break;
             case TERRAIN:
                 actions.push(new AlterTerrainAction(unit, state));
+                break;
+            case SHOVE:
+                actions.push(new ShoveAction(unit, state));
                 break;
         }
     }

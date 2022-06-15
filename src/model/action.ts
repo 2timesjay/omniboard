@@ -1,7 +1,7 @@
-import { TacticsInputs } from "../game/tactics_controller";
+import { BoardAction, TacticsInputs } from "../game/tactics_controller";
 import { Flinch, Bump } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
-import { ISelectable, Stack } from "./core";
+import { ISelectable, OptionFn, Stack } from "./core";
 import { AlterStatusEffect, AlterTerrainEffect, AlterType, DamageEffect, Effect, ExhaustEffect, MoveEffect } from "./effect";
 import { IInputAcquirer, InputSelection, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer, ChainedInputAcquirer } from "./input";
 import { Inputs } from "./phase";
@@ -19,9 +19,11 @@ export const END = "End Turn";
 export const CHANNELED_ATTACK = "Channeled Attack";
 export const COUNTER = "Counter";
 export const TERRAIN = "Alter Terrain";
+export const SHOVE = "Shove";
 
 export type DigestFn<T extends ISelectable> = (selection: InputSelection<T>) => Array<Effect>;
 
+// TODO: U extends IState not _actually_ used. Remove it.
 // T is the type of input expected
 export class Action<T extends ISelectable, U extends IState> implements ISelectable {
     // Class managing combination of input acquisition and effect generation.
@@ -69,6 +71,54 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
                 
 };
 
+// T is the type of input expected
+export class SingleTargetAction<T extends ISelectable> extends Action<T, BoardState> {
+    
+    effect_constructor: new (source: Unit, target: T) => Effect;
+    source: Unit;
+    state: BoardState;
+
+    constructor(
+        text: string, 
+        index: number,
+        source: Unit,
+        state: BoardState, 
+        option_fn: OptionFn<T>, 
+        effect_constructor: new (source: Unit, target: T) => Effect,
+    ) {
+        super(text, index);
+        this.source = source;
+        this.state = state;
+        this.effect_constructor = effect_constructor;
+        var acquirer = this._build_acquirer(option_fn);
+        this.acquirer = acquirer;
+    }
+    
+    _build_acquirer(option_fn: OptionFn<T>): SimpleInputAcquirer<T> {
+        return new SimpleInputAcquirer<T>(
+            option_fn
+        );
+    }
+
+    _build_effect(target: T) : Effect {
+        return new this.effect_constructor(this.source, target);
+    }
+
+    digest_fn(selection: T): Array<Effect> {
+        // TODO: InputSelection wrap/unwrap
+        var target = selection;
+        var effects = [
+            this._build_effect(target),
+            new ExhaustEffect(this.source, this)
+        ];
+        return effects;
+    }
+
+    get_root(tactics_inputs: TacticsInputs): T {
+        return null
+    }       
+};
+
 /**
  * Move
  */
@@ -111,6 +161,27 @@ export class MoveAction extends Action<GridLocation, BoardState> {
         return new Stack(tactics_inputs.unit.loc);
     }
 }
+
+// T is the type of input expected
+export class ShoveAction extends SingleTargetAction<Unit> {
+    constructor(source: Unit, state: BoardState) {
+        // TODO: Handle case of shove onto overlap. Currently same as attack.
+        var option_fn = (): Array<Unit> => {
+            var units = state.units
+                .filter((u) => (u.team != this.source.team))
+                .filter((u) => (u.is_alive()));
+            var attack_range = this.source.attack_range;
+            var attacker_loc = this.source.loc
+            var options = units.filter(
+                (u) => state.grid.getDistance(attacker_loc, u.loc) <= attack_range
+            )
+            return options;
+        };
+        super(SHOVE, 5, source, state, option_fn, ShoveEffect);
+        var acquirer = this._build_acquirer(option_fn);
+        this.acquirer = acquirer;
+    }  
+};
 
 /**
  * Attack
@@ -315,7 +386,7 @@ export class CounterReadyAction extends Action<Confirmation, BoardState> {
 export class AlterTerrainAction extends Action<GridLocation, BoardState> {
 
     constructor(source: Unit, state: BoardState) {
-        super(TERRAIN, 2);
+        super(TERRAIN, 5);
         this.source = source;
 
         var option_fn = (): Array<GridLocation> => {

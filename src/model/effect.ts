@@ -339,3 +339,68 @@ export class AlterTerrainEffect extends AbstractEffect {
     //     // Add Flash
     // }
 }
+
+
+
+class ShoveKernel implements EffectKernel {
+    source: Unit;
+    target: Unit;
+
+    _prev_loc: GridLocation;
+
+    constructor(source: Unit, target: Unit) {
+        this.source = source;
+        this.target = target;
+    }
+
+    execute(state: BoardState): BoardState {
+        var source = this.source;
+        var target = this.target;
+        this._prev_loc = target.loc;
+        var vector: Vector = state.grid.getVector(source.loc, target.loc);
+        var destination = state.grid.getSimpleRelativeCoordinate(target.loc, vector);
+        if (destination != null && destination.traversable) {
+            target.setLoc(destination);
+        }
+        // TODO: Else, damage somehow.
+        return state;
+    };
+
+    reverse(state: BoardState): BoardState {
+        this.target.setLoc(this._prev_loc);
+        return state;
+    }
+}
+
+export class ShoveEffect extends AbstractEffect {
+    source: Unit;
+    target: Unit;
+
+    kernel: ShoveKernel;
+    description: string;
+
+    constructor(source: Unit, target: Unit) {
+        super();
+        this.source = source;
+        this.target = target;
+        this.kernel = new ShoveKernel(source, target);
+
+        this.description = "Shove Unit";
+    }
+
+    execute(state: BoardState): BoardState {
+        return this.kernel.execute(state);
+    }
+
+    animate(state: BoardState, display_handler: DisplayHandler) {   
+        var source = this.source;
+        var target = this.target;
+        var vector: Vector = state.grid.getVector(source.loc, target.loc);
+        console.log("Vector: ", vector)
+        var source_display = display_handler.display_map.get(source);
+        // @ts-ignore Doesn't know unit_display is a UnitDisplay
+        var animation = new Move(vector.x, vector.y, DURATION_FRAMES, source_display);
+        // @ts-ignore Can't even use UnitDisplay as a normal type.
+        source_display.interrupt_animation(animation);
+    }
+}
