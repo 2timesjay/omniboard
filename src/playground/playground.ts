@@ -5,25 +5,40 @@ import { Inputs, IPhase } from "../model/phase";
 import { IState } from "../model/state";
 import { DisplayHandler } from "../view/display_handler";
 
-const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
+type SelectionLabel = ContinuousSelectionLabel | DiscreteSelectionLabel;
+
+enum ContinuousSelectionLabel { }
+
+enum DiscreteSelectionLabel {
+    Entity = 0,
+    Point = 1,
+    Confirmation = 2,
+}
+
+interface LabeledSelection {
+    label?: SelectionLabel;
+    selection: InputSelection<ISelectable>;
+}
 
 class PlaygroundInputs implements Inputs {
     input_state: number;
-    input_queue: Array<InputSelection<ISelectable>>;
+    input_queue: Array<LabeledSelection>;
 
     constructor() {
         this.input_state = 0;
     }
 
-    push_input(input: InputSelection<ISelectable>) {
+    push_input(input: LabeledSelection) {
         this.input_queue.push(input);
+        this.input_state += 1;
     }
 
     pop_input() {
         this.input_queue.pop();
+        this.input_state = Math.max(0, this.input_state - 1);
     }
 
-    consume_input(): InputSelection<ISelectable> {
+    consume_input(): LabeledSelection {
         return this.input_queue.shift();
     }
 
@@ -84,7 +99,8 @@ export class PlaygroundPhase implements IPhase {
          */        
         while (true) {
             var selection = yield *this.selection(state);
-            this.current_inputs.push_input(selection);
+            var labeled_selection = {selection: selection}
+            this.current_inputs.push_input(labeled_selection);
             break;
         }
         this.current_inputs.reset();

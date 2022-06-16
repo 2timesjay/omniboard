@@ -54,7 +54,7 @@ export function display_setup(
         GLOBAL_CONFIRMATION, 
         // @ts-ignore doesn't know this is an ILocatableDisplay
         // TODO: Replace with some kind of "invisible pin" display.
-        display_map.get(grid.get(1,1)), 
+        display_map.get(grid.get({x: 1, y: 1})), 
     )
     display_map.set(GLOBAL_CONFIRMATION, global_confirmation_display);
     return display_map

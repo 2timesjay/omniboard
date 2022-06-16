@@ -12,16 +12,17 @@ export function tactics_setup(k: number): BoardState {
     var state = new BoardState();
     state.grid = grid_space;
     var unit_1 = new Unit(0);
-    unit_1.setLoc(grid_space.get(3, 2));
+    unit_1.setLoc(grid_space.get({x: 3, y: 2}));
     var unit_2 = new Unit(1);
-    unit_2.setLoc(grid_space.get(2,2));
+    unit_2.setLoc(grid_space.get({x: 2, y: 2}));
     var unit_3 = new Unit(0);
-    unit_3.setLoc(grid_space.get(2, 3));
+    unit_3.setLoc(grid_space.get({x: 2, y: 3}));
     var units = [unit_1, unit_2, unit_3];
-    for (var co of [[1,2],[2,1],[2,0],[0,2],[0,0]]) {
-        var [x, y] = co;
+    for (var pair of [[1,2],[2,1],[2,0],[0,2],[0,0]]) {
+        var [x, y] = pair;
+        var co = {x: x, y: y}
         var unit_extra = new Unit(1);
-        unit_extra.setLoc(grid_space.get(x, y));
+        unit_extra.setLoc(grid_space.get(co));
         units.push(unit_extra);
     }
     // TODO: Safer Laziness in action construction

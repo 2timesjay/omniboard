@@ -1,4 +1,15 @@
-enum RelativeCoordinateOperator {
+export interface ICoordinate { }
+
+export interface DiscreteCoordinate extends ICoordinate { }
+
+export interface GridCoordinate {
+    x: number,
+    // x?: number | null;
+    y?: number | null;
+    z?: number | null;
+}
+
+export enum RelativeCoordinateOperator {
     BASE,
     OR,
     // REPEAT,
@@ -6,70 +17,149 @@ enum RelativeCoordinateOperator {
     // CONDITIONAL,
 }
 
-// Replace with class-based approach. Operators and subclassing.
-class RelativeCoordinate {
+export class RelativeCoordinate<T extends ICoordinate>{
     type: RelativeCoordinateOperator;
-    value: Vector;
-    children: Array<RelativeCoordinate>;
+    vec: T; // TODO: should actually be vector<T>; Vector = Vector<GridCoordinate>. Messy
+    children: Array<RelativeGridCoordinate>;
 
     constructor(
-        x: number, 
-        y: number, 
-        z?: number | null, 
+        vec: T,
         type?: RelativeCoordinateOperator | null, 
-        children?: Array<RelativeCoordinate> | null
+        children?: Array<RelativeGridCoordinate> | null
     ) {
-        this.value = {x: x, y: y, z: z};
+        this.vec = vec;
         this.type = this.type ? type : RelativeCoordinateOperator.BASE;
         this.children = this.children ? children : [];
     }
+
+    add_to(co: T): T {
+        throw new Error('Method not implemented.');
+    }
 };
 
-type RelativeNeighborhood = Array<RelativeCoordinate>;
+export class RelativeGridCoordinate extends RelativeCoordinate<GridCoordinate> {
+    static from_xyz(
+        x?: number | null, 
+        y?: number | null, 
+        z?: number | null, 
+        type?: RelativeCoordinateOperator | null, 
+        children?: Array<RelativeGridCoordinate> | null
+    ): RelativeGridCoordinate {
+        var vec = {x: x, y: y, z: z};
+        return new RelativeGridCoordinate(vec);
+    }
+
+    add_to(co: GridCoordinate): GridCoordinate {
+        var new_x = co.x != null ? co.x + this.vec.x : null;
+        var new_y = co.y != null ? co.y + this.vec.y : null;
+        var new_z = co.z != null ? co.z + this.vec.z : null;
+        return {x: new_x, y: new_y, z: new_z};
+    }
+}
+
+export type RelativeNeighborhood<T> = Array<RelativeCoordinate<T>>;
 
 // RelativeNeighborhood
 export const GRID_ADJACENCY = [
-    new RelativeCoordinate(0, 1),
-    new RelativeCoordinate(1, 0),
-    new RelativeCoordinate(0, -1),
-    new RelativeCoordinate(-1, 0),
+    RelativeGridCoordinate.from_xyz(0, 1),
+    RelativeGridCoordinate.from_xyz(1, 0),
+    RelativeGridCoordinate.from_xyz(0, -1),
+    RelativeGridCoordinate.from_xyz(-1, 0),
 ]
 
-interface ILocation {}
+export interface ILocation {
+    co: ICoordinate;
+}
 
-interface IDiscreteLocation extends ILocation {}
+export interface IDiscreteLocation extends ILocation {
+    co: DiscreteCoordinate;
+}
+
+export interface ISpace {
+    getRelativeCoordinate: (loc: ILocation, rel_co: RelativeCoordinate<ICoordinate>) => Array<ILocation>;
+    getNeighborhood: (loc: ILocation, rel_ne: RelativeNeighborhood<ICoordinate>) => Array<ILocation>;
+    to_array: () => Array<ILocation>;
+}
+
+export class AbstractSpace implements ISpace {
+
+    constructor() {
+    }
+
+    get(co: ICoordinate): ILocation {
+        throw new Error('Method not implemented.');
+    }
+
+    getRelativeCoordinate(loc: ILocation, rel_co: RelativeCoordinate<ICoordinate>): Array<ILocation> {
+        var nh = new Array<ILocation>();
+        if (rel_co.type == RelativeCoordinateOperator.BASE) {
+            var ne = this.get(rel_co.add_to(loc.co));
+            if (ne) {
+                nh.push(ne);
+            }
+        } else if (rel_co.type == RelativeCoordinateOperator.OR) {
+            var ne_list = rel_co.children.flatMap(
+                (child) => this.getRelativeCoordinate(loc, child)
+            );
+            if (ne_list) {
+                nh.push(...ne_list);
+            }
+        }
+        return nh;
+    }
+
+    getNeighborhood(loc: ILocation, rel_ne: RelativeNeighborhood<ICoordinate>): Array<ILocation> {
+        return rel_ne.flatMap((rel_co) => this.getRelativeCoordinate(loc, rel_co));
+    }
+
+    to_array(): Array<ILocation> {
+        throw new Error('Method not implemented.');
+    }
+}
 
 // TODO: Quick and dirty: expand use?
 export interface Vector {
     x: number;
-    y: number;
+    y?: number;
     z?: number;
 }
 
 export class GridLocation implements IDiscreteLocation {
-    x: number;
-    y: number;
-    z?: number;
-
-    dim: number;
+    co: GridCoordinate;
 
     traversable: boolean;
 
-    constructor(x: number, y: number, z?: number){
-        this.x = x;
-        this.y = y;
-        if (z) {
-            this.z = z;
-            this.dim = 3;
-        }
-        else { 
-            this.dim = 2;
-        }
+    constructor(co: GridCoordinate){
+        this.co = co;
         this.traversable = true;
     };
+    
+    static from_xyz(
+        x?: number | null, 
+        y?: number | null, 
+        z?: number | null, 
+    ): GridLocation {
+        var co = {x: x, y: y, z: z};
+        return new GridLocation(co);
+    }
+
+    get x(): number {
+        return this.co.x;
+    };
+
+    get y(): number {
+        return this.co.y;
+    };
+
+    get z(): number {
+        return this.co.z;
+    }
 }
 
-export class GridSpace {
+/**
+ * A 2-dimensional Grid
+ */
+export class GridSpace implements ISpace {
     h: number;
     w: number;
     locs: GridLocation[][]; // | GridLocation[][][] // use ndarrays? https://github.com/scijs/ndarray
@@ -79,7 +169,7 @@ export class GridSpace {
         for (var x = 0; x < h; x++){
             var row = [];
             for (var y = 0; y < w; y++){
-                row.push(new GridLocation(x, y));
+                row.push(GridLocation.from_xyz(x, y));
             }
             this.locs.push(row);
         }
@@ -87,7 +177,8 @@ export class GridSpace {
         this.w = w;
     }
 
-    get(x: number, y: number): GridLocation | null {
+    get(co: GridCoordinate): GridLocation | null {
+        var {x, y} = co;
         if ((x >= 0 && x < this.h) && (y >= 0 && y < this.w)) {
             return this.locs[x][y];
         } else {
@@ -95,10 +186,10 @@ export class GridSpace {
         }
     }
 
-    getRelativeCoordinate(loc: GridLocation, rel_co: RelativeCoordinate): Array<GridLocation> {
+    getRelativeCoordinate(loc: GridLocation, rel_co: RelativeGridCoordinate): Array<GridLocation> {
         var nh = new Array<GridLocation>();
         if (rel_co.type == RelativeCoordinateOperator.BASE) {
-            var ne = this.get(loc.x + rel_co.value.x, loc.y + rel_co.value.y);
+            var ne = this.get(rel_co.add_to(loc.co));
             if (ne) {
                 nh.push(ne);
             }
@@ -115,9 +206,9 @@ export class GridSpace {
     
     // TODO: Optional return
     // TODO: Less dumb name
-    getSimpleRelativeCoordinate(loc: GridLocation, vector: Vector): GridLocation {
-        var rel_co = new RelativeCoordinate(
-            vector.x, vector.y, vector.z, 
+    getSimpleRelativeGridCoordinate(loc: GridLocation, vector: Vector): GridLocation {
+        var rel_co = new RelativeGridCoordinate(
+            vector,
             RelativeCoordinateOperator.BASE,
         );
         var nh = this.getRelativeCoordinate(loc, rel_co);
@@ -128,7 +219,7 @@ export class GridSpace {
         }
     }
 
-    getNeighborhood(loc: GridLocation, rel_ne: RelativeNeighborhood): Array<GridLocation> {
+    getNeighborhood(loc: GridLocation, rel_ne: RelativeNeighborhood<GridCoordinate>): Array<GridLocation> {
         return rel_ne.flatMap((rel_co) => this.getRelativeCoordinate(loc, rel_co));
     }
 

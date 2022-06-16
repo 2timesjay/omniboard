@@ -358,7 +358,7 @@ class ShoveKernel implements EffectKernel {
         var target = this.target;
         this._prev_loc = target.loc;
         var vector: Vector = state.grid.getVector(source.loc, target.loc);
-        var destination = state.grid.getSimpleRelativeCoordinate(target.loc, vector);
+        var destination = state.grid.getSimpleRelativeGridCoordinate(target.loc, vector);
         // TODO: Also check if occupied. Can overlap units now.
         if (destination != null && destination.traversable) {
             target.setLoc(destination);

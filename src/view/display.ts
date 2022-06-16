@@ -56,7 +56,6 @@ function interruptable_generator(
 ): () => DeltaGen {
     return function*(): DeltaGen {
         while(true) {
-            console.log("Interruptable Generator Base Gen Build");
             var base_gen = base_gen_builder();
             var delegate_gen: DeltaGen = yield *base_gen;
             if (delegate_gen != null) {
@@ -658,6 +657,7 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
     }
 
     update_pos() {
+        console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
         this._xOffset = this.selectable.loc.x * size + 0.2 * size;
         this._yOffset = this.selectable.loc.y * size + 0.2 * size;
         this._size = size * 0.6;

@@ -13,7 +13,7 @@ import {
 export function tactics_setup(k: number): BoardState {
     // Space Setup
     const grid_space = new GridSpace(k, k);
-    grid_space.get(3, 1).traversable = false;
+    grid_space.get({x: 3, y: 1}).traversable = false;
 
     // State Setup
     var state = new BoardState();
@@ -22,21 +22,21 @@ export function tactics_setup(k: number): BoardState {
     
     // Unit setup
     var unit_0_a = new Unit(0);
-    unit_0_a.setLoc(grid_space.get(2, 2));
+    unit_0_a.setLoc(grid_space.get({x: 2, y: 2}));
     unit_0_a.setActions(construct_actions(unit_0_a, state, [MOVE, ATTACK, COUNTER, END, SHOVE]))
     unit_0_a.piercing_strength = 2;
     var unit_0_b = new Unit(0);
-    unit_0_b.setLoc(grid_space.get(0, 0));
+    unit_0_b.setLoc(grid_space.get({x: 0, y: 0}));
     unit_0_b.setActions(construct_actions(unit_0_b, state, [MOVE, TERRAIN, CHANNELED_ATTACK, END]))
 
     var unit_1_a = new Unit(1);
-    unit_1_a.setLoc(grid_space.get(3, 2));
+    unit_1_a.setLoc(grid_space.get({x: 3, y: 2}));
     unit_1_a.setActions(construct_actions(unit_1_a, state, [MOVE, ATTACK, CHAIN, END]))
     var unit_1_b = new Unit(1);
-    unit_1_b.setLoc(grid_space.get(2, 3));
+    unit_1_b.setLoc(grid_space.get({x: 2, y: 3}));
     unit_1_b.setActions(construct_actions(unit_1_b, state, [MOVE, ATTACK, END]))
     var unit_1_c = new Unit(1);
-    unit_1_c.setLoc(grid_space.get(4, 1));
+    unit_1_c.setLoc(grid_space.get({x: 4, y: 1}));
     unit_1_c.setActions(construct_actions(unit_1_c, state, [MOVE, ATTACK, END]))
     
     var units = [
