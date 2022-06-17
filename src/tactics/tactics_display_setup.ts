@@ -30,17 +30,6 @@ export function display_setup(
             display_map.set(action, action_display);
             action_display.display(context);
         }
-        display_map.set(unit, unit_display);
-        unit_display.display(context);
-    }
-
-    for (let unit of units) {
-        let unit_display = new UnitDisplay(unit);
-        for (let action of unit.actions) {
-            let action_display = new MenuElementDisplay(action, unit_display)
-            display_map.set(action, action_display);
-            action_display.display(context);
-        }
         for (let i = 0; i < unit.all_hp.length; i++) {
             // TODO: Make attachment more explicit instead of hidden in constructor.
             // TODO: Move this into unit_display construction?

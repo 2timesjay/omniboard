@@ -93,7 +93,7 @@ export class BaseDisplayHandler {
         this.stateful_selectables.push(...acquirer_inputs_arr);
     }
 
-    on_phase_end(phase: TacticsPhase){
+    on_phase_end(phase: IPhase){
         console.log("Phase End");
         // Clear states and clear stateful_selectables
         this.clear_queued();
