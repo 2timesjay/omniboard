@@ -61,8 +61,9 @@ export class PlaygroundState implements IState {
     // TODO: Add actions or handle generically
     get_selectables(): Array<ISelectable> {
         var selectables = [];
-        selectables.push(...this.entities);
+        // TODO: selectable order = Draw order - shouldn't be case.
         selectables.push(...this.space.to_array());
+        selectables.push(...this.entities);
         return selectables;
     }
 

@@ -15,7 +15,7 @@ export class LineSpace extends AbstractSpace {
         this.l = l;
         this.locs = [];
         for (var x = 0; x < l; x++){
-            this.locs.push(GridLocation.from_xyz(x));
+            this.locs.push(GridLocation.from_xyz(x, 0));
         }
     }
 

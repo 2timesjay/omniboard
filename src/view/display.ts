@@ -6,6 +6,7 @@ import { Awaited } from "../model/utilities";
 import { GridLocation } from "../model/space";
 import { Unit } from "../model/unit";
 import { createWatchCompilerHost } from "typescript";
+import { Entity } from "../playground/playground_entity";
 
 export enum DisplayState {
     Neutral,
@@ -130,6 +131,28 @@ export class CircleInPlace extends BaseAnimation {
     * _delta_y(): DeltaGen {
         while(true){
             var gen = yield Math.sin(Date.now()/100 + this.phase_shift);
+            if (gen != null) {
+                return gen;
+            }
+        }
+    }
+
+    // TODO: Couldn't construct `this.rand` in constructor so had to do in gens.
+    // TODO: This was actually because I didn't bind correctly.
+    get phase_shift(): number {
+        if (this.rand === undefined) {
+            this.rand = Math.PI*(2*Math.random() - 1);
+        }
+        return this.rand;
+    }
+}
+
+export class JumpInPlace extends BaseAnimation { 
+    rand: number;
+
+    * _delta_y(): DeltaGen {
+        while(true){
+            var gen = yield -5*Math.abs(Math.sin(Date.now()/500 + this.phase_shift));
             if (gen != null) {
                 return gen;
             }
@@ -630,6 +653,91 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 }
 
+// Share code with _UnitDisplay
+class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPathable {
+    selectable: Entity;
+    _xOffset: number;
+    _yOffset: number;
+    _size: number;
+    width: number;
+    height: number;
+
+    constructor(entity: Entity) {
+        super(entity);
+        this.update_pos();
+    }
+
+    get xOffset(): number {
+        return this._xOffset;
+    }
+
+    get yOffset(): number {
+        return this._yOffset;
+    }
+
+    get size(): number {
+        return this._size;
+    }
+
+    update_pos() {
+        // @ts-ignore Actualy GridLocation
+        console.log("UPDATED LOC: ", this.selectable.loc.co.x, this.selectable.loc.y, this.selectable.loc.z);
+        // @ts-ignore Actualy GridLocation
+        this._xOffset = this.selectable.loc.x * size + 0.2 * size;
+        // @ts-ignore Actualy GridLocation
+        this._yOffset = this.selectable.loc.y * size + 0.2 * size;
+        this._size = size * 0.6;
+        this.width = size * 0.6;
+        this.height = size * 0.6;
+    }
+
+    render(context: CanvasRenderingContext2D, clr: string) {
+        makeSquare(this.xOffset, this.yOffset, context, this.size, clr);
+    }
+
+    alt_render(context: CanvasRenderingContext2D, clr: string) {
+        var offset = 0.2 * this.size;
+        makeSquare(this.xOffset + offset, this.yOffset + offset, context, this.size*.6, clr);
+    }
+
+    neutralDisplay(context: CanvasRenderingContext2D) {
+        this.render(context, 'orange');
+    }
+
+    optionDisplay(context: CanvasRenderingContext2D) {
+        this.render(context, 'grey');
+    }
+
+    previewDisplay(context: CanvasRenderingContext2D) {
+        this.render(context, 'yellow');
+    }
+
+    queueDisplay(context: CanvasRenderingContext2D) {
+        this.alt_render(context, 'indianred');
+    }
+
+    selectDisplay(context: CanvasRenderingContext2D) {
+        this.render(context, 'red');
+    }
+
+    isHit(mousePos: Position): boolean {
+        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
+            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    pathDisplay(context: CanvasRenderingContext2D, to: IPathable) {
+        var from = this;
+        var line = new LinearVisual(from, to);
+        line.display(context);
+    }
+}
+
+export const EntityDisplay = Animate(_EntityDisplay, JumpInPlace);
 
 class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathable {
     selectable: Unit;

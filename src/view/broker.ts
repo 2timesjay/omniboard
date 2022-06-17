@@ -27,7 +27,7 @@ export class Canvas2DBroker implements IBroker {
 
     constructor(
         display_map: DisplayMap<ISelectable>, 
-        state: BoardState, 
+        state: IState, // TODO: Remove
         context: CanvasRenderingContext2D
     ) {
         var canvas = context.canvas;
