@@ -7,7 +7,7 @@ import { Canvas2DBroker } from "./broker";
 import { DisplayHandler } from "./display_handler";
 import { playground_setup } from "../playground/playground_model_setup";
 import { playground_display_setup } from "../playground/playground_display_setup";
-import { PlaygroundController, PlaygroundPhase } from "../playground/playground";
+import { PlaygroundController, PlaygroundPhase } from "../playground/playground_controller";
 
 export const TICK_DURATION_MS = 20
 
