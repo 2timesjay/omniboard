@@ -2,11 +2,11 @@ import { RelativeGridCoordinate, ILocation, RelativeCoordinateOperator, Relative
 
 // RelativeNeighborhood
 export const LINE_ADJACENCY = [
-    RelativeGridCoordinate.from_xyz(1),
-    RelativeGridCoordinate.from_xyz(-1),
+    RelativeGridCoordinate.from_xyz(1, 0),
+    RelativeGridCoordinate.from_xyz(-1, 0),
 ]
 
-export class LineSpace extends AbstractSpace {
+export class LineSpace extends AbstractSpace<GridLocation> {
     l: number;
     locs: GridLocation[];
 
@@ -22,6 +22,10 @@ export class LineSpace extends AbstractSpace {
     get(co: GridCoordinate): GridLocation {
         var {x} = co;
         return this.locs[x];
+    }
+
+    getNaturalNeighborhood(loc: GridLocation): Array<GridLocation> {
+        return this.getNeighborhood(loc, LINE_ADJACENCY);
     }
 
     to_array(): Array<GridLocation> {

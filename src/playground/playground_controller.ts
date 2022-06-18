@@ -1,9 +1,13 @@
-import { ISelectable } from "../model/core";
+import { ISelectable, Stack } from "../model/core";
 import { Effect } from "../model/effect";
-import { InputOptions, InputRequest, InputSelection, SimpleInputAcquirer } from "../model/input";
+import { InputOptions, InputRequest, InputSelection, SequentialInputAcquirer, SimpleInputAcquirer } from "../model/input";
 import { Inputs, IPhase } from "../model/phase";
+import { GridLocation } from "../model/space";
 import { IState } from "../model/state";
 import { DisplayHandler } from "../view/display_handler";
+import { Entity } from "./playground_entity";
+import { LineSpace } from "./playground_space";
+import { PlaygroundState } from "./playground_state";
 
 type SelectionLabel = ContinuousSelectionLabel | DiscreteSelectionLabel;
 
@@ -11,7 +15,13 @@ enum ContinuousSelectionLabel { }
 
 enum DiscreteSelectionLabel {
     Entity = 0,
-    Point = 1,
+    Location = 1,
+    Confirmation = 2,
+}
+
+enum PlaygroundInputState {
+    Entity = 0,
+    Location = 1,
     Confirmation = 2,
 }
 
@@ -20,16 +30,18 @@ interface LabeledSelection {
     selection: InputSelection<ISelectable>;
 }
 
+// TODO: Label input selections based on InputState
 class PlaygroundInputs implements Inputs {
-    input_state: number;
-    input_queue: Array<LabeledSelection>;
+    input_state: PlaygroundInputState;
+    // input_queue: Array<LabeledSelection>;
+    input_queue: Array<InputSelection<ISelectable>>;
 
     constructor() {
         this.input_state = 0;
         this.input_queue = [];
     }
 
-    push_input(input: LabeledSelection) {
+    push_input(input: InputSelection<ISelectable>) {
         this.input_queue.push(input);
         this.input_state += 1;
     }
@@ -39,12 +51,17 @@ class PlaygroundInputs implements Inputs {
         this.input_state = Math.max(0, this.input_state - 1);
     }
 
-    consume_input(): LabeledSelection {
+    consume_input(): InputSelection<ISelectable> {
         return this.input_queue.shift();
+    }
+
+    peek(): InputSelection<ISelectable> {
+        return this.input_queue[0];
     }
 
     reset() {
         this.input_queue.length = 0;
+        this.input_state = 0;
     }
 }
 
@@ -72,12 +89,14 @@ export class PlaygroundPhase implements IPhase {
     }
 
     async * run_phase(
-        state: IState
+        state: PlaygroundState
     ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         while (this.phase_condition()) {
-            var inputs: PlaygroundInputs = yield *this.run_subphase(state);            
+            console.log("Running Subphase")
+            var inputs: PlaygroundInputs = yield *this.run_subphase(state); 
+            console.log("Resetting Inputs")
+            this.current_inputs.reset();           
             var effects = this.inputs_to_effects(inputs);
-
             console.log("Effects: ", effects);
 
             // TODO: Side effect that queue display doesn't clear before effect execution
@@ -87,7 +106,7 @@ export class PlaygroundPhase implements IPhase {
 
     // TODO: Explicit and well-typed, but some generic patterns could be abstracted. 
     * run_subphase(
-        state: IState
+        state: PlaygroundState
     ): Generator<InputOptions<ISelectable>, PlaygroundInputs, InputSelection<ISelectable>> {
         /**
          * Occupies one of three states:
@@ -99,23 +118,56 @@ export class PlaygroundPhase implements IPhase {
          * Decrement state on rejection.
          */        
         while (true) {
-            var selection = yield *this.selection(state);
-            var labeled_selection = {selection: selection}
-            this.current_inputs.push_input(labeled_selection);
-            break;
+            // TODO: Replicate robustness of tactics_controller
+            if (this.current_inputs.input_state == PlaygroundInputState.Entity) {
+                var selection = yield *this.entity_selection(state);
+                this.current_inputs.push_input(selection);
+            } else if (this.current_inputs.input_state == PlaygroundInputState.Location) {
+                var selection = yield *this.location_selection(state);
+                this.current_inputs.push_input(selection);
+            } else if (this.current_inputs.input_state == PlaygroundInputState.Confirmation) {
+                break;
+            }
         }
-        this.current_inputs.reset();
         return this.current_inputs;
     }
 
-    // TODO: Unify with SimpleInputAcquirer
-    * selection (
-        state: IState
+    // TODO: further simplify to SimpleInputAcquirer direct usage?
+    * entity_selection (
+        state: PlaygroundState
     ): Generator<Array<ISelectable>, ISelectable, ISelectable> {
-        // @ts-ignore
         var selection_options: Array<ISelectable> = state.entities;
         var acquirer = new SimpleInputAcquirer<ISelectable>(() => selection_options, false);
         var selection = yield *acquirer.input_option_generator();
+        return selection;
+    }
+    
+    * location_selection (
+    state: PlaygroundState
+    ): Generator<Array<ISelectable>, ISelectable, ISelectable> { // TODO: Type alias
+        // @ts-ignore
+        var source : Entity = this.current_inputs.peek();
+        var increment_fn = (stack: Stack<GridLocation>): Array<GridLocation> => {
+            var entities = state.entities;
+            // @ts-ignore
+            var space: LineSpace = state.space;
+            // @ts-ignore
+            var neighborhood = space.getNaturalNeighborhood(stack.value);
+            var occupied = new Set(entities.map((u) => u.loc));
+            var options = neighborhood
+                .filter(l => !occupied.has(l))
+                .filter(l => l.traversable);
+            return options;
+        };
+        var termination_fn = (stack: Stack<GridLocation>): boolean => {
+            return stack.depth >= 3; // + 1 because stack starts at root.
+        }
+        var acquirer = new SequentialInputAcquirer<GridLocation>(
+            increment_fn,
+            termination_fn,
+        )
+        // @ts-ignore
+        var selection = yield *acquirer.input_option_generator(new Stack(source.loc));
         return selection;
     }
 }
@@ -125,9 +177,9 @@ export class PlaygroundPhase implements IPhase {
  * Also calls various display_handler refresh subroutines, and evaluates gameEnd.
  */
 export class PlaygroundController {
-    state: IState;
+    state: PlaygroundState;
 
-    constructor(state: IState) {
+    constructor(state: PlaygroundState) {
         this.state = state;
     }
 

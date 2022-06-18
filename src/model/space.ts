@@ -81,17 +81,17 @@ export interface ISpace {
     to_array: () => Array<ILocation>;
 }
 
-export class AbstractSpace implements ISpace {
+export class AbstractSpace<T extends ILocation> implements ISpace {
 
     constructor() {
     }
 
-    get(co: ICoordinate): ILocation {
+    get(co: ICoordinate): T {
         throw new Error('Method not implemented.');
     }
 
-    getRelativeCoordinate(loc: ILocation, rel_co: RelativeCoordinate<ICoordinate>): Array<ILocation> {
-        var nh = new Array<ILocation>();
+    getRelativeCoordinate(loc: T, rel_co: RelativeCoordinate<ICoordinate>): Array<T> {
+        var nh = new Array<T>();
         if (rel_co.type == RelativeCoordinateOperator.BASE) {
             var ne = this.get(rel_co.add_to(loc.co));
             if (ne) {
@@ -108,11 +108,11 @@ export class AbstractSpace implements ISpace {
         return nh;
     }
 
-    getNeighborhood(loc: ILocation, rel_ne: RelativeNeighborhood<ICoordinate>): Array<ILocation> {
+    getNeighborhood(loc: T, rel_ne: RelativeNeighborhood<ICoordinate>): Array<T> {
         return rel_ne.flatMap((rel_co) => this.getRelativeCoordinate(loc, rel_co));
     }
 
-    to_array(): Array<ILocation> {
+    to_array(): Array<T> {
         throw new Error('Method not implemented.');
     }
 }
