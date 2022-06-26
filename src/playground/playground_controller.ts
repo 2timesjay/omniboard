@@ -122,16 +122,26 @@ export class PlaygroundPhase implements IPhase {
          * 
          * Increment state on selection.
          * Decrement state on rejection.
-         */        
-        while (true) {
-            // TODO: Replicate robustness/popping of tactics_controller
-            if (this.current_inputs.input_state == PlaygroundInputState.Entity) {
+         */    
+         while (true) {
+            // Note: Fine to hit these all in one loop
+            if (this.current_inputs.input_state == PlaygroundInputState.Entity){
                 var selection = yield *this.entity_selection(state);
-                this.current_inputs.push_input(selection);
-            } else if (this.current_inputs.input_state == PlaygroundInputState.Location) {
+                if (selection != null) {
+                    this.current_inputs.push_input(selection);
+                } else {
+                    this.current_inputs.pop_input();
+                }
+            }
+            if (this.current_inputs.input_state == PlaygroundInputState.Location){
                 var selection = yield *this.location_selection(state);
-                this.current_inputs.push_input(selection);
-            } else if (this.current_inputs.input_state == PlaygroundInputState.Confirmation) {
+                if (selection != null) {
+                    this.current_inputs.push_input(selection);
+                } else {
+                    this.current_inputs.pop_input();
+                }
+            }
+            if (this.current_inputs.input_state == PlaygroundInputState.Confirmation) {
                 break;
             }
         }

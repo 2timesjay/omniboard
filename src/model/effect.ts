@@ -222,7 +222,7 @@ export class MoveEffect extends AbstractEffect {
         console.log("Vector: ", vector)
         var source_display = display_handler.display_map.get(source);
         // @ts-ignore Doesn't know unit_display is a UnitDisplay
-        var animation = new Move(vector.x, vector.y, DURATION_FRAMES, source_display);
+        var animation = new Move(vector, DURATION_FRAMES, source_display);
         // @ts-ignore Can't even use UnitDisplay as a normal type.
         source_display.interrupt_animation(animation)
     }
@@ -400,7 +400,7 @@ export class ShoveEffect extends AbstractEffect {
         console.log("Vector: ", vector)
         var target_display = display_handler.display_map.get(target);
         // @ts-ignore Doesn't know unit_display is a UnitDisplay
-        var animation = new Move(vector.x, vector.y, DURATION_FRAMES, target_display);
+        var animation = new Move(vector, DURATION_FRAMES, target_display);
         // @ts-ignore Can't even use UnitDisplay as a normal type.
         target_display.interrupt_animation(animation);
     }

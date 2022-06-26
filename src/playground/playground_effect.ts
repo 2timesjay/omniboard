@@ -58,7 +58,7 @@ export class PlaygroundMoveEffect extends AbstractEffect {
         console.log("Vector: ", vector)
         var source_display = display_handler.display_map.get(source);
         // @ts-ignore Doesn't know Entity_display is a EntityDisplay
-        var animation = new Move(vector.x, vector.y, DURATION_FRAMES, source_display);
+        var animation = new Move(vector, DURATION_FRAMES, source_display);
         // @ts-ignore Can't even use EntityDisplay as a normal type.
         source_display.interrupt_animation(animation)
     }

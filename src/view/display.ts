@@ -3,7 +3,7 @@ import { ISelectable } from "../model/core";
 import { makeArc, makeCanvas, makeCircle, makeLine, makeRect, makeSquare } from "./rendering";
 import { getMousePos, Position } from "./input";
 import { Awaited } from "../model/utilities";
-import { GridLocation } from "../model/space";
+import { GridLocation, Vector } from "../model/space";
 import { Unit } from "../model/unit";
 import { createWatchCompilerHost } from "typescript";
 import { Entity } from "../playground/playground_entity";
@@ -238,15 +238,18 @@ export class Flinch implements IAnimation {
 export class Move implements IAnimation { 
     x_walk: Array<number>;
     y_walk: Array<number>;
+    z_walk: Array<number>;
     finished: boolean;
     parent: AbstractDisplay<ISelectable> & ILocatable;
 
     constructor(
-        dx:number, dy: number, duration: number, parent: AbstractDisplay<ISelectable> & ILocatable
+        v: Vector, duration: number, parent: AbstractDisplay<ISelectable> & ILocatable
     ) {
+        var {x: dx, y: dy, z: dz} = v
         this.parent = parent;
         this.x_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dx*size/duration);
         this.y_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dy*size/duration);
+        this.z_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dz*size/duration);
         this.finished = false;
     }
 
@@ -270,6 +273,14 @@ export class Move implements IAnimation {
     * delta_y(): DeltaGen {
         while(this.y_walk.length > 0) {
             yield this.y_walk.shift();
+        }
+        this.finish();
+    }
+
+    // @ts-ignore
+    * delta_z(): DeltaGen {
+        while(this.z_walk.length > 0) {
+            yield this.z_walk.shift();
         }
         this.finish();
     }

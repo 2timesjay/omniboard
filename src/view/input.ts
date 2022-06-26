@@ -25,11 +25,13 @@ export function setupOptions(options: Array<AbstractDisplay<ISelectable>>) {
     options.forEach((o) => o.state = DisplayState.Option);
 }
 
+// TODO: SelectionBroker can probably always be ISelectable, no need for Generic.
 export class SelectionBroker<T extends ISelectable> {
     resolve: Awaited<T>;
     reject: Rejection;
     // Organize more efficiently; by input type?
     onevents: Array<DisplayHitOnevent>;
+    mouseover_selection: T;
 
     constructor(onevents?: Array<DisplayHitOnevent>){
         if (onevents){
@@ -64,16 +66,32 @@ export class SelectionBroker<T extends ISelectable> {
     }
     
     onmousemove(e: MouseEvent) {
-        // Fanout clicks to all onevents
+        // Fanout mousemove to all onevents
         var nohits = true;
         for (let onevent of this.onevents) {
-            onevent(e); // Ignore Selection output.
+            var selection = onevent(e);
+            if (selection && nohits) {
+                nohits = false;
+                // @ts-ignore DisplayHitOnevent returns broad ISelectable. Need safe casting.
+                this.mouseover_selection = selection;
+            }
+        }
+        if (nohits) {
+            this.mouseover_selection = null;
         }
     }
 
     onkeyboardevent (e: KeyboardEvent) {
+        const ENTER = "Enter";
+        const C = "KeyC";
         const ESCAPE = "Escape";
         const X = "KeyX";
+        if (
+            (e.code == ENTER || e.code == C) &&
+            (this.mouseover_selection != null) 
+        ) {
+            this.resolve(this.mouseover_selection);
+        }
         if (e.code == ESCAPE || e.code == X) {
             console.log(this);
             this.reject();
