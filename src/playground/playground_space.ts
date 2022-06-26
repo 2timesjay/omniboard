@@ -1,4 +1,4 @@
-import { RelativeGridCoordinate, ILocation, RelativeCoordinateOperator, RelativeNeighborhood, AbstractSpace, GridLocation, GridCoordinate } from "../model/space";
+import { RelativeGridCoordinate, ILocation, RelativeCoordinateOperator, RelativeNeighborhood, AbstractSpace, GridLocation, GridCoordinate, Vector } from "../model/space";
 
 // RelativeNeighborhood
 export const LINE_ADJACENCY = [
@@ -26,6 +26,10 @@ export class LineSpace extends AbstractSpace<GridLocation> {
 
     getNaturalNeighborhood(loc: GridLocation): Array<GridLocation> {
         return this.getNeighborhood(loc, LINE_ADJACENCY);
+    }
+
+    getVector(loc: GridLocation, other_loc: GridLocation): Vector {
+        return {x: other_loc.x - loc.x, y: other_loc.y - loc.y};
     }
 
     to_array(): Array<GridLocation> {

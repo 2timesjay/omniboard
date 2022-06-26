@@ -680,6 +680,7 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     }
 
     update_pos() {
+        console.log("MOVING ENTITY: ", this.selectable)
         // @ts-ignore Actualy GridLocation
         console.log("UPDATED LOC: ", this.selectable.loc.co.x, this.selectable.loc.y, this.selectable.loc.z);
         // @ts-ignore Actualy GridLocation

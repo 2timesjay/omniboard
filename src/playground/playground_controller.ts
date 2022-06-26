@@ -2,9 +2,10 @@ import { ISelectable, Stack } from "../model/core";
 import { Effect } from "../model/effect";
 import { InputOptions, InputRequest, InputSelection, SequentialInputAcquirer, SimpleInputAcquirer } from "../model/input";
 import { Inputs, IPhase } from "../model/phase";
-import { GridLocation } from "../model/space";
+import { GridLocation, ILocation } from "../model/space";
 import { IState } from "../model/state";
 import { DisplayHandler } from "../view/display_handler";
+import { PlaygroundMoveEffect } from "./playground_effect";
 import { Entity } from "./playground_entity";
 import { LineSpace } from "./playground_space";
 import { PlaygroundState } from "./playground_state";
@@ -81,7 +82,12 @@ export class PlaygroundPhase implements IPhase {
     }
 
     inputs_to_effects(inputs: PlaygroundInputs): Array<Effect> {
-        return [];
+        console.log("Inputs: ", inputs.input_queue);
+        // @ts-ignore
+        var source: Entity = inputs.consume_input();
+        // @ts-ignore
+        var loc: ILocation = inputs.consume_input().value; // Extract tail of path.
+        return [new PlaygroundMoveEffect(source, loc)];
     }
 
     phase_condition(): boolean {
@@ -95,9 +101,9 @@ export class PlaygroundPhase implements IPhase {
             console.log("Running Subphase")
             var inputs: PlaygroundInputs = yield *this.run_subphase(state); 
             console.log("Resetting Inputs")
-            this.current_inputs.reset();           
             var effects = this.inputs_to_effects(inputs);
             console.log("Effects: ", effects);
+            this.current_inputs.reset();           
 
             // TODO: Side effect that queue display doesn't clear before effect execution
             await state.process(effects, this.display_handler).then(() => {});
@@ -118,7 +124,7 @@ export class PlaygroundPhase implements IPhase {
          * Decrement state on rejection.
          */        
         while (true) {
-            // TODO: Replicate robustness of tactics_controller
+            // TODO: Replicate robustness/popping of tactics_controller
             if (this.current_inputs.input_state == PlaygroundInputState.Entity) {
                 var selection = yield *this.entity_selection(state);
                 this.current_inputs.push_input(selection);
