@@ -27,7 +27,7 @@ if (game_type == GameType.Tactics) {
 
     // Create Canvas
     const size = 100;
-    const canvas = makeCanvas(k * 100, k * size, true);
+    const canvas = makeCanvas(k * size, k * size, true);
     const context = canvas.getContext("2d");
 
     // Create Displays
@@ -47,12 +47,13 @@ if (game_type == GameType.Tactics) {
     tc.run(tp, input_request, display_handler);
 } else if (game_type == GameType.Playground) {
     // State Setup
-    var k = 8;
-    var pg_state = playground_setup(k)
+    var k = 4;
+    var d = 2;
+    var pg_state = playground_setup(k, d)
 
     // Create Canvas
-    const size = 100;
-    const canvas = makeCanvas(k * 100, k * size, true);
+    const size = 100 * d;
+    const canvas = makeCanvas(k * size, k * size, true);
     const context = canvas.getContext("2d");
 
     // Create Displays

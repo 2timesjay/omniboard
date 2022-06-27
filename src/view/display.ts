@@ -21,15 +21,18 @@ type Mixinable = new (...args: any[]) => {};
 type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 
 const size: number = 100;
+const k: number = 4; // TODO: un-hardcode.
 
 // TODO: Add size, add center;
 interface ILocatable {
     _xOffset: number;
     _yOffset: number;
+    _zOffset: number
     _size: number;
     children: Array<AbstractVisual>;
     get xOffset(): number;
     get yOffset(): number;
+    get zOffset(): number;
     get size(): number;
 }
 
@@ -361,17 +364,17 @@ function Animate<TBase extends Animatable>(
 
         get xOffset(): number {
             // @ts-ignore possible generator termination
-            return this._xOffset + this.delta_x.next().value;
+            return super.xOffset + this.delta_x.next().value;
         }
 
         get yOffset(): number {
             // @ts-ignore possible generator termination
-            return this._yOffset + this.delta_y.next().value;
+            return super.yOffset + this.delta_y.next().value;
         }
 
         get size(): number {
             // @ts-ignore possible generator termination
-            return this._size * this.delta_s.next().value;
+            return super.size * this.delta_s.next().value;
         }
 
 
@@ -593,12 +596,14 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     selectable: GridLocation;
     _xOffset: number;
     _yOffset: number;
+    _zOffset: number;
     _size: number;
     width: number;
     height: number;
 
     constructor(loc: GridLocation) {
         super(loc);
+        this._zOffset = this.selectable.z != null ? this.selectable.z * size * k: 0;
         this._xOffset = this.selectable.x * size + 0.1 * size;
         this._yOffset = this.selectable.y * size + 0.1 * size;
         this._size = size * 0.8;
@@ -607,11 +612,15 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 
     get xOffset(): number {
-        return this._xOffset;
+        return this._xOffset + this._zOffset;
     }
 
     get yOffset(): number {
-        return this._yOffset;
+        return this._yOffset + this._zOffset;
+    }
+
+    get zOffset(): number {
+        return 0;
     }
 
     get size(): number {
@@ -669,6 +678,7 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     selectable: Entity;
     _xOffset: number;
     _yOffset: number;
+    _zOffset: number;
     _size: number;
     width: number;
     height: number;
@@ -679,11 +689,15 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     }
 
     get xOffset(): number {
-        return this._xOffset;
+        return this._xOffset + this._zOffset;
     }
 
     get yOffset(): number {
-        return this._yOffset;
+        return this._yOffset + this._zOffset;
+    }
+
+    get zOffset(): number {
+        return 0;
     }
 
     get size(): number {
@@ -693,7 +707,9 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     update_pos() {
         console.log("MOVING ENTITY: ", this.selectable)
         // @ts-ignore Actualy GridLocation
-        console.log("UPDATED LOC: ", this.selectable.loc.co.x, this.selectable.loc.y, this.selectable.loc.z);
+        console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
+        // @ts-ignore Actualy GridLocation
+        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * size * k: 0;
         // @ts-ignore Actualy GridLocation
         this._xOffset = this.selectable.loc.x * size + 0.2 * size;
         // @ts-ignore Actualy GridLocation
@@ -749,12 +765,14 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     }
 }
 
-export const EntityDisplay = Animate(_EntityDisplay, JumpInPlace);
+// export const EntityDisplay = Animate(_EntityDisplay, JumpInPlace);
+export const EntityDisplay = Animate(_EntityDisplay, BaseAnimation);
 
 class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathable {
     selectable: Unit;
     _xOffset: number;
     _yOffset: number;
+    _zOffset: number;
     _size: number;
     width: number;
     height: number;
@@ -765,11 +783,15 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
     }
 
     get xOffset(): number {
-        return this._xOffset;
+        return this._xOffset + this._zOffset;
     }
 
     get yOffset(): number {
-        return this._yOffset;
+        return this._yOffset + this._zOffset;
+    }
+
+    get zOffset(): number {
+        return 0;
     }
 
     get size(): number {
@@ -777,7 +799,9 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
     }
 
     update_pos() {
-        console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
+        console.log("MOVING UNIT: ", this.selectable)
+        console.log("UPDATED LOC: ", this.selectable.loc.co.x, this.selectable.loc.y, this.selectable.loc.z);
+        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * size * k: 0;
         this._xOffset = this.selectable.loc.x * size + 0.2 * size;
         this._yOffset = this.selectable.loc.y * size + 0.2 * size;
         this._size = size * 0.6;
