@@ -16,17 +16,7 @@ export function makeSquare(
     clr?: string | null, 
     lfa?: number | null
 ): void {
-    const alpha = lfa == undefined ? 1.0 : lfa;
-    const color = clr == undefined ? "#000000" : clr;
-    context.globalAlpha = alpha;
-    context.beginPath();
-    context.rect(x, y, size, size);
-    context.fillStyle = color;
-    context.fill();
-    context.lineWidth = 4;
-    context.strokeStyle = 'black';
-    context.stroke();
-    context.globalAlpha = 1.0;
+    makeRect(x, y, context, size, size, clr, lfa);
 }
 
 export function makeRect(
@@ -128,4 +118,106 @@ export function makeArc(
     context.strokeStyle = color;
     context.stroke();
     context.globalAlpha = 1.0;
+}
+
+interface IView {
+    context: RenderingContext
+    drawArc: (
+        x: number, 
+        y: number, 
+        size: number, 
+        frac_filled?: number | null,
+        clr?: string | null, 
+        lfa?: number | null
+    ) => void;
+    drawCircle: (
+        x: number, 
+        y: number, 
+        size: number, 
+        clr?: string | null, 
+        lfa?: number | null
+    ) => void;
+    drawLine: (
+        x_from: number, 
+        y_from: number,
+        x_to: number,
+        y_to: number, 
+        line_width: number, 
+        clr?: string | null, 
+        lfa?: number | null
+    ) => void;
+    drawRect: (
+        x: number, 
+        y: number, 
+        width: number, 
+        height: number,
+        clr?: string | null, 
+        lfa?: number | null
+    ) => void;
+}
+
+class View2D implements IView {
+    context: CanvasRenderingContext2D;
+
+    constructor(k: number, size: number) {
+        // Create Canvas
+        var canvas = makeCanvas(k * size, k * size, true);
+        this.context = canvas.getContext("2d");
+
+    }
+
+    drawArc(
+        x: number, y: number, size: number, frac_filled?: number, clr?: string, lfa?: number
+    ): void {
+        makeArc(x, y, this.context, size, frac_filled, clr, lfa);
+    }
+
+    drawCircle(
+        x: number, y: number, size: number, clr?: string, lfa?: number
+    ): void {
+        makeCircle(x, y, this.context, size, clr, lfa);
+    }
+
+    drawRect(
+        x: number, y: number, width: number, height: number, clr?: string, lfa?: number
+    ): void {
+        makeRect(x, y, this.context, width, height, clr, lfa);
+    }
+
+    drawLine(
+        x_from: number, 
+        y_from: number,
+        x_to: number,
+        y_to: number,  
+        line_width: number, 
+        clr?: string | null, 
+        lfa?: number | null
+    ): void {
+        makeLine(x_from, y_from, x_to, y_to, this.context, line_width, clr, lfa);
+    }
+}
+
+class View2DWithZ extends View2D {
+    context: CanvasRenderingContext2D;
+
+    constructor(k: number, size: number, d: number) {
+        super(k, size);
+        // Create Canvas
+        var canvas = makeCanvas(k * size, k * size * d, true);
+        this.context = canvas.getContext("2d");
+
+    }
+}
+
+class View2DIsometric extends View2D {
+    context: CanvasRenderingContext2D;
+
+    constructor(k: number, size: number, d: number) {
+        super(k, size);
+        // Create Canvas
+        var canvas = makeCanvas(k * size, k * size * d, true);
+        this.context = canvas.getContext("2d");
+
+    }
+
 }
