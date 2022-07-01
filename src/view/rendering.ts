@@ -120,7 +120,7 @@ export function makeArc(
     context.globalAlpha = 1.0;
 }
 
-interface IView {
+export interface IView {
     context: RenderingContext
     drawArc: (
         x: number, 
