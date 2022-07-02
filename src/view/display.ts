@@ -1,12 +1,13 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
-import { makeArc, makeCanvas, makeCircle, makeLine, makeRect, makeSquare } from "./rendering";
+import { IView, makeArc, makeCanvas, makeCircle, makeLine, makeRect, makeSquare } from "./rendering";
 import { getMousePos, Position } from "./input";
 import { Awaited } from "../model/utilities";
 import { GridLocation, Vector } from "../model/space";
 import { Unit } from "../model/unit";
 import { createWatchCompilerHost } from "typescript";
 import { Entity } from "../playground/playground_entity";
+import { IView3D, View3D } from "./rendering_three";
 
 export enum DisplayState {
     Neutral,
@@ -493,6 +494,8 @@ export class LinearVisual extends AbstractVisual {
     }
 }
 
+type ViewOrRenderingContext = IView | CanvasRenderingContext2D;
+
 export class AbstractDisplay<T extends ISelectable> {
     selectable: T;
     // TODO: Clean up this crazy state/selection_state
@@ -511,7 +514,7 @@ export class AbstractDisplay<T extends ISelectable> {
         throw new Error('Method not implemented.');
     }
 
-    display(context: CanvasRenderingContext2D) {
+    display(context: ViewOrRenderingContext) {
         // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
         // this.update_pos();
         if (this.state == DisplayState.Select) {
@@ -528,23 +531,24 @@ export class AbstractDisplay<T extends ISelectable> {
             this.queueDisplay(context);
         }
         for (var visual of this.children) {
+            // @ts-ignore
             visual.display(context);
         }
     }
 
-    neutralDisplay(context: CanvasRenderingContext2D) {
+    neutralDisplay(context: ViewOrRenderingContext) {
     }
 
-    optionDisplay(context: CanvasRenderingContext2D) {
+    optionDisplay(context: ViewOrRenderingContext) {
     }
 
-    previewDisplay(context: CanvasRenderingContext2D) {
+    previewDisplay(context: ViewOrRenderingContext) {
     }
 
-    queueDisplay(context: CanvasRenderingContext2D) {
+    queueDisplay(context: ViewOrRenderingContext) {
     }
 
-    selectDisplay(context: CanvasRenderingContext2D) {
+    selectDisplay(context: ViewOrRenderingContext) {
     }
 
     // TODO: Input Mixin?
@@ -554,7 +558,6 @@ export class AbstractDisplay<T extends ISelectable> {
 
     createOnclick(canvas: HTMLCanvasElement) {
         // Select by click - clicks off this element de-select.
-        let context = canvas.getContext("2d");
         let self = this;
         let trigger = function (e: MouseEvent): T | null {
             if (e.type == "click") {
@@ -573,7 +576,6 @@ export class AbstractDisplay<T extends ISelectable> {
 
     createOnmousemove(canvas: HTMLCanvasElement) {
         // Preview if not selected.
-        let context = canvas.getContext("2d");
         let self = this;
         let trigger = function (e: MouseEvent): T | null {
             if (e.type == "mousemove" && !(self.state == DisplayState.Select)) {
@@ -673,6 +675,102 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 }
 
+export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> implements ILocatable, IPathable {
+    selectable: GridLocation;
+    _xOffset: number;
+    _yOffset: number;
+    _zOffset: number;
+    _size: number;
+    width: number;
+    height: number;
+
+    constructor(loc: GridLocation) {
+        super(loc);
+        this._zOffset = this.selectable.z != null ? this.selectable.z * size * k: 0;
+        this._xOffset = this.selectable.x * size + 0.1 * size;
+        this._yOffset = this.selectable.y * size + 0.1 * size;
+        this._size = size * 0.8;
+        this.width = size * 0.8;
+        this.height = size * 0.8;
+    }
+
+    get xOffset(): number {
+        return this._xOffset;
+    }
+
+    get yOffset(): number {
+        return this._yOffset;
+    }
+
+    get zOffset(): number {
+        return this._zOffset;
+    }
+
+    get size(): number {
+        return this._size;
+    }
+
+    render(view: IView3D, clr: string, lfa?: number) {
+        view.drawRect(
+            {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
+            this.size, this.size, this.size,
+            clr, 
+            lfa,
+        );
+    }
+
+    alt_render(view: IView3D, clr: string) {
+        view.drawCircle(
+            {x: this.xOffset, y: this.yOffset, z: this.zOffset},
+            this.size,
+            clr,
+        );
+    }
+
+    // @ts-ignore
+    neutralDisplay(view: IView3D) {
+        var lfa = this.selectable.traversable ? 1.0 : 0.25
+        this.render(view, 'lightgrey', lfa);
+    }
+
+    // @ts-ignore
+    optionDisplay(view: IView3D) {
+        this.render(view, 'grey');
+    }
+
+    // @ts-ignore
+    previewDisplay(view: IView3D) {
+        this.render(view, 'yellow');
+    }
+
+    // @ts-ignore
+    queueDisplay(view: IView3D) {
+        this.alt_render(view, 'indianred');
+    }
+
+    // @ts-ignore
+    selectDisplay(view: IView3D) {
+        this.render(view, 'red');
+    }
+
+    isHit(mousePos: Position): boolean {
+        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
+            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    // @ts-ignore
+    pathDisplay(view: IView3D, to: IPathable) {
+        // var from = this;
+        // var line = new LinearVisual(from, to);
+        // line.display(view);
+    }
+}
+
 // Share code with _UnitDisplay
 class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPathable {
     selectable: Entity;
@@ -765,8 +863,120 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     }
 }
 
+
 // export const EntityDisplay = Animate(_EntityDisplay, JumpInPlace);
 export const EntityDisplay = Animate(_EntityDisplay, BaseAnimation);
+
+
+class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocatable, IPathable {
+    selectable: Entity;
+    _xOffset: number;
+    _yOffset: number;
+    _zOffset: number;
+    _size: number;
+    width: number;
+    height: number;
+
+    constructor(entity: Entity) {
+        super(entity);
+        this.update_pos();
+    }
+
+    get xOffset(): number {
+        return this._xOffset + this._zOffset;
+    }
+
+    get yOffset(): number {
+        return this._yOffset + this._zOffset;
+    }
+
+    get zOffset(): number {
+        return 0;
+    }
+
+    get size(): number {
+        return this._size;
+    }
+
+    update_pos() {
+        console.log("MOVING ENTITY: ", this.selectable)
+        // @ts-ignore Actualy GridLocation
+        console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
+        // @ts-ignore Actualy GridLocation
+        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * size * k: 0;
+        // @ts-ignore Actualy GridLocation
+        this._xOffset = this.selectable.loc.x * size + 0.2 * size;
+        // @ts-ignore Actualy GridLocation
+        this._yOffset = this.selectable.loc.y * size + 0.2 * size;
+        this._size = size * 0.6;
+        this.width = size * 0.6;
+        this.height = size * 0.6;
+    }
+
+    render(view: IView3D, clr: string) {
+        view.drawRect(
+            {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
+            this.size, this.size, this.size,
+            clr, 
+        );
+    }
+
+    alt_render(view: IView3D, clr: string) {
+        var offset = 0.2 * this.size;
+        var reduced_size = 0.6 * this.size;
+        view.drawRect(
+            {x: this.xOffset + offset, y: this.yOffset + offset, z: this.zOffset + offset}, 
+            reduced_size, reduced_size, reduced_size,
+            clr,
+        );
+    }
+
+    // @ts-ignore
+    neutralDisplay(view: IView3D) {
+        this.render(view, 'orange');
+    }
+
+    // @ts-ignore
+    optionDisplay(view: IView3D) {
+        this.render(view, 'grey');
+    }
+
+    // @ts-ignore
+    previewDisplay(view: IView3D) {
+        this.render(view, 'yellow');
+    }
+
+    // @ts-ignore
+    queueDisplay(view: IView3D) {
+        this.alt_render(view, 'indianred');
+    }
+
+    // @ts-ignore
+    selectDisplay(view: IView3D) {
+        this.render(view, 'red');
+    }
+
+    isHit(mousePos: Position): boolean {
+        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
+            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    // @ts-ignore
+    pathDisplay(view: IView3D, to: IPathable) {
+        // var from = this;
+        // var line = new LinearVisual(from, to);
+        // line.display(view);
+    }
+}
+
+
+export const EntityDisplay3D = Animate(_EntityDisplay3D, BaseAnimation);
+
 
 class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathable {
     selectable: Unit;

@@ -1,8 +1,14 @@
+// NOTE: OrbitControl import problems: https://stackoverflow.com/questions/19444592/using-threejs-orbitcontols-in-typescript/56338877#56338877
+// import * as THREE from 'three';
+// window.THREE = THREE;
+// require('three/examples/js/controls/OrbitControls');
+// export default THREE;
 import * as THREE from 'three';
+// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GridCoordinate } from '../model/space';
 import { IView, makeCanvas } from './rendering';
 
-
+// @ts-ignore
 export interface IView3D extends IView {
     scene: THREE.Scene
     drawArc: (
@@ -33,33 +39,6 @@ export interface IView3D extends IView {
         clr?: string | null, 
         lfa?: number | null
     ) => void;
-}
-
-
-function getGroup(scene: THREE.Scene) {
-    var objects = scene.children
-    if (objects.length === 0) { return null; }
-    var group = objects[objects.length - 1]
-    if (group.type !== "Group") { return null; }
-    return group
-}
-
-function clear(context: WebGLRenderingContext){
-    function clearThree(obj: THREE.Object3D) {
-        while (obj.children.length > 0) {
-            clearThree(obj.children[0])
-            obj.remove(obj.children[0]);
-        }
-        // @ts-ignore - test type instead of property directly
-        if (obj.geometry) obj.geometry.dispose()
-        // @ts-ignore - test type instead of property directly
-        if (obj.material) obj.material.dispose()
-        // @ts-ignore - test type instead of property directly
-        if (obj.texture) obj.texture.dispose()
-    }
-
-    var group = getGroup(context.scene);
-    if (group != null) {clearThree(group);}
 }
 
 function makeRect3D(
@@ -139,14 +118,11 @@ function makeCircle3D(
 // }
 
 /** THREE objects necessary for rendering */
-function makeRenderer(parameters: Object) {
+function makeRenderer(parameters: Object): THREE.Renderer {
     return new THREE.WebGLRenderer(parameters);
 }
 
-function makeScene() {
-    const material = new THREE.MeshNormalMaterial();
-    let scene = new THREE.Scene();
-
+function _addLights(scene: THREE.Scene) {
     scene.background = new THREE.Color(0xf0f0f0);
     var light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(1, 1, 1).normalize();
@@ -159,67 +135,159 @@ function makeScene() {
     return scene;
 }
 
-// var _populateSimpleScene = function (scene, coords){
+function _populateScene(scene: THREE.Scene) {
+    let group = new THREE.Group();
 
-//     let group = new THREE.Group();
-//     for (var i = 0; i < coords.length; i++) {
-//         let co = coords[i];
-//         let geometry = new THREE.CubeGeometry(1, 1, 1);
-//         // let blockMesh = new THREE.Mesh(geometry, material);
-//         let blockMesh = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
-//         blockMesh.position.x = co[0];
-//         blockMesh.position.y = co[1];
-//         blockMesh.position.z = co[2];
-//         blockMesh.coords = co;
-//         group.add(blockMesh);
-//     }
+    
+    var coords = [
+        [0, 0, 0], [0, 1, 0], [0, 2, 0],
+        [1, 0, 0], [1, 1, 0],
+        [2, 0, 0], [2, 1, 0], [2, 2, 0],
 
-//     scene.add(group);
+        [0, 0, 1], [0, 2, 1],
+        [1, 0, 1], [1, 1, 1],
+        [2, 1, 1],
 
-//     return scene;
-// }
+
+        [1, 0, 2]
+    ]
+    for (var i = 0; i < coords.length; i++) {
+        let co = coords[i];
+        let geometry = new THREE.BoxGeometry(1, 1, 1);
+        // let blockMesh = new THREE.Mesh(geometry, material);
+        let blockMesh = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
+        blockMesh.position.x = co[0];
+        blockMesh.position.y = co[1];
+        blockMesh.position.z = co[2];
+        console.log(blockMesh);
+        group.add(blockMesh);
+    }
+
+    scene.add(group);
+
+    return scene;
+}
+
+function makeScene(): THREE.Scene {
+    const material = new THREE.MeshNormalMaterial();
+    let scene = new THREE.Scene();
+
+    _addLights(scene);
+
+    _populateScene(scene);
+
+    return scene;
+}
 
 function makeCamera (view_width: number, view_height: number) {
     const fov = 45;
+    // const fov = 180;
     const aspect = view_width/view_height;
-    const near = 1;
+    const near = 0.1;
     const far = 1000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     // const camera = new THREE.OrthographicCamera(-5, 5, -5, 5, -100, 100)
     camera.position.set(4, 4, 12)
+    // camera.position.set(0, 0, 5);
     // camera.rotation.y=10/180 * Math.PI;
-    // camera.lookAt(new THREE.Vector3(5, 5, 0));
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
     // controls.target = (new THREE.Vector3(5, 5, 0));
     return camera;
+}
+
+var makeControls = function(camera: THREE.Camera, canvas: HTMLCanvasElement) {
+    // return new OrbitControls(camera, canvas);
 }
 
 var makeRaycaster = function() {
     return new THREE.Raycaster();
 }
 
-// var _getControls = function(camera, domElement) {
-//     return new OrbitControls(camera, domElement);
+
+// function onWindowResize() {
+//     camera.aspect = WIDTH / HEIGHT;
+//     camera.updateProjectionMatrix();
+//     renderer.setSize(WIDTH, HEIGHT);
+// }
+// function onDocumentMouseMove(event) {
+//     event.preventDefault();
+//     var rect = event.target.getBoundingClientRect();
+//     mouse.x = ((event.clientX - rect.left) / WIDTH) * 2 - 1;
+//     mouse.y = - ((event.clientY - rect.top) / HEIGHT) * 2 + 1;
+// }
+// function onDocumentMouseClick(event) {
+//     event.preventDefault();
 // }
 
-class View3D implements IView3D {
-    context: WebGLRenderingContext;
+
+function getGroup(scene: THREE.Scene): THREE.Object3D {
+    var objects = scene.children
+    if (objects.length === 0) { return null; }
+    var group = objects[objects.length - 1]
+    if (group.type !== "Group") { return null; }
+    console.log(group);
+    return group
+}
+
+
+function _clearThree(obj: THREE.Object3D) {
+    while (obj.children.length > 0) {
+        _clearThree(obj.children[0])
+        obj.remove(obj.children[0]);
+    }
+    // TODO: Clean up these type errors.
+    // @ts-ignore - test type instead of property directly
+    if (obj.geometry) obj.geometry.dispose()
+    // @ts-ignore - test type instead of property directly
+    if (obj.material) obj.material.dispose()
+    // @ts-ignore - test type instead of property directly
+    if (obj.texture) obj.texture.dispose()
+}
+
+
+function clearThree(scene: THREE.Scene){
+    var group = getGroup(scene);
+    if (group != null) {_clearThree(group);}
+}
+
+
+export class View3D implements IView3D {
+    context: WebGL2RenderingContext;
     scene: THREE.Scene;
     camera: THREE.Camera;
     renderer: THREE.Renderer;
+    // controls: OrbitControls;
+    cube: THREE.Object3D;
 
     constructor(view_width: number, view_height: number) {
         // Create Canvas
         var canvas = makeCanvas(view_width, view_height, true);
-        this.context = canvas.getContext("webgl");
+        this.context = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
         this.renderer = makeRenderer( {canvas: canvas});
+        // NOTE: Can only access context through renderer.getContext
+        // @ts-ignore
+        // console.log("Context: ", this.renderer.getContext("webgl"))
+        // @ts-ignore
+        // this.context = this.renderer.getContext("webgl");
+        // this.context = this.renderer.domElement.getContext("webgl");
         this.scene = makeScene();
         this.camera = makeCamera(view_width, view_height);
+        // this.controls = makeControls(this.camera, canvas);
     }
 
     animate(): void {
-        requestAnimationFrame( this.animate.bind(this) );
+        // TODO: Move to `requestAnimationFrame` instead of display_handler on_tick?
+        // console.log("Animating: ", this);
+        // requestAnimationFrame( this.animate.bind(this) );
 
-        this.renderer.render( this.scene, this.camera );
+        // this.camera.updateMatrixWorld();
+        
+        // mouseRaycast(mouse, camera, scene);
+    
+        // TODO: Re-implement controls
+        // this.controls.update();
+        console.log("Render")
+        this.renderer.render(this.scene, this.camera);
     };
 
     drawArc(
@@ -237,6 +305,7 @@ class View3D implements IView3D {
     drawRect(
         co: GridCoordinate, width: number, height: number, depth: number, clr?: string, lfa?: number
     ): void {
+        console.log("DrawRect");
         makeRect3D(co, this.scene, width, height, depth, clr, lfa);
     }
 
@@ -248,5 +317,10 @@ class View3D implements IView3D {
         lfa?: number | null
     ): void {
         // makeLine3D(x_from, y_from, x_to, y_to, this.context, line_width, clr, lfa);
+    }
+
+    clear(){
+        console.log("clear");
+        clearThree(this.scene);
     }
 }

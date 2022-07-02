@@ -6,18 +6,22 @@ import { display_setup } from "../tactics/tactics_display_setup";
 import { Canvas2DBroker } from "./broker";
 import { DisplayHandler } from "./display_handler";
 import { playground_setup } from "../playground/playground_model_setup";
-import { playground_display_setup } from "../playground/playground_display_setup";
+import { playground_display_setup, playground_display_setup_3D } from "../playground/playground_display_setup";
 import { PlaygroundController, PlaygroundPhase } from "../playground/playground_controller";
+import { View3D } from "./rendering_three";
+import { DisplayHandler3D } from "./display_handler_three";
+import { ThreeBroker } from "./broker_three";
 
 export const TICK_DURATION_MS = 20
 
 enum GameType {
     Tactics = 0,
-    Playground = 1,
+    Playground2D = 1,
+    Playground3D = 2,
 }
 
 // const game_type = GameType.Tactics;
-const game_type = GameType.Playground;
+const game_type = GameType.Playground3D;
 
 // @ts-ignore - just a switch
 if (game_type == GameType.Tactics) {
@@ -45,7 +49,8 @@ if (game_type == GameType.Tactics) {
 
     // Start main game loop
     tc.run(tp, input_request, display_handler);
-} else if (game_type == GameType.Playground) {
+// @ts-ignore - just a switch
+} else if (game_type == GameType.Playground2D) {
     // State Setup
     var k = 4;
     var d = 2;
@@ -71,5 +76,32 @@ if (game_type == GameType.Tactics) {
 
     // Start main game loop
     pg_c.run(pg_p, input_request, display_handler);
+
+} else if (game_type == GameType.Playground3D) {
+    // State Setup
+    var k = 4;
+    var d = 2;
+    var pg_state = playground_setup(k, d)
+
+    // Create Canvas
+    const size = 100
+    const view = new View3D(k* size, k* size)
+
+    // Create Displays
+    var display_map = playground_display_setup_3D(pg_state, view);
+
+    // Connect View (display) interactions with state through Broker
+    var three_broker = new ThreeBroker(display_map, pg_state, view);
+    var input_request = three_broker.input_request;
+
+    // Create Controller
+    var pg_p = new PlaygroundPhase();
+    var three_display_handler = new DisplayHandler3D(view, display_map, pg_state);
+    setInterval(three_display_handler.on_tick.bind(three_display_handler), TICK_DURATION_MS);
+    var pg_c = new PlaygroundController(pg_state);
+
+    // Start main game loop
+    // @ts-ignore
+    pg_c.run(pg_p, input_request, three_display_handler);
 
 }

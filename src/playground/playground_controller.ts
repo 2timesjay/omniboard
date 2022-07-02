@@ -208,10 +208,13 @@ export class PlaygroundController {
         input_request: InputRequest<ISelectable>,
         display_handler: DisplayHandler,
     ) {
+        display_handler.refresh();
         phase.set_display_handler(display_handler);
         display_handler.on_selection(null, phase);
         // Note: No Victory Conditions. Go forever.
+        display_handler.refresh();
         while (true) {
+            display_handler.refresh();
             var phase_runner = phase.run_phase(this.state);
             // TODO: lol what a mess
             var input_options = await phase_runner.next();
