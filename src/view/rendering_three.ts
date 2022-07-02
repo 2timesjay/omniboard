@@ -52,10 +52,12 @@ function makeRect3D(
 ) {
     const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
 
+    console.log("alpha: ", alpha);
     let geometry = new THREE.BoxGeometry(width, height, depth);
     let material = new THREE.MeshLambertMaterial({
-        // opacity: alpha,
-        color: clr
+        opacity: alpha,
+        color:  clr, // Math.random() * 0xffffff, 
+        transparent: true,
     });
     let mesh = new THREE.Mesh(geometry, material);
     mesh.position.x = co.x;
@@ -278,7 +280,7 @@ export class View3D implements IView3D {
     animate(): void {
         // TODO: Move to `requestAnimationFrame` instead of display_handler on_tick?
         // console.log("Animating: ", this);
-        // requestAnimationFrame( this.animate.bind(this) );
+        requestAnimationFrame( this.animate.bind(this) );
 
         // this.camera.updateMatrixWorld();
         

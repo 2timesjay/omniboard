@@ -80,7 +80,7 @@ if (game_type == GameType.Tactics) {
 } else if (game_type == GameType.Playground3D) {
     // State Setup
     var k = 4;
-    var d = 2;
+    var d = 3;
     var pg_state = playground_setup(k, d)
 
     // Create Canvas

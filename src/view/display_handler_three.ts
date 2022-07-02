@@ -40,7 +40,8 @@ import { IPhase } from '../model/phase';
     }
 
     on_tick() {
-        this.refresh();
+        // TODO: Clean up since this is handled by requestAnimationFrame in View3D.
+        // this.refresh();
     }
 
     refresh(){

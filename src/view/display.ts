@@ -686,7 +686,7 @@ export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> impleme
 
     constructor(loc: GridLocation) {
         super(loc);
-        this._zOffset = this.selectable.z != null ? this.selectable.z * size * k: 0;
+        this._zOffset = this.selectable.z != null ? this.selectable.z * size: 0;
         this._xOffset = this.selectable.x * size + 0.1 * size;
         this._yOffset = this.selectable.y * size + 0.1 * size;
         this._size = size * 0.8;
@@ -729,7 +729,7 @@ export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> impleme
 
     // @ts-ignore
     neutralDisplay(view: IView3D) {
-        var lfa = this.selectable.traversable ? 1.0 : 0.25
+        var lfa = this.selectable.traversable ? 1.0 : 0.0
         this.render(view, 'lightgrey', lfa);
     }
 
