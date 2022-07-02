@@ -4,6 +4,7 @@
 // require('three/examples/js/controls/OrbitControls');
 // export default THREE;
 import * as THREE from 'three';
+// import { OrbitControls } from 'three-orbitcontrols';
 // import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GridCoordinate } from '../model/space';
 import { IView, makeCanvas } from './rendering';
@@ -127,12 +128,16 @@ function makeRenderer(parameters: Object): THREE.Renderer {
 function _addLights(scene: THREE.Scene) {
     scene.background = new THREE.Color(0xf0f0f0);
     var light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(1, 1, 1).normalize();
+    light.position.set(10000, 10000, 10000).normalize();
+    light.lookAt(0, 0, 0)
     scene.add(light);
     var light = new THREE.DirectionalLight(0xffffff, 0.4);
-    light.position.set(-1, -1, -1).normalize();
+    light.lookAt(0, 0, 0)
+    light.position.set(-10000, -10000, -10000).normalize();
+    scene.add(light);
     var light = new THREE.DirectionalLight(0xffffff, 0.7);
-    light.position.set(-4, -4, -12).normalize();
+    light.lookAt(0, 0, 0)
+    light.position.set(-40000, -40000, -120000).normalize();
     scene.add(light);
     return scene;
 }
@@ -198,7 +203,7 @@ function makeCamera (view_width: number, view_height: number) {
 }
 
 var makeControls = function(camera: THREE.Camera, canvas: HTMLCanvasElement) {
-    // return new OrbitControls(camera, canvas);
+    return new OrbitControls(camera, canvas);
 }
 
 var makeRaycaster = function() {
@@ -227,7 +232,6 @@ function getGroup(scene: THREE.Scene): THREE.Object3D {
     if (objects.length === 0) { return null; }
     var group = objects[objects.length - 1]
     if (group.type !== "Group") { return null; }
-    console.log(group);
     return group
 }
 
@@ -280,7 +284,7 @@ export class View3D implements IView3D {
     animate(): void {
         // TODO: Move to `requestAnimationFrame` instead of display_handler on_tick?
         // console.log("Animating: ", this);
-        requestAnimationFrame( this.animate.bind(this) );
+        // requestAnimationFrame( this.animate.bind(this) );
 
         // this.camera.updateMatrixWorld();
         

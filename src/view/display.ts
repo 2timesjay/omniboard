@@ -878,20 +878,20 @@ class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocatable, IP
     height: number;
 
     constructor(entity: Entity) {
-        super(entity);
+        super(entity);        
         this.update_pos();
     }
 
     get xOffset(): number {
-        return this._xOffset + this._zOffset;
+        return this._xOffset;
     }
 
     get yOffset(): number {
-        return this._yOffset + this._zOffset;
+        return this._yOffset;
     }
 
     get zOffset(): number {
-        return 0;
+        return this._zOffset;
     }
 
     get size(): number {
@@ -903,7 +903,7 @@ class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocatable, IP
         // @ts-ignore Actualy GridLocation
         console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
         // @ts-ignore Actualy GridLocation
-        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * size * k: 0;
+        this._zOffset = this.selectable.loc.z != null ? (this.selectable.loc.z + 1) * size: 0;
         // @ts-ignore Actualy GridLocation
         this._xOffset = this.selectable.loc.x * size + 0.2 * size;
         // @ts-ignore Actualy GridLocation
