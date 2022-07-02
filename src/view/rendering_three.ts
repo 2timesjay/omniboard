@@ -53,8 +53,8 @@ function makeRect3D(
     const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
 
     let geometry = new THREE.BoxGeometry(width, height, depth);
-    let material = new THREE.MeshStandardMaterial({
-        opacity: alpha,
+    let material = new THREE.MeshLambertMaterial({
+        // opacity: alpha,
         color: clr
     });
     let mesh = new THREE.Mesh(geometry, material);
@@ -184,10 +184,10 @@ function makeCamera (view_width: number, view_height: number) {
     // const fov = 180;
     const aspect = view_width/view_height;
     const near = 0.1;
-    const far = 1000;
+    const far = 100000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     // const camera = new THREE.OrthographicCamera(-5, 5, -5, 5, -100, 100)
-    camera.position.set(4, 4, 12)
+    camera.position.set(400, 400, 1200)
     // camera.position.set(0, 0, 5);
     // camera.rotation.y=10/180 * Math.PI;
     camera.lookAt(new THREE.Vector3(0, 0, 0));
