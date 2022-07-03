@@ -4,8 +4,7 @@
 // require('three/examples/js/controls/OrbitControls');
 // export default THREE;
 import * as THREE from 'three';
-// import { OrbitControls } from 'three-orbitcontrols';
-// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GridCoordinate } from '../model/space';
 import { IView, makeCanvas } from './rendering';
 
@@ -53,9 +52,8 @@ function makeRect3D(
 ) {
     const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
 
-    console.log("alpha: ", alpha);
     let geometry = new THREE.BoxGeometry(width, height, depth);
-    let material = new THREE.MeshLambertMaterial({
+    let material = new THREE.MeshStandardMaterial({
         opacity: alpha,
         color:  clr, // Math.random() * 0xffffff, 
         transparent: true,
@@ -127,18 +125,20 @@ function makeRenderer(parameters: Object): THREE.Renderer {
 
 function _addLights(scene: THREE.Scene) {
     scene.background = new THREE.Color(0xf0f0f0);
-    var light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(10000, 10000, 10000).normalize();
-    light.lookAt(0, 0, 0)
-    scene.add(light);
-    var light = new THREE.DirectionalLight(0xffffff, 0.4);
-    light.lookAt(0, 0, 0)
-    light.position.set(-10000, -10000, -10000).normalize();
-    scene.add(light);
-    var light = new THREE.DirectionalLight(0xffffff, 0.7);
-    light.lookAt(0, 0, 0)
-    light.position.set(-40000, -40000, -120000).normalize();
-    scene.add(light);
+    // var light = new THREE.DirectionalLight(0xffffff, 1);
+    // light.position.set(10000, 10000, 10000).normalize();
+    // light.lookAt(0, 0, 0)
+    // scene.add(light);
+    // var light = new THREE.DirectionalLight(0xffffff, 0.4);
+    // light.lookAt(0, 0, 0)
+    // light.position.set(-10000, -10000, -10000).normalize();
+    // scene.add(light);
+    // var light = new THREE.DirectionalLight(0xffffff, 0.7);
+    // light.lookAt(0, 0, 0)
+    // light.position.set(-40000, -40000, -120000).normalize();
+    // scene.add(light);
+    const light = new THREE.HemisphereLight( 0xffffff, 0x080808, 1 );
+    scene.add( light );
     return scene;
 }
 
@@ -191,7 +191,7 @@ function makeCamera (view_width: number, view_height: number) {
     // const fov = 180;
     const aspect = view_width/view_height;
     const near = 0.1;
-    const far = 100000;
+    const far = 12000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     // const camera = new THREE.OrthographicCamera(-5, 5, -5, 5, -100, 100)
     camera.position.set(400, 400, 1200)
@@ -262,13 +262,13 @@ export class View3D implements IView3D {
     scene: THREE.Scene;
     camera: THREE.Camera;
     renderer: THREE.Renderer;
-    // controls: OrbitControls;
+    controls: OrbitControls;
     cube: THREE.Object3D;
 
     constructor(view_width: number, view_height: number) {
         // Create Canvas
         var canvas = makeCanvas(view_width, view_height, true);
-        this.context = canvas.getContext("webgl2", {preserveDrawingBuffer: true});
+        this.context = canvas.getContext("webgl2");
         this.renderer = makeRenderer( {canvas: canvas});
         // NOTE: Can only access context through renderer.getContext
         // @ts-ignore
@@ -278,7 +278,7 @@ export class View3D implements IView3D {
         // this.context = this.renderer.domElement.getContext("webgl");
         this.scene = makeScene();
         this.camera = makeCamera(view_width, view_height);
-        // this.controls = makeControls(this.camera, canvas);
+        this.controls = makeControls(this.camera, canvas);
     }
 
     animate(): void {
@@ -311,7 +311,6 @@ export class View3D implements IView3D {
     drawRect(
         co: GridCoordinate, width: number, height: number, depth: number, clr?: string, lfa?: number
     ): void {
-        console.log("DrawRect");
         makeRect3D(co, this.scene, width, height, depth, clr, lfa);
     }
 
@@ -326,7 +325,6 @@ export class View3D implements IView3D {
     }
 
     clear(){
-        console.log("clear");
         clearThree(this.scene);
     }
 }

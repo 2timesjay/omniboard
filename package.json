@@ -1,10 +1,12 @@
 {
   "name": "omniboard",
   "version": "0.4.0",
+  "type": "module",
   "dependencies": {
     "@types/three": "^0.141.0",
     "ts-node": "^10.4.0",
-    "tsify": "^5.0.4"
+    "tsify": "^5.0.4",
+    "vite": "^2.9.13"
   },
   "description": "An Engine",
   "main": "index.js",
@@ -34,6 +36,9 @@
     "typescript": "^4.7.3"
   },
   "scripts": {
-    "prettier-format": "prettier --config .prettierrc src\\**\\path_only.ts --write"
+    "prettier-format": "prettier --config .prettierrc src\\**\\path_only.ts --write",
+    "start": "vite",
+    "build": "vite build",
+    "check": "tsc --noImplicitAny --target es6 --noEmit"
   }
 }

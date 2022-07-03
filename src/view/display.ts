@@ -711,6 +711,9 @@ export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> impleme
     }
 
     render(view: IView3D, clr: string, lfa?: number) {
+        // TODO: Make this more consistent with 2D
+        // NOTE: Don't render if lfa = 0; rendering bug when inside transparent object.
+        if (lfa == 0) return;
         view.drawRect(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
             this.size, this.size, this.size,
@@ -902,12 +905,20 @@ class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocatable, IP
         console.log("MOVING ENTITY: ", this.selectable)
         // @ts-ignore Actualy GridLocation
         console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
+        
+        // TODO: Fix to 0.2 * size after I fix offsets for gridLocations
+        var margin = 0.1 * size;
         // @ts-ignore Actualy GridLocation
-        this._zOffset = this.selectable.loc.z != null ? (this.selectable.loc.z + 1) * size: 0;
+        this._xOffset = this.selectable.loc.x * size + margin;
         // @ts-ignore Actualy GridLocation
-        this._xOffset = this.selectable.loc.x * size + 0.2 * size;
-        // @ts-ignore Actualy GridLocation
-        this._yOffset = this.selectable.loc.y * size + 0.2 * size;
+        this._yOffset = this.selectable.loc.y * size + margin;
+        this._zOffset = (
+            // @ts-ignore Actualy GridLocation
+            this.selectable.loc.z != null ? 
+            // @ts-ignore Actualy GridLocation
+            (this.selectable.loc.z + 1) * size + margin: 
+            margin
+        );
         this._size = size * 0.6;
         this.width = size * 0.6;
         this.height = size * 0.6;

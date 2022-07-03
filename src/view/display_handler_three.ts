@@ -14,7 +14,6 @@ import { IPhase } from '../model/phase';
     state: IState,
 ) {
     view.clear();
-    // console.log(view.scene);
     for (let selectable of state.get_selectables()) {
         var display = display_map.get(selectable);
         // @ts-ignore
