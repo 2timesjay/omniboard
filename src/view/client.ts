@@ -97,6 +97,7 @@ if (game_type == GameType.Tactics) {
     // Create Controller
     var pg_p = new PlaygroundPhase();
     var three_display_handler = new DisplayHandler3D(view, display_map, pg_state);
+    // TODO: Change to `requestAnimationFrame` everywhere
     setInterval(three_display_handler.on_tick.bind(three_display_handler), TICK_DURATION_MS);
     var pg_c = new PlaygroundController(pg_state);
 

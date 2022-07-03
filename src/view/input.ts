@@ -6,12 +6,12 @@ import { AbstractDisplay, DisplayState } from "./display";
 export type DisplayMap<T> = Map<T, AbstractDisplay<T>>;
 
 // TODO: Consistent Style
-export interface Position {
+export interface InputCoordinate {
     x: number;
     y: number;
 }
 
-export function getMousePos(canvasDom: HTMLElement, mouseEvent: MouseEvent): Position {
+export function getMousePos(canvasDom: HTMLElement, mouseEvent: MouseEvent): InputCoordinate {
     var rect = canvasDom.getBoundingClientRect();
     return {
         x: mouseEvent.clientX - rect.left,

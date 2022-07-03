@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GridCoordinate } from '../model/space';
+import { InputCoordinate } from './input';
 import { IView, makeCanvas } from './rendering';
 
 // @ts-ignore
@@ -264,6 +265,7 @@ export class View3D implements IView3D {
     renderer: THREE.Renderer;
     controls: OrbitControls;
     cube: THREE.Object3D;
+    raycaster: THREE.Raycaster;
 
     constructor(view_width: number, view_height: number) {
         // Create Canvas
@@ -279,19 +281,23 @@ export class View3D implements IView3D {
         this.scene = makeScene();
         this.camera = makeCamera(view_width, view_height);
         this.controls = makeControls(this.camera, canvas);
+        this.raycaster = makeRaycaster();
+    }
+
+    _getHit(mouse_co: InputCoordinate): THREE.Object3D {
+        // find intersections
+        this.raycaster.setFromCamera(mouse_co, this.camera);
+        var group = getGroup(this.scene)
+        var intersects = this.raycaster.intersectObjects(group.children);
+        var hit = intersects[0].object;
+        return hit;
     }
 
     animate(): void {
         // TODO: Move to `requestAnimationFrame` instead of display_handler on_tick?
-        // console.log("Animating: ", this);
         // requestAnimationFrame( this.animate.bind(this) );
-
-        // this.camera.updateMatrixWorld();
+        // this._getHit();
         
-        // mouseRaycast(mouse, camera, scene);
-    
-        // TODO: Re-implement controls
-        // this.controls.update();
         console.log("Render")
         this.renderer.render(this.scene, this.camera);
     };

@@ -1,7 +1,7 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
 import { IView, makeArc, makeCanvas, makeCircle, makeLine, makeRect, makeSquare } from "./rendering";
-import { getMousePos, Position } from "./input";
+import { getMousePos, InputCoordinate } from "./input";
 import { Awaited } from "../model/utilities";
 import { GridLocation, Vector } from "../model/space";
 import { Unit } from "../model/unit";
@@ -552,7 +552,7 @@ export class AbstractDisplay<T extends ISelectable> {
     }
 
     // TODO: Input Mixin?
-    isHit(mousePos: Position): boolean {
+    isHit(mouseCo: InputCoordinate): boolean {
         return false;
     }
 
@@ -561,8 +561,8 @@ export class AbstractDisplay<T extends ISelectable> {
         let self = this;
         let trigger = function (e: MouseEvent): T | null {
             if (e.type == "click") {
-                let mousePos = getMousePos(canvas, e);
-                if (self.isHit(mousePos)) {
+                let mouseCo = getMousePos(canvas, e);
+                if (self.isHit(mouseCo)) {
                     // self.state = DisplayState.Select;
                     return self.selectable;
                 } else {
@@ -579,8 +579,82 @@ export class AbstractDisplay<T extends ISelectable> {
         let self = this;
         let trigger = function (e: MouseEvent): T | null {
             if (e.type == "mousemove" && !(self.state == DisplayState.Select)) {
-                let mousePos = getMousePos(canvas, e);
-                if (self.isHit(mousePos)) {
+                let mouseCo = getMousePos(canvas, e);
+                if (self.isHit(mouseCo)) {
+                    self.state = DisplayState.Preview;
+                    return self.selectable;
+                } else {
+                    self.state = DisplayState.Option;
+                    return null;
+                }
+            }
+        }
+        return trigger;
+    }
+
+}
+
+export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T> {
+    selectable: T;
+    // TODO: Clean up this crazy state/selection_state
+    state: DisplayState;
+    selection_state: DisplayState
+    children: Array<AbstractVisual>;
+
+    constructor(selectable: T) {
+        super(selectable);
+    }
+
+    // @ts-ignore
+    neutralDisplay(view: IView3D) {
+    }
+
+    // @ts-ignore
+    optionDisplay(view: IView3D) {
+    }
+
+    // @ts-ignore
+    previewDisplay(view: IView3D) {
+    }
+
+    // @ts-ignore
+    queueDisplay(view: IView3D) {
+    }
+
+    // @ts-ignore
+    selectDisplay(view: IView3D) {
+    }
+
+    // TODO: Input Mixin?
+    isHit(mouseCo: InputCoordinate): boolean {
+        return false;
+    }
+
+    createOnclick(canvas: HTMLCanvasElement) {
+        // Select by click - clicks off this element de-select.
+        let self = this;
+        let trigger = function (e: MouseEvent): T | null {
+            if (e.type == "click") {
+                let mouseCo = getMousePos(canvas, e);
+                if (self.isHit(mouseCo)) {
+                    // self.state = DisplayState.Select;
+                    return self.selectable;
+                } else {
+                    self.state = DisplayState.Neutral;
+                    return null;
+                }
+            }
+        }
+        return trigger;
+    }
+
+    createOnmousemove(canvas: HTMLCanvasElement) {
+        // Preview if not selected.
+        let self = this;
+        let trigger = function (e: MouseEvent): T | null {
+            if (e.type == "mousemove" && !(self.state == DisplayState.Select)) {
+                let mouseCo = getMousePos(canvas, e);
+                if (self.isHit(mouseCo)) {
                     self.state = DisplayState.Preview;
                     return self.selectable;
                 } else {
@@ -658,9 +732,9 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
         this.render(context, 'red');
     }
 
-    isHit(mousePos: Position): boolean {
-        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
-            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+    isHit(mouseCo: InputCoordinate): boolean {
+        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
+            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
                 return true;
             }
         } else {
@@ -756,9 +830,9 @@ export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> impleme
         this.render(view, 'red');
     }
 
-    isHit(mousePos: Position): boolean {
-        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
-            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+    isHit(mouseCo: InputCoordinate): boolean {
+        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
+            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
                 return true;
             }
         } else {
@@ -849,9 +923,9 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         this.render(context, 'red');
     }
 
-    isHit(mousePos: Position): boolean {
-        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
-            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+    isHit(mouseCo: InputCoordinate): boolean {
+        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
+            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
                 return true;
             }
         } else {
@@ -967,9 +1041,9 @@ class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocatable, IP
         this.render(view, 'red');
     }
 
-    isHit(mousePos: Position): boolean {
-        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
-            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+    isHit(mouseCo: InputCoordinate): boolean {
+        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
+            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
                 return true;
             }
         } else {
@@ -1065,9 +1139,9 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         this.render(context, 'red');
     }
 
-    isHit(mousePos: Position): boolean {
-        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
-            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+    isHit(mouseCo: InputCoordinate): boolean {
+        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
+            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
                 return true;
             }
         } else {
@@ -1145,9 +1219,9 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
         this.render(context, 'red');
     }
 
-    isHit(mousePos: Position): boolean {
-        if (mousePos.x >= this.xOffset && mousePos.x < this.xOffset + this.width) {
-            if (mousePos.y >= this.yOffset && mousePos.y < this.yOffset + this.height) {
+    isHit(mouseCo: InputCoordinate): boolean {
+        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
+            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
                 return true;
             }
         } else {
