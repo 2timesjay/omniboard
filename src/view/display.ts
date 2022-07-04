@@ -1029,7 +1029,7 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
             // @ts-ignore Actualy GridLocation
             this.selectable.loc.z != null ? 
             // @ts-ignore Actualy GridLocation
-            (this.selectable.loc.z + 1) * size + margin: 
+            (this.selectable.loc.z + 1) * size - margin: 
             margin
         );
         this._size = size * 0.6;

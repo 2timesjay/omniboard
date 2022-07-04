@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GridCoordinate } from '../model/space';
+import { ThreeBroker } from './broker_three';
 import { InputCoordinate } from './input';
 import { IView, makeCanvas } from './rendering';
 
@@ -170,6 +171,7 @@ function _addLights(scene: THREE.Scene) {
     // light.position.set(-40000, -40000, -120000).normalize();
     // scene.add(light);
     const light = new THREE.HemisphereLight( 0xffffff, 0x080808, 1 );
+    light.position.set(0, 0, 1);
     scene.add( light );
     return scene;
 }
@@ -226,7 +228,7 @@ function makeCamera (view_width: number, view_height: number) {
     const far = 12000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     // const camera = new THREE.OrthographicCamera(-5, 5, -5, 5, -100, 100)
-    camera.position.set(1200, 1200, 400)
+    camera.position.set(800, 800, 800)
     // camera.position.set(0, 0, 5);
     // camera.rotation.y=10/180 * Math.PI;
     camera.up = new THREE.Vector3(0, 0, 1)
