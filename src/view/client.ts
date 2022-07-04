@@ -38,13 +38,13 @@ if (game_type == GameType.Tactics) {
     var display_map = display_setup(state, context);
 
     // Connect View (display) interactions with state through Broker
-    var broker = new Canvas2DBroker(display_map, state, context);
+    var display_handler = new DisplayHandler(context, display_map, state);
+    var broker = new Canvas2DBroker(display_handler, context);
     var input_request = broker.input_request;
+    var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
 
     // Create Controller
     var tp = new TacticsPhase();
-    var display_handler = new DisplayHandler(context, display_map, state);
-    var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
     var tc = new TacticsController(state);
 
     // Start main game loop
@@ -65,13 +65,13 @@ if (game_type == GameType.Tactics) {
     var display_map = playground_display_setup(pg_state, context);
 
     // Connect View (display) interactions with state through Broker
-    var broker = new Canvas2DBroker(display_map, pg_state, context);
+    var broker = new Canvas2DBroker(display_handler, context);
     var input_request = broker.input_request;
+    var display_handler = new DisplayHandler(context, display_map, pg_state);
+    var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
 
     // Create Controller
     var pg_p = new PlaygroundPhase();
-    var display_handler = new DisplayHandler(context, display_map, pg_state);
-    var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
     var pg_c = new PlaygroundController(pg_state);
 
     // Start main game loop
@@ -91,14 +91,14 @@ if (game_type == GameType.Tactics) {
     var display_map = playground_display_setup_3D(pg_state, view);
 
     // Connect View (display) interactions with state through Broker
-    var three_broker = new ThreeBroker(display_map, pg_state, view);
+    var three_display_handler = new DisplayHandler3D(view, display_map, pg_state);
+    var three_broker = new ThreeBroker(three_display_handler, view);
     var input_request = three_broker.input_request;
+    // TODO: Change to `requestAnimationFrame` everywhere
+    setInterval(three_display_handler.on_tick.bind(three_display_handler), TICK_DURATION_MS);
 
     // Create Controller
     var pg_p = new PlaygroundPhase();
-    var three_display_handler = new DisplayHandler3D(view, display_map, pg_state);
-    // TODO: Change to `requestAnimationFrame` everywhere
-    setInterval(three_display_handler.on_tick.bind(three_display_handler), TICK_DURATION_MS);
     var pg_c = new PlaygroundController(pg_state);
 
     // Start main game loop

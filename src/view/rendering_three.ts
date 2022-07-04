@@ -237,6 +237,16 @@ function getGroup(scene: THREE.Scene): THREE.Object3D {
 }
 
 
+function onDocumentMouseMove(e: MouseEvent) {
+    e.preventDefault();
+}
+
+
+function onDocumentMouseClick(e: MouseEvent) {
+    e.preventDefault();
+}
+
+
 function _clearThree(obj: THREE.Object3D) {
     while (obj.children.length > 0) {
         _clearThree(obj.children[0])
@@ -268,6 +278,9 @@ export class View3D implements IView3D {
     raycaster: THREE.Raycaster;
 
     constructor(view_width: number, view_height: number) {
+        // TODO: Do I need these to let events get consumed twice?
+        // document.addEventListener('mousemove', onDocumentMouseMove, false);
+        // document.addEventListener('click', onDocumentMouseClick, false); 
         // Create Canvas
         var canvas = makeCanvas(view_width, view_height, true);
         this.context = canvas.getContext("webgl2");
@@ -280,16 +293,19 @@ export class View3D implements IView3D {
         // this.context = this.renderer.domElement.getContext("webgl");
         this.scene = makeScene();
         this.camera = makeCamera(view_width, view_height);
-        this.controls = makeControls(this.camera, canvas);
+        // this.controls = makeControls(this.camera, canvas);
         this.raycaster = makeRaycaster();
     }
 
-    _getHit(mouse_co: InputCoordinate): THREE.Object3D {
+    getHitObject(mouse_co: InputCoordinate): THREE.Object3D {
         // find intersections
         this.raycaster.setFromCamera(mouse_co, this.camera);
         var group = getGroup(this.scene)
         var intersects = this.raycaster.intersectObjects(group.children);
-        var hit = intersects[0].object;
+        console.log(intersects);
+        var hit = intersects;
+        // TODO: Fix
+        // @ts-ignore
         return hit;
     }
 
@@ -297,7 +313,8 @@ export class View3D implements IView3D {
         // TODO: Move to `requestAnimationFrame` instead of display_handler on_tick?
         // requestAnimationFrame( this.animate.bind(this) );
         // this._getHit();
-        
+        this.camera.updateMatrixWorld();
+        this.camera.updateMatrix();
         console.log("Render")
         this.renderer.render(this.scene, this.camera);
     };

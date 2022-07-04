@@ -1,8 +1,8 @@
 import { ISelectable } from "../model/core";
 import { InputRequest, async_input_getter } from "../model/input";
 import { BoardState, IState } from "../model/state";
-import { refreshDisplay } from "./display_handler";
-import { build_broker_callback, DisplayMap, SelectionBroker } from "./input";
+import { DisplayHandler, refreshDisplay } from "./display_handler";
+import { build_broker_callback, DisplayMap, inputEventToSelectable2D, SelectionBroker } from "./input";
 
 export interface IBroker {
     input_request: InputRequest<ISelectable>;
@@ -26,16 +26,15 @@ export class Canvas2DBroker implements IBroker {
     input_request: InputRequest<ISelectable>;
 
     constructor(
-        display_map: DisplayMap<ISelectable>, 
-        state: IState, // TODO: Remove
+        display_handler: DisplayHandler,
         context: CanvasRenderingContext2D
     ) {
         var canvas = context.canvas;
-        var selection_broker = new SelectionBroker<ISelectable>();
+        var selection_broker = new SelectionBroker(display_handler, null, inputEventToSelectable2D);
         // TODO: Error with unset handlers - dummies for now.
         selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
         // TODO: Move function into broker.
-        var brokered_selection_fn = build_broker_callback(selection_broker, display_map, canvas);
+        var brokered_selection_fn = build_broker_callback(selection_broker, display_handler.display_map, canvas);
         var input_request = async_input_getter(brokered_selection_fn);
         this.input_request = input_request;
         
@@ -43,19 +42,19 @@ export class Canvas2DBroker implements IBroker {
     }
     
     addCanvasListeners(
-        selection_broker: SelectionBroker<ISelectable>,
+        selection_broker: SelectionBroker,
         context: CanvasRenderingContext2D, 
     ) {
         context.canvas.onclick = function (event) {
-            selection_broker.onclick(event);
+            selection_broker.onMouseEvent(event);
         }
         context.canvas.onmousemove = function (event) {
-            selection_broker.onmousemove(event);
+            selection_broker.onMouseEvent(event);
         }
         window.addEventListener(
             "keydown", 
             function (event) {
-                selection_broker.onkeyboardevent(event);
+                selection_broker.onKeyboardEvent(event);
             }, 
             false,
         );

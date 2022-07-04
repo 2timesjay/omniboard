@@ -2,7 +2,9 @@ import { ISelectable } from "../model/core";
 import { InputRequest, async_input_getter } from "../model/input";
 import { IState } from "../model/state";
 import { IBroker } from "./broker";
-import { build_broker_callback, DisplayMap, SelectionBroker } from "./input";
+import { BaseDisplayHandler, DisplayHandler } from "./display_handler";
+import { DisplayHandler3D } from "./display_handler_three";
+import { build_broker_callback, DisplayMap, inputEventToSelectable2D, inputEventToSelectable3D, SelectionBroker } from "./input";
 import { IView } from "./rendering";
 import { IView3D } from "./rendering_three";
 
@@ -24,11 +26,12 @@ export class ThreeBroker implements IBroker {
     input_request: InputRequest<ISelectable>;
 
     constructor(
-        display_map: DisplayMap<ISelectable>, 
-        state: IState, // TODO: Remove
+        display_handler: DisplayHandler3D, 
         view: IView3D,
     ) {
-        var selection_broker = new SelectionBroker<ISelectable>();
+        // @ts-ignore Incompatible RenderingContexts
+        var selection_broker = new SelectionBroker(display_handler, null, inputEventToSelectable3D);
+        var display_map = display_handler.display_map;
         // TODO: Error with unset handlers - dummies for now.
         selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
         // TODO: Move function into broker.
@@ -38,23 +41,23 @@ export class ThreeBroker implements IBroker {
         this.input_request = input_request;
         
         // TODO: !!! Reinstate adding listeners
-        // this.addListeners(selection_broker, view);
+        this.addListeners(selection_broker, view);
     }
     
     addListeners(
-        selection_broker: SelectionBroker<ISelectable>,
+        selection_broker: SelectionBroker,
         view: IView3D, 
     ) {
         view.context.canvas.onclick = function (event) {
-            selection_broker.onclick(event);
+            selection_broker.onMouseEvent(event);
         }
         view.context.canvas.onmousemove = function (event) {
-            selection_broker.onmousemove(event);
+            selection_broker.onMouseEvent(event);
         }
         window.addEventListener(
             "keydown", 
             function (event) {
-                selection_broker.onkeyboardevent(event);
+                selection_broker.onKeyboardEvent(event);
             }, 
             false,
         );

@@ -1,7 +1,11 @@
+import { StaticReadUsage } from "three";
 import { ISelectable, Tree } from "../model/core";
 import { CallbackSelectionFn, PreviewMap } from "../model/input";
 import { Awaited, Rejection } from "../model/utilities";
 import { AbstractDisplay, DisplayState } from "./display";
+import { BaseDisplayHandler, DisplayHandler } from "./display_handler";
+import { DisplayHandler3D } from "./display_handler_three";
+import { IView } from "./rendering";
 
 export type DisplayMap<T> = Map<T, AbstractDisplay<T>>;
 
@@ -11,7 +15,10 @@ export interface InputCoordinate {
     y: number;
 }
 
-export function getMousePos(canvasDom: HTMLElement, mouseEvent: MouseEvent): InputCoordinate {
+export type OnInputEvent = (sel: ISelectable) => ISelectable | null;
+export type inputEventToSelectable = (e: Event, display_handler: BaseDisplayHandler) => ISelectable | null;
+
+export function getMouseCo(canvasDom: HTMLElement, mouseEvent: MouseEvent): InputCoordinate {
     var rect = canvasDom.getBoundingClientRect();
     return {
         x: mouseEvent.clientX - rect.left,
@@ -19,69 +26,112 @@ export function getMousePos(canvasDom: HTMLElement, mouseEvent: MouseEvent): Inp
     };
 }
 
-export type DisplayHitOnevent = (e: MouseEvent) => ISelectable | null;
+export function inputEventToSelectable2D(
+    e: MouseEvent, display_handler: DisplayHandler,
+): ISelectable | null {    
+    // Fanout mouse input to all Displays to check for hits.
+    var nohits = true;
+    var canvas = display_handler.context.canvas;
+    for (var display of display_handler.display_map.values()) {
+        var selectable = display.isHit(getMouseCo(canvas, e));
+        if (selectable && nohits) {
+            nohits = false;
+            return selectable;
+        }
+    }
+    if (nohits) {
+        return null;
+    }
+}
+export function inputEventToSelectable3D(e: MouseEvent, display_handler: DisplayHandler3D) {
+    // Raycast to check for hits.
+    var nohits = true;
+    var canvas = display_handler.context.canvas;
+    var hit_object3D = display_handler.view.getHitObject(getMouseCo(canvas, e));
+    console.log("Hit: ", hit_object3D);
+
+    for (var display of display_handler.display_map.values()) {
+        // var selectable = display.isHit(getMouseCo(canvas, e));
+        var selectable = null;
+        if (selectable && nohits) {
+            // @ts-ignore DisplayHitOnevent returns broad ISelectable. Need safe casting.
+            return selectable;
+            nohits = false;
+        }
+    }
+    if (nohits) {
+        return null;
+    }
+}
 
 export function setupOptions(options: Array<AbstractDisplay<ISelectable>>) {
     options.forEach((o) => o.state = DisplayState.Option);
 }
 
-// TODO: SelectionBroker can probably always be ISelectable, no need for Generic.
-export class SelectionBroker<T extends ISelectable> {
-    resolve: Awaited<T>;
+export class SelectionBroker {
+    resolve: Awaited<ISelectable>;
     reject: Rejection;
     // Organize more efficiently; by input type?
-    onevents: Array<DisplayHitOnevent>;
-    mouseover_selection: T;
+    display_handler: BaseDisplayHandler;
+    on_input_events: Array<OnInputEvent>;
+    input_event_to_selectable: inputEventToSelectable;
+    mouseover_selection: ISelectable;
 
-    constructor(onevents?: Array<DisplayHitOnevent>){
-        if (onevents){
-            this.setonevents(onevents);            
+    constructor(
+        display_handler?: BaseDisplayHandler,
+        on_input_events?: Array<OnInputEvent>, 
+        input_event_to_selectable?: inputEventToSelectable,
+    ){
+        if (display_handler){
+            this.display_handler = display_handler;          
+        }
+        // TODO: Why are the args optional?
+        if (on_input_events){
+            this.setOnInputEvents(on_input_events);            
+        }
+        if (input_event_to_selectable){
+            this.input_event_to_selectable = input_event_to_selectable;          
         }
     }
 
-    setonevents(onevents: Array<DisplayHitOnevent>) {
-        this.onevents = onevents;
+    // TODO: Why this special setter?
+    setOnInputEvents(on_input_events: Array<OnInputEvent>) {
+        this.on_input_events = on_input_events;
     }
 
-    setPromiseHandlers(resolve: Awaited<T>, reject: Rejection){
+    setPromiseHandlers(resolve: Awaited<ISelectable>, reject: Rejection){
         this.resolve = resolve;
         this.reject = reject;
     }
 
-    // TODO: Requirement that all onevents trigger in order to 'de-select' is too complex.
-    onclick(e: MouseEvent) { 
-        // Fanout clicks to all onevents
-        var nohits = true;
-        for (let onevent of this.onevents) {
-            var selection = onevent(e);
-            if (selection && nohits) {
-                // @ts-ignore DisplayHitOnevent returns broad ISelectable. Need safe casting.
-                this.resolve(selection); 
-                nohits = false;
+    onMouseEvent(e: MouseEvent) {
+        var hit_selectable = this.input_event_to_selectable(e, this.display_handler);
+        this.mouseover_selection = hit_selectable;
+
+        if (e.type == "click") {
+            // Fanout clicks to all on_input_events
+            var nohits = true;
+            for (let on_input_event of this.on_input_events) {
+                // Updates InputState display and returns selection if viable option (active).
+                var selection = on_input_event(hit_selectable);
+                if (selection && nohits) {
+                    this.resolve(selection); 
+                    nohits = false;
+                }
             }
-        }
-        if (nohits) {
-            this.reject();
-        }
-    }
-    
-    onmousemove(e: MouseEvent) {
-        // Fanout mousemove to all onevents
-        var nohits = true;
-        for (let onevent of this.onevents) {
-            var selection = onevent(e);
-            if (selection && nohits) {
-                nohits = false;
-                // @ts-ignore DisplayHitOnevent returns broad ISelectable. Need safe casting.
-                this.mouseover_selection = selection;
+            if (nohits) {
+                this.reject();
             }
-        }
-        if (nohits) {
-            this.mouseover_selection = null;
-        }
+        } else if (e.type == "mouseover") {
+            // Fanout mousemove to all on_input_events
+            for (let on_input_event of this.on_input_events) {
+                // Updates InputState display.
+                on_input_event(e);
+            }
+        }        
     }
 
-    onkeyboardevent (e: KeyboardEvent) {
+    onKeyboardEvent (e: KeyboardEvent) {
         const ENTER = "Enter";
         const C = "KeyC";
         const ESCAPE = "Escape";
@@ -101,9 +151,9 @@ export class SelectionBroker<T extends ISelectable> {
 
 // CallbackSelectionFn
 export function build_broker_callback<T extends ISelectable>(
-    selection_broker: SelectionBroker<T>, display_map: DisplayMap<T>, canvas: HTMLCanvasElement
+    selection_broker: SelectionBroker, display_map: DisplayMap<T>, canvas: HTMLCanvasElement
 ): CallbackSelectionFn<T> {
-    // Sets selection_broker's fanout to onevents of instances of T in Options.
+    // Sets selection_broker's fanout to on_input_events of instances of T in Options.
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
         console.log("Setup Selection Callbacks on Canvas: ", options);
         var displays = options.map((o) => display_map.get(o));
@@ -114,7 +164,7 @@ export function build_broker_callback<T extends ISelectable>(
             (d) => d.createOnmousemove(canvas)
         );
         setupOptions(displays);
-        selection_broker.setonevents([...onclicks, ...onmousemoves]);
+        selection_broker.setOnInputEvents([...onclicks, ...onmousemoves]);
         selection_broker.setPromiseHandlers(resolve, reject);
     }
 }
