@@ -26,6 +26,14 @@ export function getMouseCo(canvasDom: HTMLElement, mouseEvent: MouseEvent): Inpu
     };
 }
 
+export function getMouseCo3D(canvasDom: HTMLElement, mouseEvent: MouseEvent): InputCoordinate {
+    var rect = canvasDom.getBoundingClientRect();
+    return {
+        x: ((mouseEvent.clientX - rect.left) / rect.width) * 2 - 1,
+        y: - ((mouseEvent.clientY - rect.top) / rect.height) * 2 + 1,
+    };
+}
+
 export function inputEventToSelectable2D(
     e: MouseEvent, display_handler: DisplayHandler,
 ): ISelectable | null {    
@@ -43,11 +51,13 @@ export function inputEventToSelectable2D(
         return null;
     }
 }
-export function inputEventToSelectable3D(e: MouseEvent, display_handler: DisplayHandler3D) {
+export function inputEventToSelectable3D(
+    e: MouseEvent, display_handler: DisplayHandler3D
+): ISelectable | null {
     // Raycast to check for hits.
     var nohits = true;
     var canvas = display_handler.context.canvas;
-    var hit_object3D = display_handler.view.getHitObject(getMouseCo(canvas, e));
+    var hit_object3D = display_handler.view.getHitObject(getMouseCo3D(canvas, e));
     console.log("Hit: ", hit_object3D);
 
     for (var display of display_handler.display_map.values()) {

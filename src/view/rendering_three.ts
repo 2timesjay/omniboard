@@ -212,20 +212,14 @@ var makeRaycaster = function() {
 }
 
 
-// function onWindowResize() {
-//     camera.aspect = WIDTH / HEIGHT;
-//     camera.updateProjectionMatrix();
-//     renderer.setSize(WIDTH, HEIGHT);
-// }
-// function onDocumentMouseMove(event) {
-//     event.preventDefault();
-//     var rect = event.target.getBoundingClientRect();
-//     mouse.x = ((event.clientX - rect.left) / WIDTH) * 2 - 1;
-//     mouse.y = - ((event.clientY - rect.top) / HEIGHT) * 2 + 1;
-// }
-// function onDocumentMouseClick(event) {
-//     event.preventDefault();
-// }
+function onDocumentMouseMove(event: MouseEvent) {
+    event.preventDefault();
+}
+
+
+function onDocumentMouseClick(event: MouseEvent) {
+    event.preventDefault();
+}
 
 
 function getGroup(scene: THREE.Scene): THREE.Object3D {
@@ -234,16 +228,6 @@ function getGroup(scene: THREE.Scene): THREE.Object3D {
     var group = objects[objects.length - 1]
     if (group.type !== "Group") { return null; }
     return group
-}
-
-
-function onDocumentMouseMove(e: MouseEvent) {
-    e.preventDefault();
-}
-
-
-function onDocumentMouseClick(e: MouseEvent) {
-    e.preventDefault();
 }
 
 
@@ -279,8 +263,8 @@ export class View3D implements IView3D {
 
     constructor(view_width: number, view_height: number) {
         // TODO: Do I need these to let events get consumed twice?
-        // document.addEventListener('mousemove', onDocumentMouseMove, false);
-        // document.addEventListener('click', onDocumentMouseClick, false); 
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
+        document.addEventListener('click', onDocumentMouseClick, false); 
         // Create Canvas
         var canvas = makeCanvas(view_width, view_height, true);
         this.context = canvas.getContext("webgl2");
@@ -302,10 +286,8 @@ export class View3D implements IView3D {
         this.raycaster.setFromCamera(mouse_co, this.camera);
         var group = getGroup(this.scene)
         var intersects = this.raycaster.intersectObjects(group.children);
-        console.log(intersects);
-        var hit = intersects;
-        // TODO: Fix
-        // @ts-ignore
+        if (intersects.length == 0) return null;
+        var hit = intersects[0].object;
         return hit;
     }
 
