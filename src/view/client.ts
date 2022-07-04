@@ -88,10 +88,10 @@ if (game_type == GameType.Tactics) {
     const view = new View3D(k* size, k* size)
 
     // Create Displays
-    var display_map = playground_display_setup_3D(pg_state, view);
+    var three_display_map = playground_display_setup_3D(pg_state, view);
 
     // Connect View (display) interactions with state through Broker
-    var three_display_handler = new DisplayHandler3D(view, display_map, pg_state);
+    var three_display_handler = new DisplayHandler3D(view, three_display_map, pg_state);
     var three_broker = new ThreeBroker(three_display_handler, view);
     var input_request = three_broker.input_request;
     // TODO: Change to `requestAnimationFrame` everywhere

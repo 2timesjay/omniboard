@@ -68,6 +68,7 @@ export class BaseDisplayHandler {
      *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
      */ 
     on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
+        // TODO: pass partial acquirer inputs to DisplayHandler 
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         // TODO: Rework with "SelectionView", outlined in Notebook.
@@ -110,19 +111,8 @@ export class BaseDisplayHandler {
         console.log(this.display_map);
     }
 
-    update_queued() {  
-        for(let stateful_selectable of this.stateful_selectables) {
-            if (!(stateful_selectable instanceof Action)) {
-                var display = this.display_map.get(stateful_selectable);
-                display.selection_state = DisplayState.Queue;
-            }
-        }
-    }
-
     clear_queued() {
         for (var display of this.display_map.values()) {
-        // for(let stateful_selectable of this.stateful_selectables) {
-            // var display = this.display_map.get(stateful_selectable);
             display.selection_state = DisplayState.Neutral;
             display.state = DisplayState.Neutral;
         }

@@ -1,13 +1,14 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
 import { IView, makeArc, makeCanvas, makeCircle, makeLine, makeRect, makeSquare } from "./rendering";
-import { getMouseCo, InputCoordinate } from "./input";
+import { getMouseCo, InputCoordinate, OnInputEvent } from "./input";
 import { Awaited } from "../model/utilities";
 import { GridLocation, Vector } from "../model/space";
 import { Unit } from "../model/unit";
 import { createWatchCompilerHost } from "typescript";
 import { Entity } from "../playground/playground_entity";
 import { IView3D, View3D } from "./rendering_three";
+import { Mesh } from "three";
 
 export enum DisplayState {
     Neutral,
@@ -493,6 +494,29 @@ export class LinearVisual extends AbstractVisual {
             context, 10, clr)
     }
 }
+export class LinearVisual3D extends AbstractVisual {
+    from: ILocatable;
+    to: ILocatable;
+
+    constructor(from: ILocatable, to: ILocatable) {
+        super();
+        this.from = from;
+        this.to = to;    
+    }
+
+    // @ts-ignore
+    display(view: IView3D) {
+        this.render(view, 'indianred')
+    }
+
+    render(view: IView3D, clr: string) {
+        var co_from = {x: this.from.xOffset, y: this.from.yOffset, z: this.from.zOffset};
+        var co_to = {x: this.to.xOffset, y: this.to.yOffset, z: this.to.zOffset};
+        view.drawLine(
+            co_from, co_to, 10, clr,
+        )
+    }
+}
 
 type ViewOrRenderingContext = IView | CanvasRenderingContext2D;
 
@@ -605,56 +629,86 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
         super(selectable);
     }
 
+    // TODO: Fix up inheritance type errors
     // @ts-ignore
-    neutralDisplay(view: IView3D) {
+    display(view: View3D): THREE.Object3D {
+        // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
+        // this.update_pos();
+        if (this.state == DisplayState.Select) {
+            var mesh = this.selectDisplay(view);
+        } else if (this.state == DisplayState.Preview) {
+            var mesh = this.previewDisplay(view);
+        } else if (this.state == DisplayState.Option) {
+            var mesh = this.optionDisplay(view);
+        } else if (this.selection_state == DisplayState.Queue) {
+            // Move queueDisplay because can't double-render easily in 3D
+            var mesh = this.queueDisplay(view); 
+        } else {
+            var mesh = this.neutralDisplay(view);
+        }
+        for (var visual of this.children) {
+            // @ts-ignore
+            visual.display(view);
+        }
+
+        return mesh;
     }
 
     // @ts-ignore
-    optionDisplay(view: IView3D) {
+    neutralDisplay(view: IView3D): THREE.Object3D {
     }
 
     // @ts-ignore
-    previewDisplay(view: IView3D) {
+    optionDisplay(view: IView3D): THREE.Object3D {
     }
 
     // @ts-ignore
-    queueDisplay(view: IView3D) {
+    previewDisplay(view: IView3D): THREE.Object3D {
     }
 
     // @ts-ignore
-    selectDisplay(view: IView3D) {
+    queueDisplay(view: IView3D): THREE.Object3D {
+    }
+
+    // @ts-ignore
+    selectDisplay(view: IView3D): THREE.Object3D {
     }
 
     // TODO: Input Mixin?
-    isHit(mouseCo: InputCoordinate): boolean {
-        return false
+    isHit(hit_selectable: ISelectable): boolean {
+        return this.selectable == hit_selectable;
     }
 
-    createOnclick(canvas: HTMLCanvasElement) {
+    // @ts-ignore
+    createOnclick(canvas: HTMLCanvasElement): OnInputEvent<T> {
         // Select by click - clicks off this element de-select.
         let self = this;
-        let trigger = function (e: MouseEvent): T | null {
-            if (e.type == "click") {
-                let mouseCo = getMouseCo(canvas, e);
-                if (self.isHit(mouseCo)) {
-                    // self.state = DisplayState.Select;
-                    return self.selectable;
-                } else {
-                    self.state = DisplayState.Neutral;
-                    return null;
-                }
+        let trigger = function (hit_selectable: T | null, type: string): T | null {
+            // TODO: Clean up this and `SelectionBroker` fanout
+            if (type != "click") {
+                return null;
+            }
+            if (self.isHit(hit_selectable)) {
+                // self.state = DisplayState.Select;
+                return self.selectable;
+            } else {
+                self.state = DisplayState.Neutral;
+                return null;
             }
         }
         return trigger;
     }
 
+    // @ts-ignore
     createOnmousemove(canvas: HTMLCanvasElement) {
         // Preview if not selected.
         let self = this;
-        let trigger = function (e: MouseEvent): T | null {
-            if (e.type == "mousemove" && !(self.state == DisplayState.Select)) {
-                let mouseCo = getMouseCo(canvas, e);
-                if (self.isHit(mouseCo)) {
+        let trigger = function (hit_selectable: T | null, type: string): T | null {
+            if (type != "mousemove") {
+                return null;
+            }
+            if (self.state != DisplayState.Select) {
+                if (self.isHit(hit_selectable)) {
                     self.state = DisplayState.Preview;
                     return self.selectable;
                 } else {
@@ -784,11 +838,11 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
         return this._size;
     }
 
-    render(view: IView3D, clr: string, lfa?: number) {
+    render(view: IView3D, clr: string, lfa?: number): THREE.Object3D {
         // TODO: Make this more consistent with 2D
         // NOTE: Don't render if lfa = 0; rendering bug when inside transparent object.
         if (lfa == 0) return;
-        view.drawRect(
+        return view.drawRect(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
             this.size, this.size, this.size,
             clr, 
@@ -796,40 +850,40 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
         );
     }
 
-    alt_render(view: IView3D, clr: string) {
-        view.drawCircle(
+    alt_render(view: IView3D, clr: string): THREE.Object3D {
+        return view.drawCircle(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset},
             this.size,
             clr,
         );
     }
 
-    neutralDisplay(view: IView3D) {
+    neutralDisplay(view: IView3D): THREE.Object3D {
         var lfa = this.selectable.traversable ? 1.0 : 0.0
-        this.render(view, 'lightgrey', lfa);
+        return this.render(view, 'lightgrey', lfa);
     }
 
-    optionDisplay(view: IView3D) {
-        this.render(view, 'grey');
+    optionDisplay(view: IView3D): THREE.Object3D {
+        return this.render(view, 'grey');
     }
 
-    previewDisplay(view: IView3D) {
-        this.render(view, 'yellow');
+    previewDisplay(view: IView3D): THREE.Object3D {
+        return this.render(view, 'yellow');
     }
 
-    queueDisplay(view: IView3D) {
-        this.alt_render(view, 'indianred');
+    queueDisplay(view: IView3D): THREE.Object3D {
+        return this.alt_render(view, 'indianred');
     }
 
-    selectDisplay(view: IView3D) {
-        this.render(view, 'red');
+    selectDisplay(view: IView3D): THREE.Object3D {
+        return this.render(view, 'red');
     }
 
     // @ts-ignore
     pathDisplay(view: IView3D, to: IPathable) {
-        // var from = this;
-        // var line = new LinearVisual(from, to);
-        // line.display(view);
+        var from = this;
+        var line = new LinearVisual3D(from, to);
+        line.display(view);
     }
 }
 
@@ -983,49 +1037,49 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
         this.height = size * 0.6;
     }
 
-    render(view: IView3D, clr: string) {
-        view.drawRect(
+    render(view: IView3D, clr: string): THREE.Object3D {
+        return view.drawRect(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
             this.size, this.size, this.size,
             clr, 
         );
     }
 
-    alt_render(view: IView3D, clr: string) {
+    alt_render(view: IView3D, clr: string): THREE.Object3D {
         var offset = 0.2 * this.size;
         var reduced_size = 0.6 * this.size;
-        view.drawRect(
+        return view.drawRect(
             {x: this.xOffset + offset, y: this.yOffset + offset, z: this.zOffset + offset}, 
             reduced_size, reduced_size, reduced_size,
             clr,
         );
     }
 
-    neutralDisplay(view: IView3D) {
-        this.render(view, 'orange');
+    neutralDisplay(view: IView3D): THREE.Object3D {
+        return this.render(view, 'orange');
     }
 
-    optionDisplay(view: IView3D) {
-        this.render(view, 'grey');
+    optionDisplay(view: IView3D): THREE.Object3D {
+        return this.render(view, 'grey');
     }
 
-    previewDisplay(view: IView3D) {
-        this.render(view, 'yellow');
+    previewDisplay(view: IView3D): THREE.Object3D {
+        return this.render(view, 'yellow');
     }
 
-    queueDisplay(view: IView3D) {
-        this.alt_render(view, 'indianred');
+    queueDisplay(view: IView3D): THREE.Object3D {
+        return this.alt_render(view, 'indianred');
     }
 
-    selectDisplay(view: IView3D) {
-        this.render(view, 'red');
+    selectDisplay(view: IView3D): THREE.Object3D {
+        return this.render(view, 'red');
     }
 
     // @ts-ignore
     pathDisplay(view: IView3D, to: IPathable) {
-        // var from = this;
-        // var line = new LinearVisual(from, to);
-        // line.display(view);
+        var from = this;
+        var line = new LinearVisual3D(from, to);
+        line.display(view);
     }
 }
 

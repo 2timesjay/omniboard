@@ -8,8 +8,7 @@ import { build_broker_callback, DisplayMap, inputEventToSelectable2D, inputEvent
 import { IView } from "./rendering";
 import { IView3D } from "./rendering_three";
 
-// TODO: Eliminate all generics in this class if possible
-// TODO: BoardState -> IState
+// TODO: Fold into SelectionBroker
 // TODO: Unify listener setup (since 3 steps here are about that).
 // TODO: Ensure this is robust to new Display creation. DisplayBrokerWrapper?
 /**
@@ -36,11 +35,10 @@ export class ThreeBroker implements IBroker {
         selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
         // TODO: Move function into broker.
         // @ts-ignore OK with 3d displays
-        var brokered_selection_fn = build_broker_callback(selection_broker, display_map, view);
+        var brokered_selection_fn = build_broker_callback(selection_broker, display_map, view.context.canvas);
         var input_request = async_input_getter(brokered_selection_fn);
         this.input_request = input_request;
         
-        // TODO: !!! Reinstate adding listeners
         this.addListeners(selection_broker, view);
     }
     

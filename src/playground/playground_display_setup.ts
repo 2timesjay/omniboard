@@ -1,7 +1,7 @@
 import { ISelectable } from "../model/core";
 import { BoardState } from "../model/state";
 import { GLOBAL_CONFIRMATION, Unit } from "../model/unit";
-import { GridLocationDisplay, UnitDisplay, MenuElementDisplay, AbstractDisplay, HealthVisual, EntityDisplay, GridLocationDisplay3D, EntityDisplay3D } from "../view/display";
+import { GridLocationDisplay, UnitDisplay, MenuElementDisplay, AbstractDisplay, HealthVisual, EntityDisplay, GridLocationDisplay3D, EntityDisplay3D, AbstractDisplay3D } from "../view/display";
 import { IView } from "../view/rendering";
 import { IView3D } from "../view/rendering_three";
 import { PlaygroundState } from "./playground_state";
@@ -38,10 +38,10 @@ export function playground_display_setup(
  */
  export function playground_display_setup_3D(
     state: PlaygroundState, view: IView3D,
-): Map<ISelectable, AbstractDisplay<ISelectable>> {
+): Map<ISelectable, AbstractDisplay3D<ISelectable>> {
 
     // TODO: Derive all Displays from get_selectables. Reqs full info in each sel.
-    var display_map = new Map<ISelectable, AbstractDisplay<ISelectable>>();
+    var display_map = new Map<ISelectable, AbstractDisplay3D<ISelectable>>();
 
     for (let loc of state.space.to_array()) {
         // @ts-ignore Actually a GridLocation in this case.

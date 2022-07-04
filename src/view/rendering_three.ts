@@ -18,20 +18,20 @@ export interface IView3D extends IView {
         frac_filled?: number | null,
         clr?: string | null, 
         lfa?: number | null
-    ) => void;
+    ) => THREE.Object3D;
     drawCircle: (
         co: GridCoordinate,
         size: number, 
         clr?: string | null, 
         lfa?: number | null
-    ) => void;
+    ) => THREE.Object3D;
     drawLine: (
         co_from: GridCoordinate,
         co_to: GridCoordinate,
         line_width: number, 
         clr?: string | null, 
         lfa?: number | null
-    ) => void;
+    ) => THREE.Object3D;
     drawRect: (
         co: GridCoordinate,
         width: number, 
@@ -39,7 +39,7 @@ export interface IView3D extends IView {
         depth: number,
         clr?: string | null, 
         lfa?: number | null
-    ) => void;
+    ) => THREE.Object3D;
 }
 
 function makeRect3D(
@@ -50,7 +50,7 @@ function makeRect3D(
     depth: number,
     clr?: string,
     lfa?: number,
-) {
+): THREE.Object3D {
     const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
 
     let geometry = new THREE.BoxGeometry(width, height, depth);
@@ -66,6 +66,7 @@ function makeRect3D(
     // mesh.obj = obj;
     // @ts-ignore Scene should exist on context?
     getGroup(scene).add(mesh);
+    return mesh;
 }
 
 function makeCircle3D(
@@ -74,7 +75,7 @@ function makeCircle3D(
     size: number, 
     clr?: string,
     lfa?: number,
-) {
+): THREE.Object3D {
     const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
     const color = clr == undefined ? "#000000" : clr;
 
@@ -87,6 +88,36 @@ function makeCircle3D(
     mesh.position.y = co.y;
     mesh.position.z = co.z;
     getGroup(scene).add(mesh);
+    return mesh;
+}
+
+function coToVec(co: GridCoordinate): THREE.Vector3 {
+    return new THREE.Vector3(co.x, co.y, co.z);
+}
+
+function makeLine3D(
+    co_from: GridCoordinate,
+    co_to: GridCoordinate,  
+    scene: THREE.Scene,
+    size: number, 
+    clr?: string,
+    lfa?: number,
+): THREE.Object3D {
+    const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
+    const color = clr == undefined ? "#000000" : clr;
+
+    var line_points = [];
+    line_points.push(coToVec(co_from));
+    line_points.push(coToVec(co_to));
+
+    let geometry = new THREE.BufferGeometry().setFromPoints( line_points );
+    let line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ 
+        color: clr,
+        // opacity: alpha, // TODO: Implement line alpha
+    }));
+    
+    getGroup(scene).add(line);
+    return line;
 }
 
 // function makeTexture() {
@@ -195,16 +226,18 @@ function makeCamera (view_width: number, view_height: number) {
     const far = 12000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     // const camera = new THREE.OrthographicCamera(-5, 5, -5, 5, -100, 100)
-    camera.position.set(400, 400, 1200)
+    camera.position.set(1200, 1200, 400)
     // camera.position.set(0, 0, 5);
     // camera.rotation.y=10/180 * Math.PI;
+    camera.up = new THREE.Vector3(0, 0, 1)
     camera.lookAt(new THREE.Vector3(0, 0, 0));
-    // controls.target = (new THREE.Vector3(5, 5, 0));
     return camera;
 }
 
 var makeControls = function(camera: THREE.Camera, canvas: HTMLCanvasElement) {
-    return new OrbitControls(camera, canvas);
+    var controls = new OrbitControls(camera, canvas);
+    controls.target = (new THREE.Vector3(0, 0, 0));
+    return controls;
 }
 
 var makeRaycaster = function() {
@@ -258,7 +291,6 @@ export class View3D implements IView3D {
     camera: THREE.Camera;
     renderer: THREE.Renderer;
     controls: OrbitControls;
-    cube: THREE.Object3D;
     raycaster: THREE.Raycaster;
 
     constructor(view_width: number, view_height: number) {
@@ -277,7 +309,7 @@ export class View3D implements IView3D {
         // this.context = this.renderer.domElement.getContext("webgl");
         this.scene = makeScene();
         this.camera = makeCamera(view_width, view_height);
-        // this.controls = makeControls(this.camera, canvas);
+        this.controls = makeControls(this.camera, canvas);
         this.raycaster = makeRaycaster();
     }
 
@@ -297,26 +329,26 @@ export class View3D implements IView3D {
         // this._getHit();
         this.camera.updateMatrixWorld();
         this.camera.updateMatrix();
-        console.log("Render")
         this.renderer.render(this.scene, this.camera);
     };
 
     drawArc(
         co: GridCoordinate, size: number, frac_filled?: number, clr?: string, lfa?: number
-    ): void {
+    ): THREE.Object3D {
         // makeArc3D(x, y, this.context, size, frac_filled, clr, lfa);
+        throw new Error('Method not implemented.');
     }
 
     drawCircle(
         co: GridCoordinate, size: number, clr?: string, lfa?: number
-    ): void {
-        makeCircle3D(co, this.scene, size, clr, lfa);
+    ): THREE.Object3D {
+        return makeCircle3D(co, this.scene, size, clr, lfa);
     }
 
     drawRect(
         co: GridCoordinate, width: number, height: number, depth: number, clr?: string, lfa?: number
-    ): void {
-        makeRect3D(co, this.scene, width, height, depth, clr, lfa);
+    ): THREE.Object3D {
+        return makeRect3D(co, this.scene, width, height, depth, clr, lfa);
     }
 
     drawLine(
@@ -325,8 +357,8 @@ export class View3D implements IView3D {
         line_width: number, 
         clr?: string | null, 
         lfa?: number | null
-    ): void {
-        // makeLine3D(x_from, y_from, x_to, y_to, this.context, line_width, clr, lfa);
+    ): THREE.Object3D {
+        return makeLine3D(co_from, co_to, this.scene, line_width, clr, lfa);
     }
 
     clear(){
