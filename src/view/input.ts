@@ -9,7 +9,7 @@ import { IView } from "./rendering";
 
 export type DisplayMap<T> = Map<T, AbstractDisplay<T>>;
 export type DisplayMap3D<T> = Map<T, AbstractDisplay3D<T>>;
-export type MeshToSelectableMap<T> = Map<number, T>;
+export type MeshToDisplayMap<T> = Map<number, AbstractDisplay3D<T>>;
 
 // TODO: Consistent Style
 export interface InputCoordinate {
@@ -58,14 +58,28 @@ export function inputEventToSelectable3D(
 ): ISelectable | null {
     // Raycast to check for hits.
     var canvas = display_handler.context.canvas;
-    var hit_object3D = display_handler.view.getHitObject(getMouseCo3D(canvas, e));
-    var mesh_id = hit_object3D ? hit_object3D.id : null;
-
-    if (display_handler.mesh_map.has(mesh_id)) {
-        return display_handler.mesh_map.get(mesh_id);
-    } else {
-        return null;
+    var hit_objects = display_handler.view.getHitObjects(getMouseCo3D(canvas, e));
+    for (var hit_object of hit_objects) {
+        var mesh_id = hit_object ? hit_object.id : null;
+        if (display_handler.mesh_map.has(mesh_id)) {
+            var hit_display = display_handler.mesh_map.get(mesh_id);
+            if (hit_display.active) {
+                return hit_display.selectable;
+            }
+        }
     }
+    console.log("inactive object - cannot select")
+    console.log(hit_objects);
+    for (var hit_object of hit_objects) {
+        var mesh_id = hit_object ? hit_object.id : null;
+        if (display_handler.mesh_map.has(mesh_id)) {
+            var hit_display = display_handler.mesh_map.get(mesh_id);
+            if (hit_display.active) {
+                return hit_display.selectable;
+            }
+        }
+    }
+    return null;
 }
 
 export function setupOptions(options: Array<AbstractDisplay<ISelectable>>) {

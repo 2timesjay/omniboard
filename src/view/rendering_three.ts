@@ -52,7 +52,7 @@ function makeRect3D(
     clr?: string,
     lfa?: number,
 ): THREE.Object3D {
-    const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
+    const alpha = lfa == undefined ? 1.0 : lfa;
 
     let geometry = new THREE.BoxGeometry(width, height, depth);
     let material = new THREE.MeshStandardMaterial({
@@ -316,14 +316,12 @@ export class View3D implements IView3D {
         this.raycaster = makeRaycaster();
     }
 
-    getHitObject(mouse_co: InputCoordinate): THREE.Object3D {
+    getHitObjects(mouse_co: InputCoordinate): Array<THREE.Object3D> {
         // find intersections
         this.raycaster.setFromCamera(mouse_co, this.camera);
         var group = getGroup(this.scene)
         var intersects = this.raycaster.intersectObjects(group.children);
-        if (intersects.length == 0) return null;
-        var hit = intersects[0].object;
-        return hit;
+        return intersects.map(intersect => intersect.object);
     }
 
     animate(): void {

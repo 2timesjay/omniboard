@@ -1,10 +1,10 @@
 import { View3D } from "./rendering_three";
 import { ISelectable, Stack } from "../model/core";
 import { IState } from "../model/state";
-import { DisplayMap, DisplayMap3D, MeshToSelectableMap } from "./input";
+import { DisplayMap, DisplayMap3D, MeshToDisplayMap } from "./input";
 import { InputSelection } from '../model/input';
 import { IPhase } from '../model/phase';
-import { DisplayState } from "./display";
+import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
 import { Action } from "../model/action";
 
 // TODO: Extend BaseDisplayHandler
@@ -12,7 +12,7 @@ import { Action } from "../model/action";
     view: View3D;
     context: WebGL2RenderingContext;
     display_map: DisplayMap3D<ISelectable>;
-    mesh_map: MeshToSelectableMap<ISelectable>;
+    mesh_map: MeshToDisplayMap<ISelectable>;
     state: IState;
     stateful_selectables: Array<ISelectable>;
     pathy_inputs: Array<ISelectable>;
@@ -25,7 +25,7 @@ import { Action } from "../model/action";
         this.state = state;
         this.stateful_selectables = [];
         this.pathy_inputs = [];
-        this.mesh_map = new Map<number, ISelectable>()
+        this.mesh_map = new Map<number, AbstractDisplay3D<ISelectable>>()
     }
 
     on_tick() {
@@ -43,13 +43,13 @@ import { Action } from "../model/action";
     ) {
         this.view.clear();
         delete this.mesh_map;
-        this.mesh_map = new Map<number, ISelectable>();
+        this.mesh_map = new Map<number, AbstractDisplay3D<ISelectable>>();
         for (let selectable of this.state.get_selectables()) {
             var display = this.display_map.get(selectable);
             // @ts-ignore
-            var mesh = display.display(this.view);
+            var mesh = display.display(this.view, 0);
             if (mesh != null) { // Can only select rendered elements. 
-                this.mesh_map.set(mesh.id, selectable);
+                this.mesh_map.set(mesh.id, display);
             }
         }
     }

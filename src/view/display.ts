@@ -527,12 +527,14 @@ export class AbstractDisplay<T extends ISelectable> {
     state: DisplayState;
     selection_state: DisplayState
     children: Array<AbstractVisual>;
+    active: boolean;
 
     constructor(selectable: T) {
         this.selectable = selectable;
         this.state = DisplayState.Neutral;
         this.selection_state = DisplayState.Neutral;
         this.children = [];
+        this.active = true;
     }
 
     update_pos() {
@@ -631,10 +633,13 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
     }
 
     // TODO: Fix up inheritance type errors
+    // TODO: replace z_match with more general "active region", here or in display_handler.
     // @ts-ignore
-    display(view: View3D): THREE.Object3D {
+    display(view: View3D, z_match?: number): THREE.Object3D {
+        // TODO: does this need to move?
+        this.updateActive(z_match);
+
         // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
-        // this.update_pos();
         if (this.state == DisplayState.Select) {
             var mesh = this.selectDisplay(view);
         } else if (this.state == DisplayState.Preview) {
@@ -646,7 +651,7 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
         }
 
         if (this.selection_state == DisplayState.Queue) {
-            var mesh = this.queueDisplay(view);
+            this.queueDisplay(view); // Don't use mesh.
         }
         for (var visual of this.children) {
             // @ts-ignore
@@ -654,6 +659,24 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
         }
 
         return mesh;
+    }
+
+    updateActive(z_match?: number): boolean {
+        // TODO: constrain to ILocatable
+        // @ts-ignore
+        if (z_match == null) {
+            this.active = true;
+        } else {
+            this.active = (
+                // @ts-ignore
+                this.selectable.loc != null ? 
+                // @ts-ignore
+                this.selectable.loc.z == z_match :
+                // @ts-ignore
+                this.selectable.co.z == z_match
+            ) 
+        }
+        return this.active;
     }
 
     // @ts-ignore
@@ -844,11 +867,12 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
         // TODO: Make this more consistent with 2D
         // NOTE: Don't render if lfa = 0; rendering bug when inside transparent object.
         if (lfa == 0) return;
+        var adj_lfa = this.active ? lfa: 0.2 * lfa
         return view.drawRect(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
             this.size, this.size, this.size,
             clr, 
-            lfa,
+            adj_lfa,
         );
     }
 
@@ -867,19 +891,19 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
     }
 
     optionDisplay(view: IView3D): THREE.Object3D {
-        return this.render(view, 'grey');
+        return this.render(view, 'grey', 1);
     }
 
     previewDisplay(view: IView3D): THREE.Object3D {
-        return this.render(view, 'yellow');
+        return this.render(view, 'yellow', 1);
     }
 
     queueDisplay(view: IView3D): THREE.Object3D {
-        return this.alt_render(view, 'indianred');
+        return this.alt_render(view, 'indianred', 1);
     }
 
     selectDisplay(view: IView3D): THREE.Object3D {
-        return this.render(view, 'red');
+        return this.render(view, 'red', 1);
     }
 
     // @ts-ignore
@@ -1040,11 +1064,15 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
         this.height = size * 0.6;
     }
 
+    // TODO: Re-add alpha.
     render(view: IView3D, clr: string): THREE.Object3D {
+        var lfa = 1.0;
+        var adj_lfa = this.active ? lfa: 0.2 * lfa
         return view.drawRect(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
             this.size, this.size, this.size,
             clr, 
+            adj_lfa
         );
     }
 
