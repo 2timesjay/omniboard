@@ -510,8 +510,9 @@ export class LinearVisual3D extends AbstractVisual {
     }
 
     render(view: IView3D, clr: string) {
-        var co_from = {x: this.from.xOffset, y: this.from.yOffset, z: this.from.zOffset};
-        var co_to = {x: this.to.xOffset, y: this.to.yOffset, z: this.to.zOffset};
+        // TODO: Fix arbitrary z offset determined by Unit sizing
+        var co_from = {x: this.from.xOffset, y: this.from.yOffset, z: this.from.zOffset + size*0.7};
+        var co_to = {x: this.to.xOffset, y: this.to.yOffset, z: this.to.zOffset + size*0.7};
         view.drawLine(
             co_from, co_to, 10, clr,
         )
@@ -640,11 +641,12 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
             var mesh = this.previewDisplay(view);
         } else if (this.state == DisplayState.Option) {
             var mesh = this.optionDisplay(view);
-        } else if (this.selection_state == DisplayState.Queue) {
-            // Move queueDisplay because can't double-render easily in 3D
-            var mesh = this.queueDisplay(view); 
         } else {
             var mesh = this.neutralDisplay(view);
+        }
+
+        if (this.selection_state == DisplayState.Queue) {
+            var mesh = this.queueDisplay(view);
         }
         for (var visual of this.children) {
             // @ts-ignore
@@ -851,8 +853,9 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
     }
 
     alt_render(view: IView3D, clr: string): THREE.Object3D {
+        // TODO: Fix arbitrary "hover"
         return view.drawCircle(
-            {x: this.xOffset, y: this.yOffset, z: this.zOffset},
+            {x: this.xOffset, y: this.yOffset, z: this.zOffset + this.size*7/8},
             this.size,
             clr,
         );
@@ -1029,7 +1032,7 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
             // @ts-ignore Actualy GridLocation
             this.selectable.loc.z != null ? 
             // @ts-ignore Actualy GridLocation
-            (this.selectable.loc.z + 1) * size - margin: 
+            (this.selectable.loc.z) * size + size*0.6 + margin: 
             margin
         );
         this._size = size * 0.6;

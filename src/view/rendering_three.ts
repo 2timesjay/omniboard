@@ -96,6 +96,7 @@ function coToVec(co: GridCoordinate): THREE.Vector3 {
     return new THREE.Vector3(co.x, co.y, co.z);
 }
 
+// TODO: Use MeshLine (https://github.com/spite/THREE.MeshLine/blob/master/README.md) or TubeGeometry
 function makeLine3D(
     co_from: GridCoordinate,
     co_to: GridCoordinate,  

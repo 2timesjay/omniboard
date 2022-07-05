@@ -1,6 +1,6 @@
 import { ISelectable, Stack } from "../model/core";
 import { Effect } from "../model/effect";
-import { InputOptions, InputRequest, InputSelection, SequentialInputAcquirer, SimpleInputAcquirer } from "../model/input";
+import { IInputAcquirer, InputOptions, InputRequest, InputSelection, SequentialInputAcquirer, SimpleInputAcquirer } from "../model/input";
 import { Inputs, IPhase } from "../model/phase";
 import { GridLocation, ILocation } from "../model/space";
 import { IState } from "../model/state";
@@ -71,6 +71,7 @@ class PlaygroundInputs implements Inputs {
  */
 export class PlaygroundPhase implements IPhase {
     current_inputs: PlaygroundInputs;
+    _current_acquirer: IInputAcquirer<ISelectable>;
     display_handler: DisplayHandler;
 
     constructor() {
@@ -93,6 +94,15 @@ export class PlaygroundPhase implements IPhase {
     phase_condition(): boolean {
         return true;
     }
+
+    // TODO: Maybe move into partial_inputs
+    get pending_inputs(): InputSelection<ISelectable> {
+        if (this._current_acquirer == null) {
+            return null;
+        } else { 
+            return this._current_acquirer.current_input;
+        }
+    }    
 
     async * run_phase(
         state: PlaygroundState
@@ -154,6 +164,7 @@ export class PlaygroundPhase implements IPhase {
     ): Generator<Array<ISelectable>, ISelectable, ISelectable> {
         var selection_options: Array<ISelectable> = state.entities;
         var acquirer = new SimpleInputAcquirer<ISelectable>(() => selection_options, false);
+        this._current_acquirer = acquirer;
         var selection = yield *acquirer.input_option_generator();
         return selection;
     }
@@ -182,6 +193,7 @@ export class PlaygroundPhase implements IPhase {
             increment_fn,
             termination_fn,
         )
+        this._current_acquirer = acquirer;
         // @ts-ignore
         var selection = yield *acquirer.input_option_generator(new Stack(source.loc));
         return selection;

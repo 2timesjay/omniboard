@@ -54,6 +54,15 @@ import { Action } from "../model/action";
         }
     }
 
+    update_queued(pending_inputs: Array<ISelectable>) {  
+        for(let pending_selectable of pending_inputs) {
+            if (!(pending_selectable instanceof Action)) {
+                var display = this.display_map.get(pending_selectable);
+                display.selection_state = DisplayState.Queue;
+            }
+        }
+    }
+
     clear_queued() {
         for (var display of this.display_map.values()) {
             display.selection_state = DisplayState.Neutral;
@@ -71,7 +80,7 @@ import { Action } from "../model/action";
             var from: IPathable = this.display_map.get(this.pathy_inputs[i]);
             // @ts-ignore TODO: Add type guard
             var to: IPathable = this.display_map.get(this.pathy_inputs[i+1]);
-            from.pathDisplay(this.context, to);
+            from.pathDisplay(this.view, to);
         }
     }
     
@@ -82,7 +91,20 @@ import { Action } from "../model/action";
      */ 
     on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
         this.clear_queued();
-        // TODO: pass partial acquirer inputs to DisplayHandler 
+
+        // TODO: Update to reflect phase.current_inputs change to `Input` object-like
+        var current_inputs = [...Object.values(phase.current_inputs)]; // Shallow Copy
+        var pending_inputs = phase.pending_inputs;
+        this.stateful_selectables = current_inputs;
+
+        // TODO: Validate pending_inputs
+        var pending_inputs_arr = pending_inputs instanceof Stack ? pending_inputs.to_array() : (
+            pending_inputs == null ? [] : [pending_inputs]
+        )
+        this.update_queued(pending_inputs_arr);
+        this.pathy_inputs = pending_inputs_arr;
+
+        this.stateful_selectables.push(...pending_inputs_arr);
     }
 
     on_phase_end(phase: IPhase){
