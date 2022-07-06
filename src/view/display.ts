@@ -583,31 +583,37 @@ export class AbstractDisplay<T extends ISelectable> {
         return false;
     }
 
-    createOnclick(canvas: HTMLCanvasElement) {
+    // @ts-ignore
+    createOnclick(canvas: HTMLCanvasElement): OnInputEvent<T> {
         // Select by click - clicks off this element de-select.
         let self = this;
-        let trigger = function (e: MouseEvent): T | null {
-            if (e.type == "click") {
-                let mouseCo = getMouseCo(canvas, e);
-                if (self.isHit(mouseCo)) {
-                    // self.state = DisplayState.Select;
-                    return self.selectable;
-                } else {
-                    self.state = DisplayState.Neutral;
-                    return null;
-                }
+        let trigger = function (hit_selectable: T | null, type: string): T | null {
+            // TODO: Clean up this and `SelectionBroker` fanout
+            if (type != "click") {
+                return null;
+            }
+            // TODO: Clean up this vs. isHit to allow full inheritance. See inputs.ts
+            if (self.selectable == hit_selectable) {
+                // self.state = DisplayState.Select;
+                return self.selectable;
+            } else {
+                self.state = DisplayState.Neutral;
+                return null;
             }
         }
         return trigger;
     }
 
+    // @ts-ignore
     createOnmousemove(canvas: HTMLCanvasElement) {
         // Preview if not selected.
         let self = this;
-        let trigger = function (e: MouseEvent): T | null {
-            if (e.type == "mousemove" && !(self.state == DisplayState.Select)) {
-                let mouseCo = getMouseCo(canvas, e);
-                if (self.isHit(mouseCo)) {
+        let trigger = function (hit_selectable: T | null, type: string): T | null {
+            if (type != "mousemove") {
+                return null;
+            }
+            if (self.state != DisplayState.Select) {
+                if (self.selectable == hit_selectable) {
                     self.state = DisplayState.Preview;
                     return self.selectable;
                 } else {

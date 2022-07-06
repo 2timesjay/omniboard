@@ -63,6 +63,11 @@ export class BaseDisplayHandler {
     // TODO: Placeholder for handling sequential input displays
     pathy_inputs: Array<ISelectable>;
 
+    constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, state: IState) {
+        super(context, display_map, state);
+        this.pathy_inputs = [];
+    }
+
     /**
      * NOTE: Implicitly relies on subtle hack; final confirmation via "confirm click" 
      *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.

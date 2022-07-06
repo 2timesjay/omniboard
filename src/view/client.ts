@@ -1,5 +1,5 @@
 /* Imports */
-import { makeCanvas } from "./rendering";
+import { makeCanvas, View2D } from "./rendering";
 import { TacticsController, TacticsPhase } from "../tactics/tactics_controller";
 import { tactics_setup } from "../tactics/tactics_setup";
 import { display_setup } from "../tactics/tactics_display_setup";
@@ -21,7 +21,8 @@ enum GameType {
 }
 
 // const game_type = GameType.Tactics;
-const game_type = GameType.Playground3D;
+const game_type = GameType.Playground2D;
+// const game_type = GameType.Playground3D;
 
 // @ts-ignore - just a switch
 if (game_type == GameType.Tactics) {
@@ -60,14 +61,15 @@ if (game_type == GameType.Tactics) {
     const size = 100 * d;
     const canvas = makeCanvas(k * size, k * size, true);
     const context = canvas.getContext("2d");
+    // const view = new View2D(k* size, k* size)
 
     // Create Displays
     var display_map = playground_display_setup(pg_state, context);
 
     // Connect View (display) interactions with state through Broker
+    var display_handler = new DisplayHandler(context, display_map, pg_state);
     var broker = new Canvas2DBroker(display_handler, context);
     var input_request = broker.input_request;
-    var display_handler = new DisplayHandler(context, display_map, pg_state);
     var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
 
     // Create Controller

@@ -40,18 +40,19 @@ export function inputEventToSelectable2D(
     e: MouseEvent, display_handler: DisplayHandler,
 ): ISelectable | null {    
     // Fanout mouse input to all Displays to check for hits.
-    var nohits = true;
+    // TODO: Only hits one object (last). Could extend to pseudo-raycast.
     var canvas = display_handler.context.canvas;
     for (var display of display_handler.display_map.values()) {
-        var selectable = display.isHit(getMouseCo(canvas, e));
-        if (selectable && nohits) {
-            nohits = false;
-            return selectable;
+        if (display.isHit(getMouseCo(canvas, e))){
+            var selectable = display.selectable;
+            if (selectable) {
+            }
         }
     }
-    if (nohits) {
-        return null;
+    if (selectable) {
+        return selectable;
     }
+    return null;
 }
 export function inputEventToSelectable3D(
     e: MouseEvent, display_handler: DisplayHandler3D
