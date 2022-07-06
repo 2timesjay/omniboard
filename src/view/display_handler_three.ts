@@ -16,6 +16,7 @@ import { Action } from "../model/action";
     state: IState;
     stateful_selectables: Array<ISelectable>;
     pathy_inputs: Array<ISelectable>;
+    z_match: number;
 
 
     constructor(view: View3D, display_map: DisplayMap3D<ISelectable>, state: IState){
@@ -26,6 +27,7 @@ import { Action } from "../model/action";
         this.stateful_selectables = [];
         this.pathy_inputs = [];
         this.mesh_map = new Map<number, AbstractDisplay3D<ISelectable>>()
+        this.z_match = 0;
     }
 
     on_tick() {
@@ -47,7 +49,7 @@ import { Action } from "../model/action";
         for (let selectable of this.state.get_selectables()) {
             var display = this.display_map.get(selectable);
             // @ts-ignore
-            var mesh = display.display(this.view, 0);
+            var mesh = display.display(this.view, this.z_match);
             if (mesh != null) { // Can only select rendered elements. 
                 this.mesh_map.set(mesh.id, display);
             }

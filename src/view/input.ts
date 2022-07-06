@@ -68,8 +68,6 @@ export function inputEventToSelectable3D(
             }
         }
     }
-    console.log("inactive object - cannot select")
-    console.log(hit_objects);
     for (var hit_object of hit_objects) {
         var mesh_id = hit_object ? hit_object.id : null;
         if (display_handler.mesh_map.has(mesh_id)) {
@@ -163,6 +161,21 @@ export class SelectionBroker {
         if (e.code == ESCAPE || e.code == X) {
             console.log(this);
             this.reject();
+        }
+        
+        // TODO: Move into a more specific input handler mixin?
+        // @ts-ignore only display_handler_three has z_match
+        if (this.display_handler.z_match != null) {
+            const W = "KeyW";
+            const S = "KeyS";
+            if (e.code == W) {
+                // @ts-ignore
+                this.display_handler.z_match += 1;
+            }
+            if (e.code == S) {
+                // @ts-ignore
+                this.display_handler.z_match -= 1;
+            }
         }
     }
 }

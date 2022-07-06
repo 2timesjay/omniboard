@@ -1064,6 +1064,11 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
         this.height = size * 0.6;
     }
 
+    updateActive(z_match?: number): boolean {
+        this.active = true;
+        return this.active;
+    }
+
     // TODO: Re-add alpha.
     render(view: IView3D, clr: string): THREE.Object3D {
         var lfa = 1.0;
