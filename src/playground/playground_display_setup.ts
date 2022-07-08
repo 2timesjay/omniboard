@@ -2,7 +2,7 @@ import { ISelectable } from "../model/core";
 import { BoardState } from "../model/state";
 import { GLOBAL_CONFIRMATION, Unit } from "../model/unit";
 import { GridLocationDisplay, UnitDisplay, MenuElementDisplay, AbstractDisplay, HealthVisual, EntityDisplay, GridLocationDisplay3D, EntityDisplay3D, AbstractDisplay3D } from "../view/display";
-import { IView } from "../view/rendering";
+import { IView, IView2D } from "../view/rendering";
 import { IView3D } from "../view/rendering_three";
 import { PlaygroundState } from "./playground_state";
 
@@ -10,7 +10,7 @@ import { PlaygroundState } from "./playground_state";
  * Create Display elements for every selectable in state.
  */
 export function playground_display_setup(
-        state: PlaygroundState, view: IView,
+        state: PlaygroundState, view: IView2D,
 ): Map<ISelectable, AbstractDisplay<ISelectable>> {
     
     // TODO: Derive all Displays from get_selectables. Reqs full info in each sel.

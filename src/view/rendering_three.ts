@@ -11,9 +11,9 @@ import { InputCoordinate } from './input';
 import { IView, makeCanvas } from './rendering';
 
 // @ts-ignore
-export interface IView3D extends IView {
+export interface IView3D extends IView<GridCoordinate> {
     context: WebGL2RenderingContext;
-    scene: THREE.Scene
+    scene: THREE.Scene;
     drawArc: (
         co: GridCoordinate,
         size: number, 

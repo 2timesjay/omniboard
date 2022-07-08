@@ -1,3 +1,5 @@
+import { GridCoordinate, ICoordinate } from "../model/space";
+
 export function makeCanvas(width: number, height: number, attach: boolean) {
     var canvas = document.createElement("canvas");
     canvas.setAttribute("width", width.toString());
@@ -8,26 +10,15 @@ export function makeCanvas(width: number, height: number, attach: boolean) {
     return canvas;
 }
 
-export function makeSquare(
-    x: number, 
-    y: number, 
-    context: CanvasRenderingContext2D, 
-    size: number, 
-    clr?: string | null, 
-    lfa?: number | null
-): void {
-    makeRect(x, y, context, size, size, clr, lfa);
-}
-
 export function makeRect(
-    x: number, 
-    y: number, 
+    co: GridCoordinate,
     context: CanvasRenderingContext2D, 
     width: number, 
     height: number,
     clr?: string | null, 
     lfa?: number | null
 ): void {
+    var {x, y} = co;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
     context.globalAlpha = alpha;
@@ -42,13 +33,13 @@ export function makeRect(
 }
 
 export function makeCircle(
-    x: number, 
-    y: number, 
+    co: GridCoordinate,
     context: CanvasRenderingContext2D, 
     size: number, 
     clr?: string | null, 
     lfa?: number | null
 ): void {
+    var {x, y} = co;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
     var centerX = x + size/2.0;
@@ -68,15 +59,15 @@ export function makeCircle(
 }
 
 export function makeLine(
-    x_from: number, 
-    y_from: number,
-    x_to: number,
-    y_to: number, 
+    co_from: GridCoordinate,
+    co_to: GridCoordinate,
     context: CanvasRenderingContext2D, 
     line_width: number, 
     clr?: string | null, 
     lfa?: number | null
 ): void {
+    var {x: x_from, y: y_from} = co_from;
+    var {x: x_to, y: y_to} = co_to;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
     context.lineWidth = line_width;
@@ -93,14 +84,14 @@ export function makeLine(
 }
 
 export function makeArc(
-    x: number, 
-    y: number, 
+    co: GridCoordinate,
     context: CanvasRenderingContext2D, 
     size: number, 
     frac_filled?: number | null,
     clr?: string | null, 
     lfa?: number | null
 ): void {
+    var {x, y} = co;
     const fraction_filled = frac_filled == undefined ? 1.0: frac_filled;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
@@ -120,35 +111,31 @@ export function makeArc(
     context.globalAlpha = 1.0;
 }
 
-export interface IView {
+// TODO: Return RenderObject from draw methods.
+export interface IView<C> {
     context: RenderingContext
     drawArc: (
-        x: number, 
-        y: number, 
+        co: C,
         size: number, 
         frac_filled?: number | null,
         clr?: string | null, 
         lfa?: number | null
     ) => void;
     drawCircle: (
-        x: number, 
-        y: number, 
+        co: C,
         size: number, 
         clr?: string | null, 
         lfa?: number | null
     ) => void;
     drawLine: (
-        x_from: number, 
-        y_from: number,
-        x_to: number,
-        y_to: number, 
+        co_from: C,
+        co_to: C,
         line_width: number, 
         clr?: string | null, 
         lfa?: number | null
     ) => void;
     drawRect: (
-        x: number, 
-        y: number, 
+        co: C,
         width: number, 
         height: number,
         clr?: string | null, 
@@ -156,7 +143,7 @@ export interface IView {
     ) => void;
 }
 
-export interface IView2D extends IView {
+export interface IView2D extends IView<GridCoordinate> {
     context: CanvasRenderingContext2D;
 }
 
@@ -171,33 +158,31 @@ export class View2D implements IView2D {
     }
 
     drawArc(
-        x: number, y: number, size: number, frac_filled?: number, clr?: string, lfa?: number
+        co: GridCoordinate, size: number, frac_filled?: number, clr?: string, lfa?: number
     ): void {
-        makeArc(x, y, this.context, size, frac_filled, clr, lfa);
+        makeArc(co, this.context, size, frac_filled, clr, lfa);
     }
 
     drawCircle(
-        x: number, y: number, size: number, clr?: string, lfa?: number
+        co: GridCoordinate, size: number, clr?: string, lfa?: number
     ): void {
-        makeCircle(x, y, this.context, size, clr, lfa);
+        makeCircle(co, this.context, size, clr, lfa);
     }
 
     drawRect(
-        x: number, y: number, width: number, height: number, clr?: string, lfa?: number
+        co: GridCoordinate, width: number, height: number, clr?: string, lfa?: number
     ): void {
-        makeRect(x, y, this.context, width, height, clr, lfa);
+        makeRect(co, this.context, width, height, clr, lfa);
     }
 
     drawLine(
-        x_from: number, 
-        y_from: number,
-        x_to: number,
-        y_to: number,  
+        co_from: GridCoordinate,
+        co_to: GridCoordinate,  
         line_width: number, 
         clr?: string | null, 
         lfa?: number | null
     ): void {
-        makeLine(x_from, y_from, x_to, y_to, this.context, line_width, clr, lfa);
+        makeLine(co_from, co_to, this.context, line_width, clr, lfa);
     }
 }
 

@@ -3,7 +3,7 @@ import { InputRequest, async_input_getter } from "../model/input";
 import { BoardState, IState } from "../model/state";
 import { DisplayHandler, refreshDisplay } from "./display_handler";
 import { build_broker_callback, DisplayMap, inputEventToSelectable2D, SelectionBroker } from "./input";
-import { IView } from "./rendering";
+import { IView, IView2D } from "./rendering";
 
 export interface IBroker {
     input_request: InputRequest<ISelectable>;
@@ -28,7 +28,7 @@ export class Canvas2DBroker implements IBroker {
 
     constructor(
         display_handler: DisplayHandler,
-        view: IView
+        view: IView2D,
     ) {
         var canvas = view.context.canvas;
         var selection_broker = new SelectionBroker(display_handler, null, inputEventToSelectable2D);
@@ -44,7 +44,7 @@ export class Canvas2DBroker implements IBroker {
     
     addCanvasListeners(
         selection_broker: SelectionBroker,
-        view: IView,
+        view: IView2D,
     ) {
         view.context.canvas.onclick = function (event) {
             selection_broker.onMouseEvent(event);

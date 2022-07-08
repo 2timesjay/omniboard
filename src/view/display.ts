@@ -40,7 +40,7 @@ interface ILocatable {
 
 // TODO: Consider unifying ILocatable and IPathable
 interface IPathable extends ILocatable {
-    pathDisplay: (view: IView, to: IPathable) => void;
+    pathDisplay: (view: IView2D, to: IPathable) => void;
 }
 
 export interface IMenuable {// Action<ISelectable>, Confirmation
@@ -387,7 +387,7 @@ export class AbstractVisual {
     constructor() {
     }
 
-    display(view: IView) {
+    display(view: IView2D) {
     }
 }
 
@@ -404,11 +404,11 @@ export class UnitaryVisual extends AbstractVisual{
         parent.children.push(this);
     }
 
-    display(view: IView) {
+    display(view: IView2D) {
         this.render(view, null)
     }
 
-    render(view: IView, clr: string) {
+    render(view: IView2D, clr: string) {
         throw new Error('Method not implemented.');
     }
 }
@@ -423,7 +423,7 @@ export class HealthVisual extends UnitaryVisual {
         this.index = index;
     }
 
-    display(view: IView) {
+    display(view: IView2D) {
         this.render(view, this.color)
     }
 
@@ -442,7 +442,7 @@ export class HealthVisual extends UnitaryVisual {
         }
     }
 
-    render(view: IView, clr: string) {
+    render(view: IView2D, clr: string) {
         const RADIUS_INCR = 5;
         var radius_delta: number = (this.num_health_bars - this.index)  * RADIUS_INCR;
 
@@ -453,8 +453,9 @@ export class HealthVisual extends UnitaryVisual {
         var max = this.parent.selectable.all_max_hp[this.index];
         var cur = this.parent.selectable.all_hp[this.index];
         var frac_filled = cur/max
+        var co = {x: x, y: y};
         view.drawArc(
-            x, y, size, frac_filled, this.get_health_color(),
+            co, size, frac_filled, this.get_health_color(),
         );
     }
 }
@@ -469,11 +470,11 @@ export class LinearVisual extends AbstractVisual {
         this.to = to;    
     }
 
-    display(view: IView) {
+    display(view: IView2D) {
         this.render(view, 'indianred')
     }
 
-    render(view: IView, clr: string) {
+    render(view: IView2D, clr: string) {
         var from = this.from;
         var to = this.to;
         // @ts-ignore
@@ -484,8 +485,10 @@ export class LinearVisual extends AbstractVisual {
         var y_from = from.yOffset + adj_from;
         var x_to = to.xOffset + adj_to;
         var y_to = to.yOffset + adj_to;
+        var co_from = {x: x_from, y: y_from};
+        var co_to = {x: x_to, y: y_to};
         view.drawLine(
-            x_from, y_from, x_to, y_to,
+            co_from, co_to,
             10, clr)
     }
 }
@@ -534,7 +537,7 @@ export class AbstractDisplay<T extends ISelectable> {
         throw new Error('Method not implemented.');
     }
 
-    display(view: IView) {
+    display(view: IView2D) {
         // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
         // this.update_pos();
         if (this.state == DisplayState.Select) {
@@ -556,19 +559,19 @@ export class AbstractDisplay<T extends ISelectable> {
         }
     }
 
-    neutralDisplay(view: IView) {
+    neutralDisplay(view: IView2D) {
     }
 
-    optionDisplay(view: IView) {
+    optionDisplay(view: IView2D) {
     }
 
-    previewDisplay(view: IView) {
+    previewDisplay(view: IView2D) {
     }
 
-    queueDisplay(view: IView) {
+    queueDisplay(view: IView2D) {
     }
 
-    selectDisplay(view: IView) {
+    selectDisplay(view: IView2D) {
     }
 
     // TODO: Input Mixin?
@@ -632,7 +635,7 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
     // TODO: Fix up inheritance type errors
     // TODO: replace z_match with more general "active region", here or in display_handler.
     // @ts-ignore Temp IView3D inherits incorrectly
-    display(view: View3D, z_match?: number): THREE.Object3D {
+    display(view: IView3D, z_match?: number): THREE.Object3D {
         // TODO: does this need to move?
         this.updateActive(z_match);
 
@@ -779,32 +782,34 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
         return this._size;
     }
 
-    render(view: IView, clr: string, lfa?: number) {
-        view.drawRect(this.xOffset, this.yOffset, this.size, this.size, clr, lfa);
+    render(view: IView2D, clr: string, lfa?: number) {
+        var co = {x: this.xOffset, y: this.yOffset};
+        view.drawRect(co, this.size, this.size, clr, lfa);
     }
 
-    alt_render(view: IView, clr: string) {
-        view.drawCircle(this.xOffset, this.yOffset, this.size, clr);
+    alt_render(view: IView2D, clr: string) {
+        var co = {x: this.xOffset, y: this.yOffset};
+        view.drawCircle(co, this.size, clr);
     }
 
-    neutralDisplay(view: IView) {
+    neutralDisplay(view: IView2D) {
         var lfa = this.selectable.traversable ? 1.0 : 0.25
         this.render(view, 'lightgrey', lfa);
     }
 
-    optionDisplay(view: IView) {
+    optionDisplay(view: IView2D) {
         this.render(view, 'grey');
     }
 
-    previewDisplay(view: IView) {
+    previewDisplay(view: IView2D) {
         this.render(view, 'yellow');
     }
 
-    queueDisplay(view: IView) {
+    queueDisplay(view: IView2D) {
         this.alt_render(view, 'indianred');
     }
 
-    selectDisplay(view: IView) {
+    selectDisplay(view: IView2D) {
         this.render(view, 'red');
     }
 
@@ -818,7 +823,7 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
         }
     }
 
-    pathDisplay(view: IView, to: IPathable) {
+    pathDisplay(view: IView2D, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
         line.display(view);
@@ -865,6 +870,7 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
         // NOTE: Don't render if lfa = 0; rendering bug when inside transparent object.
         if (lfa == 0) return;
         var adj_lfa = this.active ? lfa: 0.2 * lfa
+        var co = {x: this.xOffset, y: this.yOffset};
         return view.drawRect(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
             this.size, this.size, this.size,
@@ -957,32 +963,34 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         this.height = size * 0.6;
     }
 
-    render(view: IView, clr: string) {
-        view.drawRect(this.xOffset, this.yOffset, this.size, this.size, clr);
+    render(view: IView2D, clr: string) {
+        var co = {x: this.xOffset, y: this.yOffset};
+        view.drawRect(co, this.size, this.size, clr);
     }
 
-    alt_render(view: IView, clr: string) {
+    alt_render(view: IView2D, clr: string) {
         var offset = 0.2 * this.size;
-        view.drawRect(this.xOffset + offset, this.yOffset + offset, this.size*.6, this.size*.6, clr);
+        var co = {x: this.xOffset + offset, y: this.yOffset + offset};
+        view.drawRect(co, this.size*.6, this.size*.6, clr);
     }
 
-    neutralDisplay(view: IView) {
+    neutralDisplay(view: IView2D) {
         this.render(view, 'orange');
     }
 
-    optionDisplay(view: IView) {
+    optionDisplay(view: IView2D) {
         this.render(view, 'grey');
     }
 
-    previewDisplay(view: IView) {
+    previewDisplay(view: IView2D) {
         this.render(view, 'yellow');
     }
 
-    queueDisplay(view: IView) {
+    queueDisplay(view: IView2D) {
         this.alt_render(view, 'indianred');
     }
 
-    selectDisplay(view: IView) {
+    selectDisplay(view: IView2D) {
         this.render(view, 'red');
     }
 
@@ -996,7 +1004,7 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         }
     }
 
-    pathDisplay(view: IView, to: IPathable) {
+    pathDisplay(view: IView2D, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
         line.display(view);
@@ -1161,38 +1169,40 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         this.height = size * 0.6;
     }
 
-    render(view: IView, clr: string) {
+    render(view: IView2D, clr: string) {
         var unit: Unit = this.selectable;
         var unit_alpha = (
             unit.all_max_hp.length == 1 ? 
             0.2 + 0.8 * unit.hp / unit.max_hp :
             1
         );
-        view.drawRect(this.xOffset, this.yOffset, this.size,  this.size, clr, unit_alpha);
+        var co = {x: this.xOffset, y: this.yOffset};
+        view.drawRect(co, this.size,  this.size, clr, unit_alpha);
     }
 
-    alt_render(view: IView, clr: string) {
+    alt_render(view: IView2D, clr: string) {
         var offset = 0.2 * this.size;
-        view.drawRect(this.xOffset + offset, this.yOffset + offset, this.size*.6, this.size*.6, clr);
+        var co = {x: this.xOffset + offset, y: this.yOffset + offset};
+        view.drawRect(co, this.size*.6, this.size*.6, clr);
     }
 
-    neutralDisplay(view: IView) {
+    neutralDisplay(view: IView2D) {
         this.render(view, this.selectable.team == 0 ? 'orange' : 'blue');
     }
 
-    optionDisplay(view: IView) {
+    optionDisplay(view: IView2D) {
         this.render(view, 'grey');
     }
 
-    previewDisplay(view: IView) {
+    previewDisplay(view: IView2D) {
         this.render(view, 'yellow');
     }
 
-    queueDisplay(view: IView) {
+    queueDisplay(view: IView2D) {
         this.alt_render(view, 'indianred');
     }
 
-    selectDisplay(view: IView) {
+    selectDisplay(view: IView2D) {
         this.render(view, 'red');
     }
 
@@ -1206,7 +1216,7 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         }
     }
 
-    pathDisplay(view: IView, to: IPathable) {
+    pathDisplay(view: IView2D, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
         line.display(view);
@@ -1239,9 +1249,10 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     }
 
 
-    render(view: IView, clr: string) {
+    render(view: IView2D, clr: string) {
+        var co = {x: this.xOffset, y: this.yOffset};
         view.drawRect(
-            this.xOffset, this.yOffset, this.width, this.height, "white", 0.5
+            co, this.width, this.height, "white", 0.5
         );
         // TODO: Add "view.drawText"
         var context = view.context;
@@ -1257,22 +1268,22 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
         );
     }
 
-    neutralDisplay(view: IView) {
+    neutralDisplay(view: IView2D) {
     }
 
-    optionDisplay(view: IView) {
+    optionDisplay(view: IView2D) {
         this.render(view, 'grey');
     }
 
-    previewDisplay(view: IView) {
+    previewDisplay(view: IView2D) {
         this.render(view, 'yellow');
     }
 
-    queueDisplay(view: IView) {
+    queueDisplay(view: IView2D) {
         this.render(view, 'indianred');
     }
 
-    selectDisplay(view: IView) {
+    selectDisplay(view: IView2D) {
         this.render(view, 'red');
     }
 

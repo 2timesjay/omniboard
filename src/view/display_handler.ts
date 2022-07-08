@@ -7,6 +7,7 @@ import { BoardState, IState } from "../model/state";
 import { DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
 import { DisplayMap } from "./input";
 import { IView, IView2D, makeLine } from "./rendering";
+import { ICoordinate } from "../model/space";
 
 
 /**
@@ -31,12 +32,12 @@ export function refreshDisplay(
  * See DisplayHandler.
  */
 export class BaseDisplayHandler {
-    view: IView;
+    view: IView<ICoordinate>;
     display_map: DisplayMap<ISelectable>;
     state: IState;
     stateful_selectables: Array<ISelectable>;
 
-    constructor(view: IView, display_map: DisplayMap<ISelectable>, state: IState){
+    constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
         this.view = view;
         this.display_map = display_map;
         this.state = state;
