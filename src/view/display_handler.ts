@@ -5,7 +5,7 @@ import { InputResponse } from "../model/input";
 import { IPhase } from "../model/phase";
 import { BoardState, IState } from "../model/state";
 import { DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
-import { DisplayMap } from "./input";
+import { DisplayMap } from "./broker";
 import { IView, IView2D, makeLine } from "./rendering";
 import { ICoordinate } from "../model/space";
 

@@ -7,7 +7,7 @@ import { BoardState, IState } from "../model/state";
 import { Unit } from "../model/unit";
 import { DisplayState } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
-import { DisplayMap } from "../view/input";
+import { DisplayMap } from "../view/broker";
 import { AI } from "./tactics_ai";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];

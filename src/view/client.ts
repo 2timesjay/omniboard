@@ -9,7 +9,7 @@ import { playground_display_setup, playground_display_setup_3D } from "../playgr
 import { PlaygroundController, PlaygroundPhase } from "../playground/playground_controller";
 import { View3D } from "./rendering_three";
 import { DisplayHandler3D } from "./display_handler_three";
-import { Canvas2DBroker, ThreeBroker } from "./input";
+import { Canvas2DBroker, ThreeBroker } from "./broker";
 
 export const TICK_DURATION_MS = 20
 

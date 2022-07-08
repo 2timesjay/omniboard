@@ -7,7 +7,7 @@ import { GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
 import { DisplayState } from "../view/display";
 import { refreshDisplay } from "../view/display_handler";
-import { DisplayMap } from "../view/input";
+import { DisplayMap } from "../view/broker";
 
 export class PathOnlyPhase implements IPhase {
     current_inputs: Array<InputSelection<ISelectable>>;

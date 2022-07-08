@@ -1,7 +1,7 @@
 import { View3D } from "./rendering_three";
 import { ISelectable, Stack } from "../model/core";
 import { IState } from "../model/state";
-import { DisplayMap, DisplayMap3D, MeshToDisplayMap } from "./input";
+import { DisplayMap, DisplayMap3D, MeshToDisplayMap } from "./broker";
 import { InputResponse } from '../model/input';
 import { IPhase } from '../model/phase';
 import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";

@@ -1,7 +1,7 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
 import { IView, IView2D, RenderObject } from "./rendering";
-import { getMouseCo, InputCoordinate, OnInputEvent } from "./input";
+import { getMouseCo, InputCoordinate, OnInputEvent } from "./broker";
 import { Awaited } from "../model/utilities";
 import { GridLocation, ICoordinate, Vector } from "../model/space";
 import { Unit } from "../model/unit";
