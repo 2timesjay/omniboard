@@ -41,7 +41,7 @@ export function inputEventToSelectable2D(
 ): ISelectable | null {    
     // Fanout mouse input to all Displays to check for hits.
     // TODO: Only hits one object (last). Could extend to pseudo-raycast.
-    var canvas = display_handler.context.canvas;
+    var canvas = display_handler.view.context.canvas;
     for (var display of display_handler.display_map.values()) {
         if (display.isHit(getMouseCo(canvas, e))){
             var selectable = display.selectable;

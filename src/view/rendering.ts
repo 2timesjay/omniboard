@@ -156,7 +156,11 @@ export interface IView {
     ) => void;
 }
 
-export class View2D implements IView {
+export interface IView2D extends IView {
+    context: CanvasRenderingContext2D;
+}
+
+export class View2D implements IView2D {
     context: CanvasRenderingContext2D;
 
     constructor(k: number, size: number) {

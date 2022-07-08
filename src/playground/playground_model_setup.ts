@@ -11,13 +11,13 @@ export function playground_setup(k: number, d: number): PlaygroundState {
     for (var loc of volume_space.to_array()) {
         if (loc.co.z > 0) { loc.traversable = false}
     }
-    if (d == 2) {
+    if (d >= 2) {
         console.log("Volume: ", volume_space);
         volume_space.get({x: 0, y: 0, z: 1}).traversable = true;
         volume_space.get({x: 1, y: 0, z: 1}).traversable = true;
         volume_space.get({x: 2, y: 0, z: 1}).traversable = true;
     }
-    if (d > 2) {
+    if (d >= 3) {
         console.log("Volume: ", volume_space);
         volume_space.get({x: 0, y: 0, z: 2}).traversable = true;
     }

@@ -3,6 +3,7 @@ import { InputRequest, async_input_getter } from "../model/input";
 import { BoardState, IState } from "../model/state";
 import { DisplayHandler, refreshDisplay } from "./display_handler";
 import { build_broker_callback, DisplayMap, inputEventToSelectable2D, SelectionBroker } from "./input";
+import { IView } from "./rendering";
 
 export interface IBroker {
     input_request: InputRequest<ISelectable>;
@@ -27,9 +28,9 @@ export class Canvas2DBroker implements IBroker {
 
     constructor(
         display_handler: DisplayHandler,
-        context: CanvasRenderingContext2D
+        view: IView
     ) {
-        var canvas = context.canvas;
+        var canvas = view.context.canvas;
         var selection_broker = new SelectionBroker(display_handler, null, inputEventToSelectable2D);
         // TODO: Error with unset handlers - dummies for now.
         selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
@@ -38,17 +39,17 @@ export class Canvas2DBroker implements IBroker {
         var input_request = async_input_getter(brokered_selection_fn);
         this.input_request = input_request;
         
-        this.addCanvasListeners(selection_broker, context);
+        this.addCanvasListeners(selection_broker, view);
     }
     
     addCanvasListeners(
         selection_broker: SelectionBroker,
-        context: CanvasRenderingContext2D, 
+        view: IView,
     ) {
-        context.canvas.onclick = function (event) {
+        view.context.canvas.onclick = function (event) {
             selection_broker.onMouseEvent(event);
         }
-        context.canvas.onmousemove = function (event) {
+        view.context.canvas.onmousemove = function (event) {
             selection_broker.onMouseEvent(event);
         }
         window.addEventListener(

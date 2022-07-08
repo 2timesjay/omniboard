@@ -73,7 +73,9 @@ export class PathOnlyDisplayHander {
                 selection = selection.parent;
             } while(selection);
         }
-        refreshDisplay(this.context, this.display_map, this.state);
+        var mock_view = {context: this.context}
+        // @ts-ignore
+        refreshDisplay(mock_view, this.display_map, this.state);
     }
 }
 

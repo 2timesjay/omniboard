@@ -32,15 +32,14 @@ if (game_type == GameType.Tactics) {
 
     // Create Canvas
     const size = 100;
-    const canvas = makeCanvas(k * size, k * size, true);
-    const context = canvas.getContext("2d");
+    const view = new View2D(k * size, k * size)
 
     // Create Displays
-    var display_map = display_setup(state, context);
+    var display_map = display_setup(state, view);
 
     // Connect View (display) interactions with state through Broker
-    var display_handler = new DisplayHandler(context, display_map, state);
-    var broker = new Canvas2DBroker(display_handler, context);
+    var display_handler = new DisplayHandler(view, display_map, state);
+    var broker = new Canvas2DBroker(display_handler, view);
     var input_request = broker.input_request;
     var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
 
@@ -59,16 +58,15 @@ if (game_type == GameType.Tactics) {
 
     // Create Canvas
     const size = 100 * d;
-    const canvas = makeCanvas(k * size, k * size, true);
-    const context = canvas.getContext("2d");
-    // const view = new View2D(k* size, k* size)
+    // const context = canvas.getContext("2d");
+    const view = new View2D(k * size, k * size)
 
     // Create Displays
-    var display_map = playground_display_setup(pg_state, context);
+    var display_map = playground_display_setup(pg_state, view);
 
     // Connect View (display) interactions with state through Broker
-    var display_handler = new DisplayHandler(context, display_map, pg_state);
-    var broker = new Canvas2DBroker(display_handler, context);
+    var display_handler = new DisplayHandler(view, display_map, pg_state);
+    var broker = new Canvas2DBroker(display_handler, view);
     var input_request = broker.input_request;
     var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
 

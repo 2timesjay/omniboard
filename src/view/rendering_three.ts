@@ -12,6 +12,7 @@ import { IView, makeCanvas } from './rendering';
 
 // @ts-ignore
 export interface IView3D extends IView {
+    context: WebGL2RenderingContext;
     scene: THREE.Scene
     drawArc: (
         co: GridCoordinate,

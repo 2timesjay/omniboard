@@ -6,22 +6,23 @@ import { IPhase } from "../model/phase";
 import { BoardState, IState } from "../model/state";
 import { DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
 import { DisplayMap } from "./input";
-import { makeLine } from "./rendering";
+import { IView, IView2D, makeLine } from "./rendering";
 
 
 /**
  * Clears and redraws entire canvas and all AbstractDisplays.
  */
 export function refreshDisplay(
-    context: CanvasRenderingContext2D, 
+    view: IView2D, 
     display_map: DisplayMap<ISelectable>,
     state: IState,
 ) {
+    var context = view.context;
     var canvas = context.canvas;
     context.clearRect(0, 0, canvas.width, canvas.height);
     for (let selectable of state.get_selectables()) {
         var display = display_map.get(selectable);
-        display.display(context);
+        display.display(view);
     }
 }
 
@@ -30,13 +31,13 @@ export function refreshDisplay(
  * See DisplayHandler.
  */
 export class BaseDisplayHandler {
-    context: CanvasRenderingContext2D;
+    view: IView;
     display_map: DisplayMap<ISelectable>;
     state: IState;
     stateful_selectables: Array<ISelectable>;
 
-    constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, state: IState){
-        this.context = context;
+    constructor(view: IView, display_map: DisplayMap<ISelectable>, state: IState){
+        this.view = view;
         this.display_map = display_map;
         this.state = state;
         this.stateful_selectables = [];
@@ -47,7 +48,6 @@ export class BaseDisplayHandler {
     }
 
     refresh(){
-        refreshDisplay(this.context, this.display_map, this.state);
     }
 }
 
@@ -59,12 +59,13 @@ export class BaseDisplayHandler {
  * Context is the actual display
  * grid_space and units are for convenient iteration.
  */
- export class DisplayHandler extends BaseDisplayHandler{
+ export class DisplayHandler extends BaseDisplayHandler {
+    view: IView2D;
     // TODO: Placeholder for handling sequential input displays
     pathy_inputs: Array<ISelectable>;
 
-    constructor(context: CanvasRenderingContext2D, display_map: DisplayMap<ISelectable>, state: IState) {
-        super(context, display_map, state);
+    constructor(view: IView2D, display_map: DisplayMap<ISelectable>, state: IState) {
+        super(view, display_map, state);
         this.pathy_inputs = [];
     }
 
@@ -127,7 +128,7 @@ export class BaseDisplayHandler {
     }
 
     refresh(){
-        super.refresh();
+        refreshDisplay(this.view, this.display_map, this.state);
         this.render_pathy_inputs();
     }
 
@@ -138,7 +139,7 @@ export class BaseDisplayHandler {
             var from: IPathable = this.display_map.get(this.pathy_inputs[i]);
             // @ts-ignore TODO: Add type guard
             var to: IPathable = this.display_map.get(this.pathy_inputs[i+1]);
-            from.pathDisplay(this.context, to);
+            from.pathDisplay(this.view.context, to);
         }
     }
 }

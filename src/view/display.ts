@@ -1,6 +1,6 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
-import { IView, makeArc, makeCanvas, makeCircle, makeLine, makeRect, makeSquare } from "./rendering";
+import { IView, IView2D } from "./rendering";
 import { getMouseCo, InputCoordinate, OnInputEvent } from "./input";
 import { Awaited } from "../model/utilities";
 import { GridLocation, Vector } from "../model/space";
@@ -40,7 +40,7 @@ interface ILocatable {
 
 // TODO: Consider unifying ILocatable and IPathable
 interface IPathable extends ILocatable {
-    pathDisplay: (context: CanvasRenderingContext2D, to: IPathable) => void;
+    pathDisplay: (view: IView, to: IPathable) => void;
 }
 
 export interface IMenuable {// Action<ISelectable>, Confirmation
@@ -387,7 +387,7 @@ export class AbstractVisual {
     constructor() {
     }
 
-    display(context: CanvasRenderingContext2D) {
+    display(view: IView) {
     }
 }
 
@@ -404,11 +404,11 @@ export class UnitaryVisual extends AbstractVisual{
         parent.children.push(this);
     }
 
-    display(context: CanvasRenderingContext2D) {
-        this.render(context, null)
+    display(view: IView) {
+        this.render(view, null)
     }
 
-    render(context: CanvasRenderingContext2D, clr: string) {
+    render(view: IView, clr: string) {
         throw new Error('Method not implemented.');
     }
 }
@@ -423,8 +423,8 @@ export class HealthVisual extends UnitaryVisual {
         this.index = index;
     }
 
-    display(context: CanvasRenderingContext2D) {
-        this.render(context, this.color)
+    display(view: IView) {
+        this.render(view, this.color)
     }
 
     get num_health_bars(): number {
@@ -442,24 +442,19 @@ export class HealthVisual extends UnitaryVisual {
         }
     }
 
-    render(context: CanvasRenderingContext2D, clr: string) {
+    render(view: IView, clr: string) {
         const RADIUS_INCR = 5;
         var radius_delta: number = (this.num_health_bars - this.index)  * RADIUS_INCR;
 
         var parent = this.parent;
         var x = parent.xOffset - radius_delta;
         var y = parent.yOffset - radius_delta;
-        var size = parent.size + 2*radius_delta;
+        var size = parent.size + 2 * radius_delta;
         var max = this.parent.selectable.all_max_hp[this.index];
         var cur = this.parent.selectable.all_hp[this.index];
         var frac_filled = cur/max
-        makeArc(
-            x, 
-            y, 
-            context, 
-            size, 
-            frac_filled, 
-            this.get_health_color(),
+        view.drawArc(
+            x, y, size, frac_filled, this.get_health_color(),
         );
     }
 }
@@ -474,11 +469,11 @@ export class LinearVisual extends AbstractVisual {
         this.to = to;    
     }
 
-    display(context: CanvasRenderingContext2D) {
-        this.render(context, 'indianred')
+    display(view: IView) {
+        this.render(view, 'indianred')
     }
 
-    render(context: CanvasRenderingContext2D, clr: string) {
+    render(view: IView, clr: string) {
         var from = this.from;
         var to = this.to;
         // @ts-ignore
@@ -489,9 +484,9 @@ export class LinearVisual extends AbstractVisual {
         var y_from = from.yOffset + adj_from;
         var x_to = to.xOffset + adj_to;
         var y_to = to.yOffset + adj_to;
-        makeLine(
+        view.drawLine(
             x_from, y_from, x_to, y_to,
-            context, 10, clr)
+            10, clr)
     }
 }
 export class LinearVisual3D extends AbstractVisual {
@@ -519,8 +514,6 @@ export class LinearVisual3D extends AbstractVisual {
     }
 }
 
-type ViewOrRenderingContext = IView | CanvasRenderingContext2D;
-
 export class AbstractDisplay<T extends ISelectable> {
     selectable: T;
     // TODO: Clean up this crazy state/selection_state
@@ -541,41 +534,41 @@ export class AbstractDisplay<T extends ISelectable> {
         throw new Error('Method not implemented.');
     }
 
-    display(context: ViewOrRenderingContext) {
+    display(view: IView) {
         // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
         // this.update_pos();
         if (this.state == DisplayState.Select) {
-            this.selectDisplay(context);
+            this.selectDisplay(view);
         } else if (this.state == DisplayState.Preview) {
-            this.previewDisplay(context);
+            this.previewDisplay(view);
         } else if (this.state == DisplayState.Option) {
-            this.optionDisplay(context);
+            this.optionDisplay(view);
         } else {
-            this.neutralDisplay(context);
+            this.neutralDisplay(view);
         }
 
         if (this.selection_state == DisplayState.Queue) {
-            this.queueDisplay(context);
+            this.queueDisplay(view);
         }
         for (var visual of this.children) {
             // @ts-ignore
-            visual.display(context);
+            visual.display(view);
         }
     }
 
-    neutralDisplay(context: ViewOrRenderingContext) {
+    neutralDisplay(view: IView) {
     }
 
-    optionDisplay(context: ViewOrRenderingContext) {
+    optionDisplay(view: IView) {
     }
 
-    previewDisplay(context: ViewOrRenderingContext) {
+    previewDisplay(view: IView) {
     }
 
-    queueDisplay(context: ViewOrRenderingContext) {
+    queueDisplay(view: IView) {
     }
 
-    selectDisplay(context: ViewOrRenderingContext) {
+    selectDisplay(view: IView) {
     }
 
     // TODO: Input Mixin?
@@ -583,7 +576,6 @@ export class AbstractDisplay<T extends ISelectable> {
         return false;
     }
 
-    // @ts-ignore
     createOnclick(canvas: HTMLCanvasElement): OnInputEvent<T> {
         // Select by click - clicks off this element de-select.
         let self = this;
@@ -604,7 +596,6 @@ export class AbstractDisplay<T extends ISelectable> {
         return trigger;
     }
 
-    // @ts-ignore
     createOnmousemove(canvas: HTMLCanvasElement) {
         // Preview if not selected.
         let self = this;
@@ -640,7 +631,7 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
 
     // TODO: Fix up inheritance type errors
     // TODO: replace z_match with more general "active region", here or in display_handler.
-    // @ts-ignore
+    // @ts-ignore Temp IView3D inherits incorrectly
     display(view: View3D, z_match?: number): THREE.Object3D {
         // TODO: does this need to move?
         this.updateActive(z_match);
@@ -685,23 +676,23 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
         return this.active;
     }
 
-    // @ts-ignore
+    // @ts-ignore Temp IView3D inherits incorrectly
     neutralDisplay(view: IView3D): THREE.Object3D {
     }
 
-    // @ts-ignore
+    // @ts-ignore Temp IView3D inherits incorrectly
     optionDisplay(view: IView3D): THREE.Object3D {
     }
 
-    // @ts-ignore
+    // @ts-ignore Temp IView3D inherits incorrectly
     previewDisplay(view: IView3D): THREE.Object3D {
     }
 
-    // @ts-ignore
+    // @ts-ignore Temp IView3D inherits incorrectly
     queueDisplay(view: IView3D): THREE.Object3D {
     }
 
-    // @ts-ignore
+    // @ts-ignore Temp IView3D inherits incorrectly
     selectDisplay(view: IView3D): THREE.Object3D {
     }
 
@@ -788,33 +779,33 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
         return this._size;
     }
 
-    render(context: CanvasRenderingContext2D, clr: string, lfa?: number) {
-        makeSquare(this.xOffset, this.yOffset, context, this.size, clr, lfa);
+    render(view: IView, clr: string, lfa?: number) {
+        view.drawRect(this.xOffset, this.yOffset, this.size, this.size, clr, lfa);
     }
 
-    alt_render(context: CanvasRenderingContext2D, clr: string) {
-        makeCircle(this.xOffset, this.yOffset, context, this.size, clr);
+    alt_render(view: IView, clr: string) {
+        view.drawCircle(this.xOffset, this.yOffset, this.size, clr);
     }
 
-    neutralDisplay(context: CanvasRenderingContext2D) {
+    neutralDisplay(view: IView) {
         var lfa = this.selectable.traversable ? 1.0 : 0.25
-        this.render(context, 'lightgrey', lfa);
+        this.render(view, 'lightgrey', lfa);
     }
 
-    optionDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'grey');
+    optionDisplay(view: IView) {
+        this.render(view, 'grey');
     }
 
-    previewDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'yellow');
+    previewDisplay(view: IView) {
+        this.render(view, 'yellow');
     }
 
-    queueDisplay(context: CanvasRenderingContext2D) {
-        this.alt_render(context, 'indianred');
+    queueDisplay(view: IView) {
+        this.alt_render(view, 'indianred');
     }
 
-    selectDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'red');
+    selectDisplay(view: IView) {
+        this.render(view, 'red');
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
@@ -827,10 +818,10 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
         }
     }
 
-    pathDisplay(context: CanvasRenderingContext2D, to: IPathable) {
+    pathDisplay(view: IView, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
-        line.display(context);
+        line.display(view);
     }
 }
 
@@ -905,11 +896,11 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
     }
 
     queueDisplay(view: IView3D): THREE.Object3D {
-        return this.alt_render(view, 'indianred', 1);
+        return this.alt_render(view, 'indianred');
     }
 
     selectDisplay(view: IView3D): THREE.Object3D {
-        return this.render(view, 'red', 1);
+        return this.render(view, 'red');
     }
 
     // @ts-ignore
@@ -966,33 +957,33 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         this.height = size * 0.6;
     }
 
-    render(context: CanvasRenderingContext2D, clr: string) {
-        makeSquare(this.xOffset, this.yOffset, context, this.size, clr);
+    render(view: IView, clr: string) {
+        view.drawRect(this.xOffset, this.yOffset, this.size, this.size, clr);
     }
 
-    alt_render(context: CanvasRenderingContext2D, clr: string) {
+    alt_render(view: IView, clr: string) {
         var offset = 0.2 * this.size;
-        makeSquare(this.xOffset + offset, this.yOffset + offset, context, this.size*.6, clr);
+        view.drawRect(this.xOffset + offset, this.yOffset + offset, this.size*.6, this.size*.6, clr);
     }
 
-    neutralDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'orange');
+    neutralDisplay(view: IView) {
+        this.render(view, 'orange');
     }
 
-    optionDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'grey');
+    optionDisplay(view: IView) {
+        this.render(view, 'grey');
     }
 
-    previewDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'yellow');
+    previewDisplay(view: IView) {
+        this.render(view, 'yellow');
     }
 
-    queueDisplay(context: CanvasRenderingContext2D) {
-        this.alt_render(context, 'indianred');
+    queueDisplay(view: IView) {
+        this.alt_render(view, 'indianred');
     }
 
-    selectDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'red');
+    selectDisplay(view: IView) {
+        this.render(view, 'red');
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
@@ -1005,10 +996,10 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         }
     }
 
-    pathDisplay(context: CanvasRenderingContext2D, to: IPathable) {
+    pathDisplay(view: IView, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
-        line.display(context);
+        line.display(view);
     }
 }
 
@@ -1170,39 +1161,39 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         this.height = size * 0.6;
     }
 
-    render(context: CanvasRenderingContext2D, clr: string) {
+    render(view: IView, clr: string) {
         var unit: Unit = this.selectable;
         var unit_alpha = (
             unit.all_max_hp.length == 1 ? 
             0.2 + 0.8 * unit.hp / unit.max_hp :
             1
         );
-        makeSquare(this.xOffset, this.yOffset, context, this.size, clr, unit_alpha);
+        view.drawRect(this.xOffset, this.yOffset, this.size,  this.size, clr, unit_alpha);
     }
 
-    alt_render(context: CanvasRenderingContext2D, clr: string) {
+    alt_render(view: IView, clr: string) {
         var offset = 0.2 * this.size;
-        makeSquare(this.xOffset + offset, this.yOffset + offset, context, this.size*.6, clr);
+        view.drawRect(this.xOffset + offset, this.yOffset + offset, this.size*.6, this.size*.6, clr);
     }
 
-    neutralDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, this.selectable.team == 0 ? 'orange' : 'blue');
+    neutralDisplay(view: IView) {
+        this.render(view, this.selectable.team == 0 ? 'orange' : 'blue');
     }
 
-    optionDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'grey');
+    optionDisplay(view: IView) {
+        this.render(view, 'grey');
     }
 
-    previewDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'yellow');
+    previewDisplay(view: IView) {
+        this.render(view, 'yellow');
     }
 
-    queueDisplay(context: CanvasRenderingContext2D) {
-        this.alt_render(context, 'indianred');
+    queueDisplay(view: IView) {
+        this.alt_render(view, 'indianred');
     }
 
-    selectDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'red');
+    selectDisplay(view: IView) {
+        this.render(view, 'red');
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
@@ -1215,10 +1206,10 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         }
     }
 
-    pathDisplay(context: CanvasRenderingContext2D, to: IPathable) {
+    pathDisplay(view: IView, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
-        line.display(context);
+        line.display(view);
     }
 }
 
@@ -1248,41 +1239,41 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     }
 
 
-    render(context: CanvasRenderingContext2D, clr: string) {
-        makeRect(
-            this.xOffset, 
-            this.yOffset, 
-            context, 
-            this.width,
-            this.height, 
-            "white", 
-            0.5
+    render(view: IView, clr: string) {
+        view.drawRect(
+            this.xOffset, this.yOffset, this.width, this.height, "white", 0.5
         );
+        // TODO: Add "view.drawText"
+        var context = view.context;
+        // @ts-ignore CanvasRenderingContext2D
         context.fillStyle = clr;
+        // @ts-ignore CanvasRenderingContext2D
         context.font = 0.8 * this.size + "px Trebuchet MS";
+        // @ts-ignore CanvasRenderingContext2D
         context.fillText(
             this.selectable.text, 
             this.xOffset + 0.2 * this.size, 
             this.yOffset + 0.8 * this.size
         );
     }
-    neutralDisplay(context: CanvasRenderingContext2D) {
+
+    neutralDisplay(view: IView) {
     }
 
-    optionDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'grey');
+    optionDisplay(view: IView) {
+        this.render(view, 'grey');
     }
 
-    previewDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'yellow');
+    previewDisplay(view: IView) {
+        this.render(view, 'yellow');
     }
 
-    queueDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'indianred');
+    queueDisplay(view: IView) {
+        this.render(view, 'indianred');
     }
 
-    selectDisplay(context: CanvasRenderingContext2D) {
-        this.render(context, 'red');
+    selectDisplay(view: IView) {
+        this.render(view, 'red');
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
