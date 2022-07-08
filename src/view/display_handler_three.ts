@@ -6,9 +6,10 @@ import { InputResponse } from '../model/input';
 import { IPhase } from '../model/phase';
 import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
 import { Action } from "../model/action";
+import { IDisplayHandler } from "./display_handler";
 
 // TODO: Extend BaseDisplayHandler
- export class DisplayHandler3D  {
+ export class DisplayHandler3D implements IDisplayHandler {
     view: View3D;
     context: WebGL2RenderingContext;
     display_map: DisplayMap3D<ISelectable>;

@@ -27,11 +27,14 @@ export function refreshDisplay(
     }
 }
 
+// TODO: Refactor appropriately - needed for now to join in DisplayHandler3D
+export interface IDisplayHandler {}
+
 /**
  * Handles updating of InputView based on current inputs, and global view refreshes.
  * See DisplayHandler.
  */
-export class BaseDisplayHandler {
+export class BaseDisplayHandler implements IDisplayHandler {
     view: IView<ICoordinate>;
     display_map: DisplayMap<ISelectable>;
     state: IState;
