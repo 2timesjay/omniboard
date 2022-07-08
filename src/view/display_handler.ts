@@ -10,6 +10,10 @@ import { IView, IView2D, makeLine } from "./rendering";
 import { ICoordinate } from "../model/space";
 
 
+// TODO: Add other ActiveRegion types
+export interface ZMatch {z: number}
+export type ActiveRegion = ZMatch 
+
 /**
  * Clears and redraws entire canvas and all AbstractDisplays.
  */
@@ -23,7 +27,7 @@ export function refreshDisplay(
     context.clearRect(0, 0, canvas.width, canvas.height);
     for (let selectable of state.get_selectables()) {
         var display = display_map.get(selectable);
-        display.display(view);
+        display.display(view, this.active_region);
     }
 }
 
@@ -39,12 +43,14 @@ export class BaseDisplayHandler implements IDisplayHandler {
     display_map: DisplayMap<ISelectable>;
     state: IState;
     stateful_selectables: Array<ISelectable>;
+    active_region: ActiveRegion;
 
     constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
         this.view = view;
         this.display_map = display_map;
         this.state = state;
         this.stateful_selectables = [];
+        this.active_region = null;
     }
 
     on_tick() {
@@ -132,8 +138,18 @@ export class BaseDisplayHandler implements IDisplayHandler {
     }
 
     refresh(){
-        refreshDisplay(this.view, this.display_map, this.state);
+        this._refresh();
         this.render_pathy_inputs();
+    }
+
+    _refresh() {   
+        var context = this.view.context;
+        var canvas = context.canvas;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        for (let selectable of this.state.get_selectables()) {
+            var display = this.display_map.get(selectable);
+            display.display(this.view, this.active_region);
+        }
     }
 
     // TODO: Not working right now; synchronize with display_handler_three impl.

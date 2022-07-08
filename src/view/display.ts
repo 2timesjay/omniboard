@@ -9,6 +9,7 @@ import { createWatchCompilerHost } from "typescript";
 import { Entity } from "../playground/playground_entity";
 import { IView3D, View3D } from "./rendering_three";
 import { Event, Mesh, Object3D } from "three";
+import { ActiveRegion } from "./display_handler";
 
 export enum DisplayState {
     Neutral,
@@ -563,7 +564,7 @@ export class AbstractDisplay<T extends ISelectable> {
         throw new Error('Method not implemented.');
     }
 
-    display(view: IView<ICoordinate>) {
+    display(view: IView<ICoordinate>, active_region?: ActiveRegion) {
         // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
         // this.update_pos();
         if (this.state == DisplayState.Select) {
@@ -672,9 +673,9 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
 
     // TODO: Fix up inheritance type errors
     // TODO: replace z_match with more general "active region", here or in display_handler.
-    display(view: IView3D, z_match?: number): THREE.Object3D {
+    display(view: IView3D, active_region?: ActiveRegion): THREE.Object3D {
         // TODO: does this need to move?
-        this.updateActive(z_match);
+        this.updateActive(active_region);
 
         // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
         if (this.state == DisplayState.Select) {
@@ -698,20 +699,24 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
         return mesh;
     }
 
-    updateActive(z_match?: number): boolean {
-        // TODO: constrain to ILocatable
-        // @ts-ignore
-        if (z_match == null) {
+    updateActive(active_region?: ActiveRegion): boolean {
+        if (active_region == null) {
             this.active = true;
         } else {
-            this.active = (
-                // @ts-ignore
-                this.selectable.loc != null ? 
-                // @ts-ignore
-                this.selectable.loc.z == z_match :
-                // @ts-ignore
-                this.selectable.co.z == z_match
-            ) 
+            var z_match = active_region.z;
+            if (z_match == null) {
+                this.active = true;
+            } else {
+                // TODO: Handle case where this is not an ILocatable
+                this.active = (
+                    // @ts-ignore
+                    this.selectable.loc != null ? 
+                    // @ts-ignore
+                    this.selectable.loc.z == z_match :
+                    // @ts-ignore
+                    this.selectable.co.z == z_match
+                ) 
+            }
         }
         return this.active;
     }
@@ -1052,7 +1057,8 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
         this.height = size * 0.6;
     }
 
-    updateActive(z_match?: number): boolean {
+    updateActive(active_region?: ActiveRegion): boolean {
+        // TODO: Put "always-active" type behavior into mixin or superclass
         this.active = true;
         return this.active;
     }

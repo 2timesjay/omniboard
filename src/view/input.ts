@@ -165,17 +165,16 @@ export class SelectionBroker {
         }
         
         // TODO: Move into a more specific input handler mixin?
-        // @ts-ignore only display_handler_three has z_match
-        if (this.display_handler.z_match != null) {
+        if (this.display_handler.active_region != null) {
             const W = "KeyW";
             const S = "KeyS";
             if (e.code == W) {
                 // @ts-ignore
-                this.display_handler.z_match += 1;
+                this.display_handler.active_region.z += 1;
             }
             if (e.code == S) {
                 // @ts-ignore
-                this.display_handler.z_match -= 1;
+                this.display_handler.active_region.z -= 1;
             }
         }
     }
