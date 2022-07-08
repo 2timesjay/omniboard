@@ -6,7 +6,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GridCoordinate } from '../model/space';
-import { ThreeBroker } from './broker_three';
 import { InputCoordinate } from './input';
 import { IView, makeCanvas } from './rendering';
 
