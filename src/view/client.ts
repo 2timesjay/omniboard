@@ -3,14 +3,13 @@ import { makeCanvas, View2D } from "./rendering";
 import { TacticsController, TacticsPhase } from "../tactics/tactics_controller";
 import { tactics_setup } from "../tactics/tactics_setup";
 import { display_setup } from "../tactics/tactics_display_setup";
-import { Canvas2DBroker } from "./broker";
 import { DisplayHandler } from "./display_handler";
 import { playground_setup } from "../playground/playground_model_setup";
 import { playground_display_setup, playground_display_setup_3D } from "../playground/playground_display_setup";
 import { PlaygroundController, PlaygroundPhase } from "../playground/playground_controller";
 import { View3D } from "./rendering_three";
 import { DisplayHandler3D } from "./display_handler_three";
-import { ThreeBroker } from "./broker";
+import { Canvas2DBroker, ThreeBroker } from "./input";
 
 export const TICK_DURATION_MS = 20
 
