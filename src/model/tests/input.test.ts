@@ -20,6 +20,7 @@ test("async_input_getter test", (t) => {
     var sel_num = new SelectableNumber(10);
     var input_promise = input_request(new Map([[sel_num, new Tree(sel_num)]]))
     input_promise.then((sel) => {
+        // @ts-ignore We know it's a singleton response
         t.equal(sel.value, sel_num);
         t.end();
     })

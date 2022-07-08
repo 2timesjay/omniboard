@@ -1,4 +1,4 @@
-import { InputSelection } from "./input";
+import { InputResponse } from "./input";
 
 export interface ISelectable {}
 
@@ -73,7 +73,7 @@ export class Stack<T> implements Iterable<T>{
 /**
  * Tree - Each subtree can be treated as a Stack.
  * This is useful for converting a choice on a PreviewMap
- * into a Stack InputSelection with maximum ease.
+ * into a Stack InputResponse with maximum ease.
  */
 export class Tree<T> extends Stack<T> {
     value: T;
@@ -147,7 +147,7 @@ export class Tree<T> extends Stack<T> {
     }
 }
 
-export type OptionFn<T extends ISelectable> = (selection?: InputSelection<T>) => Array<T>;
+export type OptionFn<T extends ISelectable> = (selection?: InputResponse<T>) => Array<T>;
 
 export type IncrementFn<T extends ISelectable> = (selection?: Stack<T>) => Array<T>;
 

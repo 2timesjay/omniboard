@@ -1,6 +1,6 @@
 import { Action, ATTACK, END, MOVE } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
-import { InputOptions, InputRequest, InputSelection, synthetic_input_getter } from "../model/input";
+import { InputOptions, InputRequest, InputResponse, synthetic_input_getter } from "../model/input";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
 import { Unit } from "../model/unit";
@@ -33,7 +33,7 @@ export class AI {
         phase: TacticsPhase, 
         input_options: InputOptions<ISelectable>, 
         tactics_inputs: TacticsInputs,
-    ): Promise<InputSelection<ISelectable>> {
+    ): Promise<InputResponse<ISelectable>> {
         // TODO: Is it better to inject tactics_inputs another way?
         this.tactics_inputs = tactics_inputs;
         // Note: Fine to hit these all in one loop

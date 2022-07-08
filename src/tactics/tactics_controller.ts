@@ -1,6 +1,6 @@
 import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
-import { Confirmation, InputOptions, InputRequest, InputSelection, SimpleInputAcquirer } from "../model/input";
+import { Confirmation, InputOptions, InputRequest, InputResponse, SimpleInputAcquirer } from "../model/input";
 import { Inputs, IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, IState } from "../model/state";
@@ -12,7 +12,7 @@ import { AI } from "./tactics_ai";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
-export type InputGenerator<T> = Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>>
+export type InputGenerator<T> = Generator<InputOptions<T>, InputResponse<T>, InputResponse<T>>
 
 // TODO: Replace everywhere
 export type BoardAction = Action<ISelectable, BoardState>;
@@ -27,7 +27,7 @@ export enum InputState {
 export interface TacticsInputs extends Inputs {
     unit?: Unit,
     action?: Action<ISelectable, BoardState>,
-    action_input?: InputSelection<ISelectable>,
+    action_input?: InputResponse<ISelectable>,
 }
 
 /**
@@ -55,7 +55,7 @@ export class TacticsPhase implements IPhase {
 
     // TODO: Efficient way to represent "sequential state machine" without GOTO
     async * run_phase(state: BoardState, cur_team: number
-    ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
+    ): AsyncGenerator<InputOptions<ISelectable>, void, InputResponse<ISelectable>> {
         console.log("TacticsPhase.run_phase");
         var team_units = state.units
             .filter((u) => u.team == cur_team)
@@ -87,7 +87,7 @@ export class TacticsPhase implements IPhase {
     // TODO: Explicit and well-typed, but some generic patterns could be abstracted. 
     * run_subphase(
         state: BoardState, cur_team: number
-    ): Generator<InputOptions<ISelectable>, TacticsInputs, InputSelection<ISelectable>> {
+    ): Generator<InputOptions<ISelectable>, TacticsInputs, InputResponse<ISelectable>> {
         /**
          * Occupies one of three states:
          *  Acquiring Unit,
@@ -181,7 +181,7 @@ export class TacticsPhase implements IPhase {
     * action_input_selection (
         tactics_inputs: TacticsInputs,
         action: Action<ISelectable, BoardState>,
-    ): Generator<InputOptions<ISelectable>, InputSelection<ISelectable>, InputSelection<ISelectable>> {
+    ): Generator<InputOptions<ISelectable>, InputResponse<ISelectable>, InputResponse<ISelectable>> {
         var action_input = yield *action.get_action_input(action.get_root(tactics_inputs));
         return action_input;
     }

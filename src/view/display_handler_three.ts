@@ -2,7 +2,7 @@ import { View3D } from "./rendering_three";
 import { ISelectable, Stack } from "../model/core";
 import { IState } from "../model/state";
 import { DisplayMap, DisplayMap3D, MeshToDisplayMap } from "./input";
-import { InputSelection } from '../model/input';
+import { InputResponse } from '../model/input';
 import { IPhase } from '../model/phase';
 import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
 import { Action } from "../model/action";
@@ -91,7 +91,7 @@ import { Action } from "../model/action";
      * NOTE: Implicitly relies on subtle hack; final confirmation via "confirm click" 
      *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
      */ 
-    on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
+    on_selection(selection: InputResponse<ISelectable>, phase: IPhase) {
         this.clear_queued();
 
         // TODO: Update to reflect phase.current_inputs change to `Input` object-like

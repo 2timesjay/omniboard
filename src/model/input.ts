@@ -16,14 +16,21 @@ export type PreviewMap<T> = Map<T, Tree<T>>;
 // NOTE: PreviewMap Options should return Stack Selection; Array returns T.
 export type InputOptions<T> = PreviewMap<T> | Array<T>;
 export type InputSelection<T> = Stack<T> | T;
+export enum InputSignal {
+    Confirm,
+    Reject,
+    Enter,
+    Exit,
+}
+export type InputResponse<T> = InputSelection<T> | InputSignal;
 
 /**
- * NOTE: Key type; from InputOptions generates asynchronous request for InputSelection.
+ * NOTE: Key type; from InputOptions generates asynchronous request for InputResponse.
  *   Bridge between InputState and user. 
  */
 export type InputRequest<T extends ISelectable> = (
     input_options: InputOptions<T>
-) => Promise<InputSelection<T>>;
+) => Promise<InputResponse<T>>;
 
 
 /**
@@ -44,7 +51,7 @@ export function synthetic_input_getter<T extends ISelectable>(
 ): InputRequest<T> {
     return async function get_input( 
         input_options: InputOptions<T>
-    ): Promise<InputSelection<T>> {
+    ): Promise<InputResponse<T>> {
         console.log("synthetic_input_getter options: ", input_options);
         if (input_options instanceof Array) {
             return selection_fn(input_options);
@@ -97,7 +104,7 @@ export function async_input_getter<T extends ISelectable>(
 
 /**
  * Key Type; Closely related to InputRequest, but a generator version - takes
- * InputOptions and returns corresponding InputSelection type.
+ * InputOptions and returns corresponding InputResponse type.
  */
 // TODO: Refine and use everywhere
 export type SelectionGen<T> = (
@@ -117,14 +124,14 @@ export class Confirmation implements ISelectable, IMenuable {
 }
 
 /**
- * InputAcquirers: Generate repeated InputRequests, yielding intermediate InputSelections,
- *   until satisfying conditions are met for a final InputSelection to be returned. 
+ * InputAcquirers: Generate repeated InputRequests, yielding intermediate InputResponses,
+ *   until satisfying conditions are met for a final InputResponse to be returned. 
  *   `yield` vs. `return` distinguishes the two.
  */
 export interface IInputAcquirer<T> {
-    current_input: InputSelection<T>;
+    current_input: InputResponse<T>;
     input_option_generator: SelectionGen<T>;
-    get_options: (input: InputSelection<T>) => InputOptions<T>;
+    get_options: (input: InputResponse<T>) => InputOptions<T>;
 }
 
 export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
@@ -139,7 +146,7 @@ export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
         this.current_input = auto_input;
     }
 
-    get_options(input: InputSelection<T>): Array<T> {
+    get_options(input: InputResponse<T>): Array<T> {
         return [this.auto_input];
     }
 
@@ -171,12 +178,12 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
         return new SimpleInputAcquirer<U>(() => options);
     }
 
-    get_options(input: InputSelection<T>): Array<T> {
+    get_options(input: InputResponse<T>): Array<T> {
         return this._option_fn(input);
     }
 
     * input_option_generator(
-        base?: InputSelection<T>
+        base?: InputResponse<T>
     ): Generator<Array<T>, T, T> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
@@ -191,10 +198,10 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
                     // var input_resp = yield options;
                     return null; // NOTE: Propagates POP Signal to subphase
                 } else if (CONFIRM_CASE){
-                    console.log("Confirm Simple InputSelection");
+                    console.log("Confirm Simple InputResponse");
                     break;
                 } else {
-                    console.log("InputSelection: ", input_resp);
+                    console.log("InputResponse: ", input_resp);
                     this.current_input = input_resp;
                     input_resp = yield options;
                 }
@@ -241,18 +248,18 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
                 // TODO: Propagate null selection better - current state + "pop signal" tuple?
                 if (this.current_input.parent) {
                     this.current_input = this.current_input.pop();
-                    console.log("Pop Sequential InputSelection")
+                    console.log("Pop Sequential InputResponse")
                     preview_map = this.get_options(this.current_input);                        
                 } else {
-                    console.log("Cannot Pop Sequential InputSelection");
+                    console.log("Cannot Pop Sequential InputResponse");
                     return null; // NOTE: Propagates POP Signal to subphase
                 }
                 input_resp = yield preview_map;
             } else if (CONFIRM_CASE){
-                console.log("Confirm Sequential InputSelection");
+                console.log("Confirm Sequential InputResponse");
                 break;
             } else {
-                console.log("InputSelection: ", input_resp);
+                console.log("InputResponse: ", input_resp);
                 this.current_input = input_resp;
                 preview_map = this.get_options(this.current_input); 
                 input_resp = yield preview_map;
@@ -288,7 +295,7 @@ export class ChainedInputAcquirer<T> extends SequentialInputAcquirer<T> {
 
 // NOTE: Supports set acquisition with DAGish constraints.
 // TODO: Actually harder to make an arbitrarily constrained SetInputAcquirer.
-// TODO: Replace Stack.to_array with new InputSelection type? ("set" or "pool").
+// TODO: Replace Stack.to_array with new InputResponse type? ("set" or "pool").
 class TreeInputAcquirer<T> implements IInputAcquirer<T> {
     increment_fn: IncrementFn<T>;
     termination_fn: TerminationFn<T>;
@@ -322,10 +329,10 @@ class TreeInputAcquirer<T> implements IInputAcquirer<T> {
                 // TODO: Propagate null selection better - current state + "pop signal" tuple?
                 if (this.current_input.parent) {
                     this.current_input = this.current_input.pop();
-                    console.log("Pop Sequential InputSelection")
+                    console.log("Pop Sequential InputResponse")
                     preview_map = this.get_options(this.current_input);                        
                 } else {
-                    console.log("Cannot Pop Sequential InputSelection");
+                    console.log("Cannot Pop Sequential InputResponse");
                     return null; // NOTE: Propagates POP Signal to subphase
                 }
                 input_resp = yield preview_map;
@@ -335,10 +342,10 @@ class TreeInputAcquirer<T> implements IInputAcquirer<T> {
                 var DESELECT_CASE = input_resp != null && already_selected;
                 var CONFIRM_CASE = false; // TODO: Implement.
                 if (CONFIRM_CASE){
-                    console.log("Confirm Sequential InputSelection");
+                    console.log("Confirm Sequential InputResponse");
                     break;
                 } else {
-                    console.log("InputSelection: ", input_resp);
+                    console.log("InputResponse: ", input_resp);
                     this.current_input = input_resp;
                     preview_map = this.get_options(this.current_input); 
                     input_resp = yield preview_map;

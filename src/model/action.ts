@@ -3,7 +3,7 @@ import { Flinch, Bump } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, OptionFn, Stack } from "./core";
 import { AlterStatusEffect, AlterTerrainEffect, AlterType, DamageEffect, Effect, ExhaustEffect, MoveEffect, ShoveEffect } from "./effect";
-import { IInputAcquirer, InputSelection, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer, ChainedInputAcquirer } from "./input";
+import { IInputAcquirer, InputResponse, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer, ChainedInputAcquirer } from "./input";
 import { Inputs } from "./phase";
 import { GridLocation, Vector } from "./space";
 import { IState, BoardState} from "./state";
@@ -21,7 +21,7 @@ export const COUNTER = "Counter";
 export const TERRAIN = "Alter Terrain";
 export const SHOVE = "Shove";
 
-export type DigestFn<T extends ISelectable> = (selection: InputSelection<T>) => Array<Effect>;
+export type DigestFn<T extends ISelectable> = (selection: InputResponse<T>) => Array<Effect>;
 
 // TODO: U extends IState not _actually_ used. Remove it.
 // T is the type of input expected
@@ -39,24 +39,24 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         this.enabled = true;   
     }
 
-    peek_action_input(): InputSelection<T> {
+    peek_action_input(): InputResponse<T> {
         return this.acquirer.current_input;
     }
 
     * get_action_input(
-        base: InputSelection<T>
-    ): Generator<InputOptions<T>, InputSelection<T>, InputSelection<T>> {
-        // @ts-ignore expects 'Stack<T> & T', but the containing gen sends 'InputSelection<T>'
+        base: InputResponse<T>
+    ): Generator<InputOptions<T>, InputResponse<T>, InputResponse<T>> {
+        // @ts-ignore expects 'Stack<T> & T', but the containing gen sends 'InputResponse<T>'
         var input = yield *this.acquirer.input_option_generator(base);
         // TODO: More elegant propagation? Probably solved by separating digest.
         return input;
     }
 
-    digest_fn(selection: InputSelection<T>): Array<Effect> {
+    digest_fn(selection: InputResponse<T>): Array<Effect> {
         throw new Error('Method not implemented.');
     }
 
-    get_root(inputs: Inputs): InputSelection<T> {
+    get_root(inputs: Inputs): InputResponse<T> {
         throw new Error('Method not implemented.');
     }
 
@@ -105,7 +105,7 @@ export class SingleTargetAction<T extends ISelectable> extends Action<T, BoardSt
     }
 
     digest_fn(selection: T): Array<Effect> {
-        // TODO: InputSelection wrap/unwrap
+        // TODO: InputResponse wrap/unwrap
         var target = selection;
         var effects = [
             this._build_effect(target),
@@ -210,7 +210,7 @@ export class AttackAction extends Action<Unit, BoardState> {
     }
 
     digest_fn(selection: Unit): Array<Effect> {
-        // TODO: InputSelection wrap/unwrap
+        // TODO: InputResponse wrap/unwrap
         var target = selection;
         var effects = [
             new DamageEffect(this.source, target),
@@ -259,7 +259,7 @@ export class ChainLightningAction extends Action<Unit, BoardState> {
     digest_fn(selection: Stack<Unit>): Array<Effect> {
         var damage_amount = 1;
 
-        // TODO: InputSelection wrap/unwrap
+        // TODO: InputResponse wrap/unwrap
         var target_arr = selection.to_array();
         target_arr.shift();
         var effects: Array<Effect> = target_arr.map(
@@ -302,7 +302,7 @@ export class ChanneledAttackAction extends Action<Unit, BoardState> {
     }
 
     digest_fn(selection: Stack<Unit>): Array<Effect> {
-        // TODO: InputSelection wrap/unwrap
+        // TODO: InputResponse wrap/unwrap
         var units_arr = selection.to_array(); // Length 3 array
         // TODO: Less hacky way to prevent bug from double-clicking source.
         if (units_arr.length != 3) {
@@ -340,7 +340,7 @@ export class EndTurnAction extends Action<Confirmation, BoardState> {
     }
 
     digest_fn(selection: Confirmation): Array<Effect> {
-        // TODO: InputSelection wrap/unwrap
+        // TODO: InputResponse wrap/unwrap
         var effects = this.source.actions.map((a) => new ExhaustEffect(this.source, a))
         return effects;
     }
@@ -366,7 +366,7 @@ export class CounterReadyAction extends Action<Confirmation, BoardState> {
     }
 
     digest_fn(selection: Confirmation): Array<Effect> {
-        // TODO: InputSelection wrap/unwrap
+        // TODO: InputResponse wrap/unwrap
         var status = new CounterReadyStatus(this.source);
         var effects = [
             new AlterStatusEffect(this.source, this.source, status, AlterType.Add),
@@ -407,7 +407,7 @@ export class AlterTerrainAction extends Action<GridLocation, BoardState> {
     }
 
     digest_fn(selection: GridLocation): Array<Effect> {
-        // TODO: InputSelection wrap/unwrap
+        // TODO: InputResponse wrap/unwrap
         var target = selection;
         var effects = [
             new AlterTerrainEffect(this.source, target),

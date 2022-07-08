@@ -1,7 +1,7 @@
 import { TacticsPhase } from "../tactics/tactics_controller";
 import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
-import { InputSelection } from "../model/input";
+import { InputResponse } from "../model/input";
 import { IPhase } from "../model/phase";
 import { BoardState, IState } from "../model/state";
 import { DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
@@ -74,7 +74,7 @@ export class BaseDisplayHandler {
      * NOTE: Implicitly relies on subtle hack; final confirmation via "confirm click" 
      *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
      */ 
-    on_selection(selection: InputSelection<ISelectable>, phase: IPhase) {
+    on_selection(selection: InputResponse<ISelectable>, phase: IPhase) {
         // TODO: pass partial acquirer inputs to DisplayHandler 
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".

@@ -33,6 +33,7 @@ type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 const size: number = 100;
 const k: number = 4; // TODO: un-hardcode.
 
+// TODO: ILocatable -> ILocatable<ICoordinate>
 // TODO: Add size, add center;
 interface ILocatable {
     _xOffset: number;

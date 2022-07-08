@@ -18,7 +18,7 @@ import { IView3D } from "./rendering_three";
  *      clicks on SelectableDisplays that are available resolve as
  *      those selectables. Clicks on the unavailable reject.
  * 3) Creates the input_request that makes InputOptions available in 
- *      InputView and then listens for InputSelection.
+ *      InputView and then listens for InputResponse.
  * 4) Wires the listeners to actual mouse events.
  */
 export class ThreeBroker implements IBroker {
