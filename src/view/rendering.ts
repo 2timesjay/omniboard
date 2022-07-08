@@ -1,5 +1,8 @@
 import { GridCoordinate, ICoordinate } from "../model/space";
 
+
+export type RenderObject = null | THREE.Object3D; // TODO: Add "Canvas snippet"
+
 export function makeCanvas(width: number, height: number, attach: boolean) {
     var canvas = document.createElement("canvas");
     canvas.setAttribute("width", width.toString());
@@ -17,7 +20,7 @@ export function makeRect(
     height: number,
     clr?: string | null, 
     lfa?: number | null
-): void {
+): RenderObject {
     var {x, y} = co;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
@@ -30,6 +33,7 @@ export function makeRect(
     context.strokeStyle = 'black';
     context.stroke();
     context.globalAlpha = 1.0;
+    return null;
 }
 
 export function makeCircle(
@@ -38,7 +42,7 @@ export function makeCircle(
     size: number, 
     clr?: string | null, 
     lfa?: number | null
-): void {
+): RenderObject {
     var {x, y} = co;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
@@ -56,6 +60,7 @@ export function makeCircle(
     // context.strokeStyle = color;
     // context.stroke();
     context.globalAlpha = 1.0;
+    return null;
 }
 
 export function makeLine(
@@ -65,7 +70,7 @@ export function makeLine(
     line_width: number, 
     clr?: string | null, 
     lfa?: number | null
-): void {
+): RenderObject {
     var {x: x_from, y: y_from} = co_from;
     var {x: x_to, y: y_to} = co_to;
     const alpha = lfa == undefined ? 1.0 : lfa;
@@ -81,6 +86,7 @@ export function makeLine(
     
     context.globalAlpha = 1.0;
     context.strokeStyle = 'black';
+    return null;
 }
 
 export function makeArc(
@@ -90,7 +96,7 @@ export function makeArc(
     frac_filled?: number | null,
     clr?: string | null, 
     lfa?: number | null
-): void {
+): RenderObject {
     var {x, y} = co;
     const fraction_filled = frac_filled == undefined ? 1.0: frac_filled;
     const alpha = lfa == undefined ? 1.0 : lfa;
@@ -109,6 +115,7 @@ export function makeArc(
     context.strokeStyle = color;
     context.stroke();
     context.globalAlpha = 1.0;
+    return null;
 }
 
 // TODO: Return RenderObject from draw methods.
@@ -120,27 +127,27 @@ export interface IView<C> {
         frac_filled?: number | null,
         clr?: string | null, 
         lfa?: number | null
-    ) => void;
+    ) => RenderObject;
     drawCircle: (
         co: C,
         size: number, 
         clr?: string | null, 
         lfa?: number | null
-    ) => void;
+    ) => RenderObject;
     drawLine: (
         co_from: C,
         co_to: C,
         line_width: number, 
         clr?: string | null, 
         lfa?: number | null
-    ) => void;
+    ) => RenderObject;
     drawRect: (
         co: C,
         width: number, 
         height: number,
         clr?: string | null, 
         lfa?: number | null
-    ) => void;
+    ) => RenderObject;
 }
 
 export interface IView2D extends IView<GridCoordinate> {
@@ -159,20 +166,20 @@ export class View2D implements IView2D {
 
     drawArc(
         co: GridCoordinate, size: number, frac_filled?: number, clr?: string, lfa?: number
-    ): void {
-        makeArc(co, this.context, size, frac_filled, clr, lfa);
+    ): RenderObject {
+        return makeArc(co, this.context, size, frac_filled, clr, lfa);
     }
 
     drawCircle(
         co: GridCoordinate, size: number, clr?: string, lfa?: number
-    ): void {
-        makeCircle(co, this.context, size, clr, lfa);
+    ): RenderObject {
+        return makeCircle(co, this.context, size, clr, lfa);
     }
 
     drawRect(
         co: GridCoordinate, width: number, height: number, clr?: string, lfa?: number
-    ): void {
-        makeRect(co, this.context, width, height, clr, lfa);
+    ): RenderObject {
+        return makeRect(co, this.context, width, height, clr, lfa);
     }
 
     drawLine(
@@ -181,8 +188,8 @@ export class View2D implements IView2D {
         line_width: number, 
         clr?: string | null, 
         lfa?: number | null
-    ): void {
-        makeLine(co_from, co_to, this.context, line_width, clr, lfa);
+    ): RenderObject {
+        return makeLine(co_from, co_to, this.context, line_width, clr, lfa);
     }
 }
 

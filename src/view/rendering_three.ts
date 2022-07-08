@@ -10,7 +10,6 @@ import { ThreeBroker } from './broker_three';
 import { InputCoordinate } from './input';
 import { IView, makeCanvas } from './rendering';
 
-// @ts-ignore
 export interface IView3D extends IView<GridCoordinate> {
     context: WebGL2RenderingContext;
     scene: THREE.Scene;
@@ -38,7 +37,6 @@ export interface IView3D extends IView<GridCoordinate> {
         co: GridCoordinate,
         width: number, 
         height: number,
-        depth: number,
         clr?: string | null, 
         lfa?: number | null
     ) => THREE.Object3D;
@@ -66,7 +64,6 @@ function makeRect3D(
     mesh.position.y = co.y;
     mesh.position.z = co.z;
     // mesh.obj = obj;
-    // @ts-ignore Scene should exist on context?
     getGroup(scene).add(mesh);
     return mesh;
 }
@@ -305,12 +302,6 @@ export class View3D implements IView3D {
         var canvas = makeCanvas(view_width, view_height, true);
         this.context = canvas.getContext("webgl2");
         this.renderer = makeRenderer( {canvas: canvas});
-        // NOTE: Can only access context through renderer.getContext
-        // @ts-ignore
-        // console.log("Context: ", this.renderer.getContext("webgl"))
-        // @ts-ignore
-        // this.context = this.renderer.getContext("webgl");
-        // this.context = this.renderer.domElement.getContext("webgl");
         this.scene = makeScene();
         this.camera = makeCamera(view_width, view_height);
         this.controls = makeControls(this.camera, canvas);
@@ -348,8 +339,10 @@ export class View3D implements IView3D {
     }
 
     drawRect(
-        co: GridCoordinate, width: number, height: number, depth: number, clr?: string, lfa?: number
+        co: GridCoordinate, width: number, height: number, clr?: string, lfa?: number
     ): THREE.Object3D {
+        // TODO: Get rid of egregious hack for type purposes.
+        var depth = height;
         return makeRect3D(co, this.scene, width, height, depth, clr, lfa);
     }
 

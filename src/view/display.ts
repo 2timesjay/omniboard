@@ -1,14 +1,14 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
-import { IView, IView2D } from "./rendering";
+import { IView, IView2D, RenderObject } from "./rendering";
 import { getMouseCo, InputCoordinate, OnInputEvent } from "./input";
 import { Awaited } from "../model/utilities";
-import { GridLocation, Vector } from "../model/space";
+import { GridLocation, ICoordinate, Vector } from "../model/space";
 import { Unit } from "../model/unit";
 import { createWatchCompilerHost } from "typescript";
 import { Entity } from "../playground/playground_entity";
 import { IView3D, View3D } from "./rendering_three";
-import { Mesh } from "three";
+import { Event, Mesh, Object3D } from "three";
 
 export enum DisplayState {
     Neutral,
@@ -17,6 +17,14 @@ export enum DisplayState {
     Select,
     Queue,
 }
+
+const DEFAULT_DISPLAY_STATE_COLORS = new Map<DisplayState, string>([
+    [DisplayState.Neutral, 'lightgrey'],
+    [DisplayState.Option, 'grey'],
+    [DisplayState.Preview, 'yellow'],
+    [DisplayState.Queue, 'indianred'],
+    [DisplayState.Select, 'red'],
+]);
 
 // Following https://www.typescriptlang.org/docs/handbook/mixins.html
 type Mixinable = new (...args: any[]) => {};
@@ -39,14 +47,19 @@ interface ILocatable {
 }
 
 // TODO: Consider unifying ILocatable and IPathable
+// TODO: Make 3D-safe
 interface IPathable extends ILocatable {
-    pathDisplay: (view: IView2D, to: IPathable) => void;
+    pathDisplay: (view: IView<ICoordinate>, to: IPathable) => void;
 }
 
 export interface IMenuable {// Action<ISelectable>, Confirmation
     index: number;
     text: string;
 }
+
+/**
+ * Animations
+ */
 
 type DeltaGen = Generator<number, DeltaGen, DeltaGen>;
 
@@ -387,9 +400,13 @@ export class AbstractVisual {
     constructor() {
     }
 
-    display(view: IView2D) {
+    display(view: IView<ICoordinate>) {
     }
 }
+
+/**
+ * Visuals
+ */
 
 export class UnitaryVisual extends AbstractVisual{
     parent: ILocatable;
@@ -404,11 +421,11 @@ export class UnitaryVisual extends AbstractVisual{
         parent.children.push(this);
     }
 
-    display(view: IView2D) {
+    display(view: IView<ICoordinate>) {
         this.render(view, null)
     }
 
-    render(view: IView2D, clr: string) {
+    render(view: IView<ICoordinate>, clr: string) {
         throw new Error('Method not implemented.');
     }
 }
@@ -492,6 +509,8 @@ export class LinearVisual extends AbstractVisual {
             10, clr)
     }
 }
+
+
 export class LinearVisual3D extends AbstractVisual {
     from: ILocatable;
     to: ILocatable;
@@ -517,6 +536,10 @@ export class LinearVisual3D extends AbstractVisual {
     }
 }
 
+
+/**
+ * Displays
+ */
 export class AbstractDisplay<T extends ISelectable> {
     selectable: T;
     // TODO: Clean up this crazy state/selection_state
@@ -524,8 +547,10 @@ export class AbstractDisplay<T extends ISelectable> {
     selection_state: DisplayState
     children: Array<AbstractVisual>;
     active: boolean;
+    display_state_colors: Map<DisplayState, string>;
 
     constructor(selectable: T) {
+        this.display_state_colors = DEFAULT_DISPLAY_STATE_COLORS;
         this.selectable = selectable;
         this.state = DisplayState.Neutral;
         this.selection_state = DisplayState.Neutral;
@@ -537,7 +562,7 @@ export class AbstractDisplay<T extends ISelectable> {
         throw new Error('Method not implemented.');
     }
 
-    display(view: IView2D) {
+    display(view: IView<ICoordinate>) {
         // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
         // this.update_pos();
         if (this.state == DisplayState.Select) {
@@ -554,24 +579,36 @@ export class AbstractDisplay<T extends ISelectable> {
             this.queueDisplay(view);
         }
         for (var visual of this.children) {
-            // @ts-ignore
             visual.display(view);
         }
     }
 
-    neutralDisplay(view: IView2D) {
+    render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
+        return null;
     }
 
-    optionDisplay(view: IView2D) {
+    alt_render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
+        return this.alt_render(view, clr, lfa);
     }
 
-    previewDisplay(view: IView2D) {
+    neutralDisplay(view: IView<ICoordinate>): RenderObject {
+        return this.render(view, this.display_state_colors.get(DisplayState.Neutral));
     }
 
-    queueDisplay(view: IView2D) {
+    optionDisplay(view: IView<ICoordinate>): RenderObject {
+        return this.render(view, this.display_state_colors.get(DisplayState.Option));
     }
 
-    selectDisplay(view: IView2D) {
+    previewDisplay(view: IView<ICoordinate>): RenderObject {
+        return this.render(view, this.display_state_colors.get(DisplayState.Preview));
+    }
+
+    queueDisplay(view: IView<ICoordinate>): RenderObject {
+        return this.alt_render(view, this.display_state_colors.get(DisplayState.Queue));
+    }
+
+    selectDisplay(view: IView<ICoordinate>): RenderObject {
+        return this.render(view, this.display_state_colors.get(DisplayState.Select));
     }
 
     // TODO: Input Mixin?
@@ -634,7 +671,6 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
 
     // TODO: Fix up inheritance type errors
     // TODO: replace z_match with more general "active region", here or in display_handler.
-    // @ts-ignore Temp IView3D inherits incorrectly
     display(view: IView3D, z_match?: number): THREE.Object3D {
         // TODO: does this need to move?
         this.updateActive(z_match);
@@ -679,32 +715,11 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
         return this.active;
     }
 
-    // @ts-ignore Temp IView3D inherits incorrectly
-    neutralDisplay(view: IView3D): THREE.Object3D {
-    }
-
-    // @ts-ignore Temp IView3D inherits incorrectly
-    optionDisplay(view: IView3D): THREE.Object3D {
-    }
-
-    // @ts-ignore Temp IView3D inherits incorrectly
-    previewDisplay(view: IView3D): THREE.Object3D {
-    }
-
-    // @ts-ignore Temp IView3D inherits incorrectly
-    queueDisplay(view: IView3D): THREE.Object3D {
-    }
-
-    // @ts-ignore Temp IView3D inherits incorrectly
-    selectDisplay(view: IView3D): THREE.Object3D {
-    }
-
     // TODO: Input Mixin?
     isHit(hit_selectable: ISelectable): boolean {
         return this.selectable == hit_selectable;
     }
 
-    // @ts-ignore
     createOnclick(canvas: HTMLCanvasElement): OnInputEvent<T> {
         // Select by click - clicks off this element de-select.
         let self = this;
@@ -724,7 +739,6 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
         return trigger;
     }
 
-    // @ts-ignore
     createOnmousemove(canvas: HTMLCanvasElement) {
         // Preview if not selected.
         let self = this;
@@ -784,33 +798,17 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
 
     render(view: IView2D, clr: string, lfa?: number) {
         var co = {x: this.xOffset, y: this.yOffset};
-        view.drawRect(co, this.size, this.size, clr, lfa);
+        return view.drawRect(co, this.size, this.size, clr, lfa);
     }
 
     alt_render(view: IView2D, clr: string) {
         var co = {x: this.xOffset, y: this.yOffset};
-        view.drawCircle(co, this.size, clr);
+        return view.drawCircle(co, this.size, clr);
     }
 
-    neutralDisplay(view: IView2D) {
+    neutralDisplay(view: IView2D): RenderObject {
         var lfa = this.selectable.traversable ? 1.0 : 0.25
-        this.render(view, 'lightgrey', lfa);
-    }
-
-    optionDisplay(view: IView2D) {
-        this.render(view, 'grey');
-    }
-
-    previewDisplay(view: IView2D) {
-        this.render(view, 'yellow');
-    }
-
-    queueDisplay(view: IView2D) {
-        this.alt_render(view, 'indianred');
-    }
-
-    selectDisplay(view: IView2D) {
-        this.render(view, 'red');
+        return this.render(view, 'lightgrey', lfa);
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
@@ -873,7 +871,7 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
         var co = {x: this.xOffset, y: this.yOffset};
         return view.drawRect(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
-            this.size, this.size, this.size,
+            this.size, this.size, // TODO: Convert to Coord/ThreeVector
             clr, 
             adj_lfa,
         );
@@ -963,35 +961,19 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         this.height = size * 0.6;
     }
 
-    render(view: IView2D, clr: string) {
+    render(view: IView2D, clr: string): RenderObject {
         var co = {x: this.xOffset, y: this.yOffset};
-        view.drawRect(co, this.size, this.size, clr);
+        return view.drawRect(co, this.size, this.size, clr);
     }
 
-    alt_render(view: IView2D, clr: string) {
+    alt_render(view: IView2D, clr: string): RenderObject {
         var offset = 0.2 * this.size;
         var co = {x: this.xOffset + offset, y: this.yOffset + offset};
-        view.drawRect(co, this.size*.6, this.size*.6, clr);
+        return view.drawRect(co, this.size*.6, this.size*.6, clr);
     }
 
-    neutralDisplay(view: IView2D) {
-        this.render(view, 'orange');
-    }
-
-    optionDisplay(view: IView2D) {
-        this.render(view, 'grey');
-    }
-
-    previewDisplay(view: IView2D) {
-        this.render(view, 'yellow');
-    }
-
-    queueDisplay(view: IView2D) {
-        this.alt_render(view, 'indianred');
-    }
-
-    selectDisplay(view: IView2D) {
-        this.render(view, 'red');
+    neutralDisplay(view: IView2D): RenderObject {
+        return this.render(view, 'orange');
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
@@ -1080,9 +1062,8 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
         var adj_lfa = this.active ? lfa: 0.2 * lfa
         return view.drawRect(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
-            this.size, this.size, this.size,
-            clr, 
-            adj_lfa
+            this.size, this.size, // TODO: Fix 3d rect hack
+            clr, adj_lfa,
         );
     }
 
@@ -1091,7 +1072,7 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
         var reduced_size = 0.6 * this.size;
         return view.drawRect(
             {x: this.xOffset + offset, y: this.yOffset + offset, z: this.zOffset + offset}, 
-            reduced_size, reduced_size, reduced_size,
+            reduced_size, reduced_size, // TODO: Fix 3d rect hack
             clr,
         );
     }
@@ -1100,23 +1081,6 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
         return this.render(view, 'orange');
     }
 
-    optionDisplay(view: IView3D): THREE.Object3D {
-        return this.render(view, 'grey');
-    }
-
-    previewDisplay(view: IView3D): THREE.Object3D {
-        return this.render(view, 'yellow');
-    }
-
-    queueDisplay(view: IView3D): THREE.Object3D {
-        return this.alt_render(view, 'indianred');
-    }
-
-    selectDisplay(view: IView3D): THREE.Object3D {
-        return this.render(view, 'red');
-    }
-
-    // @ts-ignore
     pathDisplay(view: IView3D, to: IPathable) {
         var from = this;
         var line = new LinearVisual3D(from, to);
@@ -1142,6 +1106,7 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         this.update_pos();
     }
 
+    // TODO: Factor this into 2D With Z view
     get xOffset(): number {
         return this._xOffset + this._zOffset;
     }
@@ -1169,7 +1134,7 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         this.height = size * 0.6;
     }
 
-    render(view: IView2D, clr: string) {
+    render(view: IView2D, clr: string): RenderObject {
         var unit: Unit = this.selectable;
         var unit_alpha = (
             unit.all_max_hp.length == 1 ? 
@@ -1177,33 +1142,17 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
             1
         );
         var co = {x: this.xOffset, y: this.yOffset};
-        view.drawRect(co, this.size,  this.size, clr, unit_alpha);
+        return view.drawRect(co, this.size,  this.size, clr, unit_alpha);
     }
 
-    alt_render(view: IView2D, clr: string) {
+    alt_render(view: IView2D, clr: string): RenderObject {
         var offset = 0.2 * this.size;
         var co = {x: this.xOffset + offset, y: this.yOffset + offset};
-        view.drawRect(co, this.size*.6, this.size*.6, clr);
+        return view.drawRect(co, this.size*.6, this.size*.6, clr);
     }
 
-    neutralDisplay(view: IView2D) {
-        this.render(view, this.selectable.team == 0 ? 'orange' : 'blue');
-    }
-
-    optionDisplay(view: IView2D) {
-        this.render(view, 'grey');
-    }
-
-    previewDisplay(view: IView2D) {
-        this.render(view, 'yellow');
-    }
-
-    queueDisplay(view: IView2D) {
-        this.alt_render(view, 'indianred');
-    }
-
-    selectDisplay(view: IView2D) {
-        this.render(view, 'red');
+    neutralDisplay(view: IView2D): RenderObject {
+        return this.render(view, this.selectable.team == 0 ? 'orange' : 'blue');
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
@@ -1249,42 +1198,26 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     }
 
 
-    render(view: IView2D, clr: string) {
+    render(view: IView2D, clr: string, lfa?: number): RenderObject {
         var co = {x: this.xOffset, y: this.yOffset};
-        view.drawRect(
+        var render_object = view.drawRect(
             co, this.width, this.height, "white", 0.5
         );
         // TODO: Add "view.drawText"
         var context = view.context;
-        // @ts-ignore CanvasRenderingContext2D
         context.fillStyle = clr;
-        // @ts-ignore CanvasRenderingContext2D
         context.font = 0.8 * this.size + "px Trebuchet MS";
-        // @ts-ignore CanvasRenderingContext2D
         context.fillText(
             this.selectable.text, 
             this.xOffset + 0.2 * this.size, 
             this.yOffset + 0.8 * this.size
         );
+        return render_object;
     }
 
-    neutralDisplay(view: IView2D) {
-    }
-
-    optionDisplay(view: IView2D) {
-        this.render(view, 'grey');
-    }
-
-    previewDisplay(view: IView2D) {
-        this.render(view, 'yellow');
-    }
-
-    queueDisplay(view: IView2D) {
-        this.render(view, 'indianred');
-    }
-
-    selectDisplay(view: IView2D) {
-        this.render(view, 'red');
+    // Do not render neutral DisplayState IMenuables
+    neutralDisplay(view: IView2D): RenderObject {
+        return null;
     }
 
     isHit(mouseCo: InputCoordinate): boolean {

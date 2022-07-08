@@ -133,6 +133,7 @@ export class BaseDisplayHandler {
         this.render_pathy_inputs();
     }
 
+    // TODO: Not working right now; synchronize with display_handler_three impl.
     render_pathy_inputs() {
         // TODO: turn into a function of Action or some object that encapsulates it.
         for (var i = 0; i < this.pathy_inputs.length - 1; i++) {
