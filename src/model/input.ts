@@ -24,6 +24,13 @@ export enum InputSignal {
 }
 export type InputResponse<T> = InputSelection<T> | InputSignal;
 
+// https://stackoverflow.com/questions/58278652/generic-enum-type-guard
+const isSomeEnum = <T>(e: T) => (token: any): token is T[keyof T] =>
+    Object.values(e).includes(token as T[keyof T]);
+export const isInputSignal = isSomeEnum(InputSignal);
+// TODO: Type Guard for Stack
+// export const isStack = (v) => v.contains()
+
 /**
  * NOTE: Key type; from InputOptions generates asynchronous request for InputResponse.
  *   Bridge between InputState and user. 
@@ -108,8 +115,8 @@ export function async_input_getter<T extends ISelectable>(
  */
 // TODO: Refine and use everywhere
 export type SelectionGen<T> = (
-    ((base?: Stack<T>) => Generator<PreviewMap<T>, Stack<T>, Stack<T>>) | 
-    ((base?: T) => Generator<Array<T>, T, T>)
+    ((base?: Stack<T>) => Generator<PreviewMap<T>, Stack<T>, Stack<T> | InputSignal>) | 
+    ((base?: T) => Generator<Array<T>, T, T | InputSignal>)
 )
 
 // TODO: Move and maybe generate from selectables instead of creating singleton.
@@ -152,9 +159,15 @@ export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
 
     * input_option_generator(
         base?: T
-    ): Generator<Array<T>, T, T> {
+    ): Generator<Array<T>, T, T | InputSignal> {
         var selection = yield this.get_options(base); // For confirmation only.
-        return selection;
+        if (!isInputSignal(selection)) {
+            return selection;
+        } else {
+            // TODO: Handle this robustly and simplify containing loop in Controller.
+            console.log("Not sure this should work: ", selection)
+            return this.current_input;
+        }
     }
 }
 
@@ -184,12 +197,12 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
 
     * input_option_generator(
         base?: InputResponse<T>
-    ): Generator<Array<T>, T, T> {
+    ): Generator<Array<T>, T, T | InputSignal> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
         var options = this.get_options(base);
         var input_resp = yield options;
-        if (this.require_confirmation) {
+        if (this.require_confirmation || isInputSignal(input_resp)) {
             do {
                 var REJECT_CASE = !input_resp;
                 var CONFIRM_CASE = (input_resp != null && input_resp == this.current_input)
@@ -200,10 +213,13 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
                 } else if (CONFIRM_CASE){
                     console.log("Confirm Simple InputResponse");
                     break;
-                } else {
+                } else if (!isInputSignal(input_resp)) {
                     console.log("InputResponse: ", input_resp);
                     this.current_input = input_resp;
-                    input_resp = yield options;
+                    yield options;
+                } else {
+                    console.log('Invalid Input, ', input_resp);
+                    yield options;
                 }
             } while(true);
         } else {
@@ -232,19 +248,33 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
         return bfs(input, this.increment_fn, this.termination_fn).to_map();
     }
 
+    _is_reject(input_resp: Stack<T> | InputSignal): boolean {
+        return (
+            isInputSignal(input_resp) ?
+            input_resp == InputSignal.Reject :
+            !input_resp
+        );
+    }
+
+    _is_confirm(input_resp: Stack<T> | InputSignal): boolean {
+        return (
+            isInputSignal(input_resp) ?
+            input_resp == InputSignal.Confirm :
+            input_resp != null && input_resp.value == this.current_input.value
+        );
+    }
+
     * input_option_generator(
         base?: Stack<T>
-    ): Generator<PreviewMap<T>, Stack<T>, Stack<T>> {
+    ): Generator<PreviewMap<T>, Stack<T>, Stack<T> | InputSignal> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
         this.current_input = base;
         var preview_map = this.get_options(this.current_input);
         var input_resp = yield preview_map;
         do {
-            var REJECT_CASE = !input_resp;
-            var CONFIRM_CASE = (input_resp != null && input_resp.value == this.current_input.value)
             // TODO: Currently treats "null" response as special flag to pop.
-            if (REJECT_CASE) {
+            if (this._is_reject(input_resp)) {
                 // TODO: Propagate null selection better - current state + "pop signal" tuple?
                 if (this.current_input.parent) {
                     this.current_input = this.current_input.pop();
@@ -255,13 +285,17 @@ export class SequentialInputAcquirer<T> implements IInputAcquirer<T> {
                     return null; // NOTE: Propagates POP Signal to subphase
                 }
                 input_resp = yield preview_map;
-            } else if (CONFIRM_CASE){
+            } else if (this._is_confirm(input_resp)){
                 console.log("Confirm Sequential InputResponse");
                 break;
-            } else {
+            } else if (!isInputSignal(input_resp)) {
                 console.log("InputResponse: ", input_resp);
                 this.current_input = input_resp;
                 preview_map = this.get_options(this.current_input); 
+                input_resp = yield preview_map;
+            } else {
+                console.log('Invalid Input, ', input_resp);
+                preview_map = this.get_options(this.current_input);    
                 input_resp = yield preview_map;
             }
         } while(true);
@@ -296,7 +330,7 @@ export class ChainedInputAcquirer<T> extends SequentialInputAcquirer<T> {
 // NOTE: Supports set acquisition with DAGish constraints.
 // TODO: Actually harder to make an arbitrarily constrained SetInputAcquirer.
 // TODO: Replace Stack.to_array with new InputResponse type? ("set" or "pool").
-class TreeInputAcquirer<T> implements IInputAcquirer<T> {
+export class TreeInputAcquirer<T> extends SequentialInputAcquirer<T> {
     increment_fn: IncrementFn<T>;
     termination_fn: TerminationFn<T>;
     current_input: Stack<T>;
@@ -305,18 +339,39 @@ class TreeInputAcquirer<T> implements IInputAcquirer<T> {
         increment_fn: IncrementFn<T>, 
         termination_fn: TerminationFn<T>, 
     ) {
-        this.increment_fn = increment_fn;
-        this.termination_fn = termination_fn;
-        this.current_input = null;
+        super(increment_fn, termination_fn);
     }
 
     get_options(input: Stack<T>): PreviewMap<T> {
         return bfs(input, this.increment_fn, this.termination_fn).to_map();
     }
 
+    _is_confirm(input_resp: Stack<T> | InputSignal): boolean {
+        return input_resp == InputSignal.Confirm;
+    }
+
+    // TODO: Typing kind of inconsistent.
+    _is_select(input_resp: Stack<T> | InputSignal): boolean {
+        if (!isInputSignal(input_resp)) {
+            var already_selected = input_resp.value in this.current_input.to_array()
+            return input_resp != null && !already_selected;
+        } else {
+            return false;
+        }
+    }
+
+    _is_deselect(input_resp: Stack<T> | InputSignal): boolean {
+        if (!isInputSignal(input_resp)) {
+            var already_selected = input_resp.value in this.current_input.to_array()
+            return input_resp != null && already_selected;
+        } else {
+            return false;
+        }
+    }
+
     * input_option_generator(
         base?: Stack<T>
-    ): Generator<PreviewMap<T>, Stack<T>, Stack<T>> {
+    ): Generator<PreviewMap<T>, Stack<T>, Stack<T> | InputSignal> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
         this.current_input = base;
@@ -324,8 +379,7 @@ class TreeInputAcquirer<T> implements IInputAcquirer<T> {
         var input_resp = yield preview_map;
         do {
             // TODO: Currently treats "null" response as special flag to pop.
-            var REJECT_CASE = input_resp == null;
-            if (REJECT_CASE) {
+            if (this._is_reject(input_resp)) {
                 // TODO: Propagate null selection better - current state + "pop signal" tuple?
                 if (this.current_input.parent) {
                     this.current_input = this.current_input.pop();
@@ -336,20 +390,28 @@ class TreeInputAcquirer<T> implements IInputAcquirer<T> {
                     return null; // NOTE: Propagates POP Signal to subphase
                 }
                 input_resp = yield preview_map;
-            } else {
-                var already_selected = input_resp.value in this.current_input.to_array()
-                var SELECT_CASE = input_resp != null && !already_selected;
-                var DESELECT_CASE = input_resp != null && already_selected;
-                var CONFIRM_CASE = false; // TODO: Implement.
-                if (CONFIRM_CASE){
+            } else if (!isInputSignal(input_resp)) {
+                if (this._is_select(input_resp)) {
+                    this.current_input = input_resp;
+                    preview_map = this.get_options(this.current_input); 
+                    input_resp = yield preview_map;
+                } else if(this._is_deselect(input_resp)) {
+                    this.current_input = this.current_input.splice(input_resp.value);
+                    preview_map = this.get_options(this.current_input); 
+                    input_resp = yield preview_map
+                } else if (this._is_confirm(input_resp)){
                     console.log("Confirm Sequential InputResponse");
                     break;
-                } else {
+                } else  {
                     console.log("InputResponse: ", input_resp);
                     this.current_input = input_resp;
                     preview_map = this.get_options(this.current_input); 
                     input_resp = yield preview_map;
-                }
+                } 
+            } else {
+                console.log('Invalid Input, ', input_resp);
+                preview_map = this.get_options(this.current_input);    
+                input_resp = yield preview_map;
             }
         } while(true);
         return this.current_input;

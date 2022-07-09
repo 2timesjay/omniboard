@@ -40,6 +40,14 @@ export class Stack<T> implements Iterable<T>{
         }
     }
 
+    static from_array<U>(arr: Array<U>): Stack<U> {
+        var stack = null
+        for (var value of arr) {
+            stack = new Stack(value, stack);
+        }
+        return stack;
+    }
+
     [Symbol.iterator](): Iterator<T> {
         return new StackIterator<T>(this);
     }
@@ -55,6 +63,18 @@ export class Stack<T> implements Iterable<T>{
     // TODO: This is not the conventional meaning of pop()
     pop(): Stack<T> {
         return this.parent;
+    }
+    
+    splice(value: T): Stack<T> {
+        var arr = this.to_array();
+        var index = arr.indexOf(value);
+        if (index >= 0) {
+            arr.splice(index, 1);
+            return Stack.from_array(arr);
+        } else {
+            return this;
+        }
+        
     }
 
     to_array(): Array<T> {

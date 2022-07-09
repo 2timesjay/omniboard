@@ -1,6 +1,6 @@
 import { Mesh, StaticReadUsage } from "three";
 import { ISelectable, Tree } from "../model/core";
-import { async_input_getter, CallbackSelectionFn, InputRequest, PreviewMap } from "../model/input";
+import { async_input_getter, CallbackSelectionFn, InputRequest, InputSignal, PreviewMap } from "../model/input";
 import { Awaited, Rejection } from "../model/utilities";
 import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
 import { BaseDisplayHandler, DisplayHandler } from "./display_handler";
@@ -150,21 +150,43 @@ export class SelectionBroker {
     }
 
     onKeyboardEvent (e: KeyboardEvent) {
+        // Confirm/Reject
         const ENTER = "Enter";
         const C = "KeyC";
         const ESCAPE = "Escape";
         const X = "KeyX";
+
+        // Select/"Null-reject";
         if (
-            (e.code == ENTER || e.code == C) &&
+            (e.code == C) &&
             (this.mouseover_selection != null) 
         ) {
             this.resolve(this.mouseover_selection);
         }
-        if (e.code == ESCAPE || e.code == X) {
-            console.log(this);
+        if (e.code == X) {
+            // this.resolve(InputSignal.Reject);
             this.reject();
         }
+
+        // Confirm/Reject
+        if (e.code == ENTER) {
+            this.resolve(InputSignal.Confirm);
+        }
+        if (e.code == ESCAPE) {
+            this.resolve(InputSignal.Reject);
+        }
+
+        // Enter/Exit
+        const E = "KeyE";
+        const D = "KeyD";
+        if (e.code == E) {
+            this.resolve(InputSignal.Enter);
+        }
+        if (e.code == D) {
+            this.resolve(InputSignal.Exit);
+        }
         
+        // View Controls
         // TODO: Move into a more specific input handler mixin?
         if (this.display_handler.active_region != null) {
             const W = "KeyW";
