@@ -5,12 +5,12 @@ import { Awaited, Rejection } from "../model/utilities";
 import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
 import { BaseDisplayHandler, DisplayHandler } from "./display_handler";
 import { DisplayHandler3D } from "./display_handler_three";
-import { IView, IView2D } from "./rendering";
+import { HitRect2D, IView, IView2D, RenderObject } from "./rendering";
 import { IView3D } from "./rendering_three";
 
 export type DisplayMap<T> = Map<T, AbstractDisplay<T>>;
 export type DisplayMap3D<T> = Map<T, AbstractDisplay3D<T>>;
-export type MeshToDisplayMap<T> = Map<number, AbstractDisplay3D<T>>;
+export type RenderObjectToDisplayMap<T> = Map<RenderObject, AbstractDisplay<T>>
 
 // TODO: Consistent Style
 export interface InputCoordinate {
@@ -37,43 +37,39 @@ export function getMouseCo3D(canvasDom: HTMLElement, mouseEvent: MouseEvent): In
     };
 }
 
+
+// TODO: Sycnhronize with Selectable3D Merge into SelectionBroker
 export function inputEventToSelectable2D(
     e: MouseEvent, display_handler: DisplayHandler,
 ): ISelectable | null {    
-    // Fanout mouse input to all Displays to check for hits.
-    // TODO: Only hits one object (last). Could extend to pseudo-raycast.
+    // Pseudo-Raycast (2D) to check for hits.
     var canvas = display_handler.view.context.canvas;
-    for (var display of display_handler.display_map.values()) {
-        if (display.isHit(getMouseCo(canvas, e))){
-            var selectable = display.selectable;
-            if (selectable) {
-            }
-        }
-    }
-    if (selectable) {
-        return selectable;
-    }
-    return null;
-}
-export function inputEventToSelectable3D(
-    e: MouseEvent, display_handler: DisplayHandler3D
-): ISelectable | null {
-    // Raycast to check for hits.
-    var canvas = display_handler.context.canvas;
-    var hit_objects = display_handler.view.getHitObjects(getMouseCo3D(canvas, e));
+    var hit_objects = display_handler.view.getHitObjects(
+        getMouseCo(canvas, e), 
+        Array.from(display_handler.render_object_map.keys()),
+    );
+    console.log("Hit objects: ", hit_objects);
     for (var hit_object of hit_objects) {
-        var mesh_id = hit_object ? hit_object.id : null;
-        if (display_handler.mesh_map.has(mesh_id)) {
-            var hit_display = display_handler.mesh_map.get(mesh_id);
-            if (hit_display.active) {
+        if (display_handler.render_object_map.has(hit_object)) {
+            var hit_display = display_handler.render_object_map.get(hit_object);
+            if (hit_display.state != DisplayState.Neutral) {
+                console.log("Hit selectable: ", hit_display.selectable);
                 return hit_display.selectable;
             }
         }
     }
+    return null;
+}
+
+export function inputEventToSelectable3D(
+    e: MouseEvent, display_handler: DisplayHandler3D
+): ISelectable | null {
+    // Raycast to check for hits.
+    var canvas = display_handler.view.context.canvas;
+    var hit_objects = display_handler.view.getHitObjects(getMouseCo3D(canvas, e));
     for (var hit_object of hit_objects) {
-        var mesh_id = hit_object ? hit_object.id : null;
-        if (display_handler.mesh_map.has(mesh_id)) {
-            var hit_display = display_handler.mesh_map.get(mesh_id);
+        if (display_handler.render_object_map.has(hit_object)) {
+            var hit_display = display_handler.render_object_map.get(hit_object);
             if (hit_display.active) {
                 return hit_display.selectable;
             }

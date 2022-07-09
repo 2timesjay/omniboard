@@ -1,19 +1,18 @@
 import { View3D } from "./rendering_three";
 import { ISelectable, Stack } from "../model/core";
 import { IState } from "../model/state";
-import { DisplayMap, DisplayMap3D, MeshToDisplayMap } from "./broker";
+import { DisplayMap, DisplayMap3D, RenderObjectToDisplayMap } from "./broker";
 import { InputResponse } from '../model/input';
 import { IPhase } from '../model/phase';
 import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
 import { Action } from "../model/action";
 import { ActiveRegion, BaseDisplayHandler, IDisplayHandler } from "./display_handler";
+import { RenderObject } from "./rendering";
 
 // TODO: Extend BaseDisplayHandler
  export class DisplayHandler3D extends BaseDisplayHandler {
     view: View3D;
-    context: WebGL2RenderingContext;
     display_map: DisplayMap3D<ISelectable>;
-    mesh_map: MeshToDisplayMap<ISelectable>;
     state: IState;
     stateful_selectables: Array<ISelectable>;
     pathy_inputs: Array<ISelectable>;
@@ -23,12 +22,10 @@ import { ActiveRegion, BaseDisplayHandler, IDisplayHandler } from "./display_han
     constructor(view: View3D, display_map: DisplayMap3D<ISelectable>, state: IState){
         super(view, display_map, state);
         this.view = view;
-        this.context = view.context;
         this.display_map = display_map;
         this.state = state;
         this.stateful_selectables = [];
         this.pathy_inputs = [];
-        this.mesh_map = new Map<number, AbstractDisplay3D<ISelectable>>()
         this.active_region = {z: 0};
     }
 
@@ -41,21 +38,6 @@ import { ActiveRegion, BaseDisplayHandler, IDisplayHandler } from "./display_han
         this._refresh();
         this.render_pathy_inputs();
         this.view.animate();
-    }
-
-    _refresh(
-    ) {
-        this.view.clear();
-        delete this.mesh_map;
-        this.mesh_map = new Map<number, AbstractDisplay3D<ISelectable>>();
-        for (let selectable of this.state.get_selectables()) {
-            var display = this.display_map.get(selectable);
-            // @ts-ignore
-            var mesh = display.display(this.view, this.active_region);
-            if (mesh != null) { // Can only select rendered elements. 
-                this.mesh_map.set(mesh.id, display);
-            }
-        }
     }
 
     update_queued(pending_inputs: Array<ISelectable>) {  

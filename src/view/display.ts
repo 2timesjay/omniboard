@@ -565,25 +565,36 @@ export class AbstractDisplay<T extends ISelectable> {
         throw new Error('Method not implemented.');
     }
 
-    display(view: IView<ICoordinate>, active_region?: ActiveRegion) {
+    updateActive(active_region?: ActiveRegion): boolean {
+        return true;
+    }
+
+    // TODO: Fix up inheritance type errors
+    // TODO: replace z_match with more general "active region", here or in display_handler.
+    display(view: IView<ICoordinate>, active_region?: ActiveRegion): RenderObject {
+        // TODO: does this need to move?
+        this.updateActive(active_region);
+
         // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
-        // this.update_pos();
         if (this.state == DisplayState.Select) {
-            this.selectDisplay(view);
+            var render_object = this.selectDisplay(view);
         } else if (this.state == DisplayState.Preview) {
-            this.previewDisplay(view);
+            var render_object = this.previewDisplay(view);
         } else if (this.state == DisplayState.Option) {
-            this.optionDisplay(view);
+            var render_object = this.optionDisplay(view);
         } else {
-            this.neutralDisplay(view);
+            var render_object = this.neutralDisplay(view);
         }
 
         if (this.selection_state == DisplayState.Queue) {
-            this.queueDisplay(view);
+            this.queueDisplay(view); // Don't use render_object.
         }
         for (var visual of this.children) {
+            // @ts-ignore
             visual.display(view);
         }
+
+        return render_object;
     }
 
     render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
@@ -615,8 +626,8 @@ export class AbstractDisplay<T extends ISelectable> {
     }
 
     // TODO: Input Mixin?
-    isHit(mouseCo: InputCoordinate): boolean {
-        return false;
+    isHit(hit_selectable: ISelectable): boolean {
+        return this.selectable == hit_selectable;
     }
 
     createOnclick(canvas: HTMLCanvasElement): OnInputEvent<T> {
@@ -672,34 +683,6 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
         super(selectable);
     }
 
-    // TODO: Fix up inheritance type errors
-    // TODO: replace z_match with more general "active region", here or in display_handler.
-    display(view: IView3D, active_region?: ActiveRegion): THREE.Object3D {
-        // TODO: does this need to move?
-        this.updateActive(active_region);
-
-        // TODO: Safe update if animation fails. Offset Also a delegated gen, not just delta?
-        if (this.state == DisplayState.Select) {
-            var mesh = this.selectDisplay(view);
-        } else if (this.state == DisplayState.Preview) {
-            var mesh = this.previewDisplay(view);
-        } else if (this.state == DisplayState.Option) {
-            var mesh = this.optionDisplay(view);
-        } else {
-            var mesh = this.neutralDisplay(view);
-        }
-
-        if (this.selection_state == DisplayState.Queue) {
-            this.queueDisplay(view); // Don't use mesh.
-        }
-        for (var visual of this.children) {
-            // @ts-ignore
-            visual.display(view);
-        }
-
-        return mesh;
-    }
-
     updateActive(active_region?: ActiveRegion): boolean {
         if (active_region == null) {
             this.active = true;
@@ -720,11 +703,6 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
             }
         }
         return this.active;
-    }
-
-    // TODO: Input Mixin?
-    isHit(hit_selectable: ISelectable): boolean {
-        return this.selectable == hit_selectable;
     }
 
     createOnclick(canvas: HTMLCanvasElement): OnInputEvent<T> {
@@ -816,16 +794,6 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     neutralDisplay(view: IView2D): RenderObject {
         var lfa = this.selectable.traversable ? 1.0 : 0.25
         return this.render(view, 'lightgrey', lfa);
-    }
-
-    isHit(mouseCo: InputCoordinate): boolean {
-        if (mouseCo.x >= SIZE*this.xOffset && mouseCo.x < SIZE*(this.xOffset + this.width)) {
-            if (mouseCo.y >= SIZE*this.yOffset && mouseCo.y < SIZE*(this.yOffset + this.height)) {
-                return true;
-            }
-        } else {
-            return false;
-        }
     }
 
     pathDisplay(view: IView2D, to: IPathable) {
@@ -981,16 +949,6 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
 
     neutralDisplay(view: IView2D): RenderObject {
         return this.render(view, 'orange');
-    }
-
-    isHit(mouseCo: InputCoordinate): boolean {
-        if (mouseCo.x >= SIZE*this.xOffset && mouseCo.x < SIZE*(this.xOffset + this.width)) {
-            if (mouseCo.y >= SIZE*this.yOffset && mouseCo.y < SIZE*(this.yOffset + this.height)) {
-                return true;
-            }
-        } else {
-            return false;
-        }
     }
 
     pathDisplay(view: IView2D, to: IPathable) {
@@ -1163,16 +1121,6 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         return this.render(view, this.selectable.team == 0 ? 'orange' : 'blue');
     }
 
-    isHit(mouseCo: InputCoordinate): boolean {
-        if (mouseCo.x >= SIZE*this.xOffset && mouseCo.x < SIZE*(this.xOffset + this.width)) {
-            if (mouseCo.y >= SIZE*this.yOffset && mouseCo.y < SIZE*(this.yOffset + this.height)) {
-                return true;
-            }
-        } else {
-            return false;
-        }
-    }
-
     pathDisplay(view: IView2D, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
@@ -1226,15 +1174,5 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     // Do not render neutral DisplayState IMenuables
     neutralDisplay(view: IView2D): RenderObject {
         return null;
-    }
-
-    isHit(mouseCo: InputCoordinate): boolean {
-        if (mouseCo.x >= SIZE*this.xOffset && mouseCo.x < SIZE*(this.xOffset + this.width)) {
-            if (mouseCo.y >= SIZE*this.yOffset && mouseCo.y < SIZE*(this.yOffset + this.height)) {
-                return true;
-            }
-        } else {
-            return false;
-        }
     }
 }

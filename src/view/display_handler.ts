@@ -4,9 +4,9 @@ import { ISelectable, Stack } from "../model/core";
 import { InputResponse } from "../model/input";
 import { IPhase } from "../model/phase";
 import { BoardState, IState } from "../model/state";
-import { DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
-import { DisplayMap } from "./broker";
-import { IView, IView2D, makeLine } from "./rendering";
+import { AbstractDisplay, DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
+import { DisplayMap, RenderObjectToDisplayMap } from "./broker";
+import { IView, IView2D, makeLine, RenderObject } from "./rendering";
 import { ICoordinate } from "../model/space";
 
 
@@ -42,6 +42,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
     view: IView<ICoordinate>;
     display_map: DisplayMap<ISelectable>;
     state: IState;
+    render_object_map: RenderObjectToDisplayMap<ISelectable>;
     stateful_selectables: Array<ISelectable>;
     active_region: ActiveRegion;
 
@@ -51,10 +52,26 @@ export class BaseDisplayHandler implements IDisplayHandler {
         this.state = state;
         this.stateful_selectables = [];
         this.active_region = null;
+        this.render_object_map = new Map<RenderObject, AbstractDisplay<ISelectable>>();
     }
 
     on_tick() {
         this.refresh();
+    }    
+
+    
+    _refresh() {
+        this.view.clear();
+        delete this.render_object_map;
+        this.render_object_map = new Map<RenderObject, AbstractDisplay<ISelectable>>()
+        for (let selectable of this.state.get_selectables()) {
+            var display = this.display_map.get(selectable);
+            // @ts-ignore
+            var render_object = display.display(this.view, this.active_region);
+            if (render_object != null) { // Can only select rendered elements. 
+                this.render_object_map.set(render_object, display);
+            }
+        }
     }
 
     refresh(){
@@ -140,16 +157,6 @@ export class BaseDisplayHandler implements IDisplayHandler {
     refresh(){
         this._refresh();
         this.render_pathy_inputs();
-    }
-
-    _refresh() {   
-        var context = this.view.context;
-        var canvas = context.canvas;
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        for (let selectable of this.state.get_selectables()) {
-            var display = this.display_map.get(selectable);
-            display.display(this.view, this.active_region);
-        }
     }
 
     // TODO: Not working right now; synchronize with display_handler_three impl.

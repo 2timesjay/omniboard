@@ -1,9 +1,32 @@
 import { GridCoordinate, ICoordinate } from "../model/space";
+import { InputCoordinate } from "./broker";
 
-
-export type RenderObject = null | THREE.Object3D; // TODO: Add "Canvas snippet"
-
+// Canvas rendering scale constant
 const SIZE = 100;
+export class HitRect2D {
+    co: GridCoordinate;
+    dims: GridCoordinate; // TODO: wrong dimensionality; ThreeVector instead?
+
+    constructor(co: GridCoordinate, dims: GridCoordinate) {
+        this.co = co;
+        this.dims = dims;
+    }
+
+    isHit(mouse_co: InputCoordinate): boolean {
+        var xOffset = SIZE * this.co.x;
+        var xExtent = SIZE * (this.co.x + this.dims.x); 
+        var yOffset = SIZE * this.co.y;
+        var yExtent = SIZE * (this.co.y + this.dims.y);
+        if (mouse_co.x >= xOffset && mouse_co.x < xExtent) {
+            if (mouse_co.y >= yOffset && mouse_co.y < yExtent) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+} 
+export type RenderObject = null | THREE.Object3D | HitRect2D; // TODO: Add "Canvas snippet"
 
 export function makeCanvas(width: number, height: number, attach: boolean) {
     var canvas = document.createElement("canvas");
@@ -35,7 +58,7 @@ export function makeRect(
     context.strokeStyle = 'black';
     context.stroke();
     context.globalAlpha = 1.0;
-    return null;
+    return new HitRect2D(co, {x: width, y: height});
 }
 
 export function makeCircle(
@@ -123,6 +146,7 @@ export function makeArc(
 // TODO: Return RenderObject from draw methods.
 export interface IView<C> {
     context: RenderingContext
+    clear: () => void;
     drawArc: (
         co: C,
         size: number, 
@@ -150,6 +174,7 @@ export interface IView<C> {
         clr?: string | null, 
         lfa?: number | null
     ) => RenderObject;
+    getHitObjects: (mouse_co: InputCoordinate, render_objects?: Array<RenderObject>) => Array<RenderObject>;
 }
 
 export interface IView2D extends IView<GridCoordinate> {
@@ -165,7 +190,18 @@ export class View2D implements IView2D {
         var canvas = makeCanvas(k * size, k * size, true);
         this.size = size;
         this.context = canvas.getContext("2d");
+    }
 
+    clear() {
+        var context = this.context;
+        var canvas = context.canvas;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // TODO: Bizarre to smuggle render_objects in here but not in 3d.
+    getHitObjects(mouse_co: InputCoordinate, render_objects: Array<HitRect2D>): Array<HitRect2D> {
+        // find intersections
+        return render_objects.filter(hr => hr.isHit(mouse_co))
     }
 
     drawArc(
@@ -219,5 +255,4 @@ class View2DIsometric extends View2D {
         this.context = canvas.getContext("2d");
 
     }
-
 }

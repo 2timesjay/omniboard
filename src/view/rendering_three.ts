@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GridCoordinate } from '../model/space';
 import { InputCoordinate } from './broker';
-import { IView, makeCanvas } from './rendering';
+import { IView, makeCanvas, RenderObject } from './rendering';
 
 export interface IView3D extends IView<GridCoordinate> {
     context: WebGL2RenderingContext;
@@ -307,7 +307,7 @@ export class View3D implements IView3D {
         this.raycaster = makeRaycaster();
     }
 
-    getHitObjects(mouse_co: InputCoordinate): Array<THREE.Object3D> {
+    getHitObjects(mouse_co: InputCoordinate, render_objects?: Array<RenderObject>): Array<THREE.Object3D> {
         // find intersections
         this.raycaster.setFromCamera(mouse_co, this.camera);
         var group = getGroup(this.scene)
