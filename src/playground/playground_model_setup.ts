@@ -1,4 +1,4 @@
-import { Entity } from "./playground_entity";
+import { Entity } from "../model/entity";
 import { LineSpace, VolumeSpace } from "./playground_space";
 import { PlaygroundState } from "./playground_state";
 

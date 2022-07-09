@@ -4,7 +4,7 @@ import { IState } from "../model/state";
 import { DURATION_FRAMES } from "../model/unit";
 import { Move } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
-import { Entity } from "./playground_entity";
+import { Entity } from "../model/entity";
 
 class PlaygroundMoveKernel implements EffectKernel {
     source: Entity;

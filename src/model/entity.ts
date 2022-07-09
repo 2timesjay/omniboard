@@ -1,5 +1,5 @@
-import { ISelectable } from "../model/core";
-import { ILocation } from "../model/space";
+import { ISelectable } from "./core";
+import { ILocation } from "./space";
 
 export class Entity implements ISelectable {
     loc: ILocation;
