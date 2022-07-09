@@ -1,5 +1,6 @@
 import { Action, AlterTerrainAction, ATTACK, AttackAction, CHAIN, ChainLightningAction, ChanneledAttackAction, CHANNELED_ATTACK, COUNTER, CounterReadyAction, END, EndTurnAction, MOVE, MoveAction, SHOVE, ShoveAction, TERRAIN } from "./action";
 import { ISelectable, Stack } from "./core";
+import { Entity } from "./entity";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "./input";
 import { GridLocation, GridSpace, Vector } from "./space";
 import { BoardState, IState } from "./state";
@@ -49,7 +50,7 @@ export function construct_actions(unit: Unit, state: BoardState, action_list: Ar
     return actions;
 } 
 
-export class Unit implements ISelectable, StatusContainer{
+export class Unit extends Entity implements ISelectable, StatusContainer{
     team: number;
     loc: GridLocation;
     actions: Array<Action<ISelectable, BoardState>>;
@@ -64,6 +65,7 @@ export class Unit implements ISelectable, StatusContainer{
     statuses: Set<Status>;
 
     constructor(team: number){
+        super();
         this.team = team;
         
         this._max_hp = [1, 3];
@@ -135,13 +137,5 @@ export class Unit implements ISelectable, StatusContainer{
 
     update_statuses() {
         this.statuses.forEach(s => s.update())
-    }
-
-    setLoc(loc: GridLocation){
-        this.loc = loc; 
-    }
-
-    setActions(actions: Array<Action<ISelectable, BoardState>>) {
-        this.actions = actions;
     }
 }
