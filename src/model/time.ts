@@ -1,5 +1,5 @@
-interface Phase {};
+import { IPhase } from "./phase";
 
-interface TimePoint {};
+export interface TimePoint {};
 
-type Timeline = Array<[TimePoint, Phase]>;
+export type Timeline = Array<[TimePoint, IPhase]>;

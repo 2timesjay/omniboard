@@ -3,6 +3,8 @@ import { GridCoordinate, ICoordinate } from "../model/space";
 
 export type RenderObject = null | THREE.Object3D; // TODO: Add "Canvas snippet"
 
+const SIZE = 100;
+
 export function makeCanvas(width: number, height: number, attach: boolean) {
     var canvas = document.createElement("canvas");
     canvas.setAttribute("width", width.toString());
@@ -26,7 +28,7 @@ export function makeRect(
     const color = clr == undefined ? "#000000" : clr;
     context.globalAlpha = alpha;
     context.beginPath();
-    context.rect(x, y, width, height);
+    context.rect(x*SIZE, y*SIZE, width*SIZE, height*SIZE);
     context.fillStyle = color;
     context.fill();
     context.lineWidth = 4;
@@ -46,13 +48,13 @@ export function makeCircle(
     var {x, y} = co;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
-    var centerX = x + size/2.0;
-    var centerY = y + size/2.0;
-    var radius = size/2.0;
+    var centerX = SIZE*(x + size/2.0);
+    var centerY = SIZE*(y + size/2.0);
+    var radius = SIZE*(size/2.0);
 
     context.globalAlpha = alpha;
     context.beginPath();
-    context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+    context.arc(SIZE*centerX, SIZE*centerY, SIZE*radius, 0, 2 * Math.PI, false);
     context.fillStyle = color;
     context.fill();
     context.lineWidth = 5;
@@ -80,8 +82,8 @@ export function makeLine(
     context.strokeStyle = color;
 
     context.beginPath();
-    context.moveTo(x_from, y_from);
-    context.lineTo(x_to, y_to);
+    context.moveTo(SIZE*x_from, SIZE*y_from);
+    context.lineTo(SIZE*x_to, SIZE*y_to);
     context.stroke();
     
     context.globalAlpha = 1.0;
@@ -101,13 +103,13 @@ export function makeArc(
     const fraction_filled = frac_filled == undefined ? 1.0: frac_filled;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
-    var centerX = x + size/2.0;
-    var centerY = y + size/2.0;
-    var radius = size/2.0;
+    var centerX = SIZE*(x + size/2.0);
+    var centerY = SIZE*(y + size/2.0);
+    var radius = SIZE*(size/2.0);
 
     context.globalAlpha = alpha;
     context.beginPath();
-    context.arc(centerX, centerY, radius, 0, fraction_filled * 2 * Math.PI, false);
+    context.arc(SIZE*centerX, SIZE*centerY, SIZE*radius, 0, fraction_filled * 2 * Math.PI, false);
     // context.fillStyle = color;
     // context.fill();
     context.lineWidth = 5;
@@ -156,10 +158,12 @@ export interface IView2D extends IView<GridCoordinate> {
 
 export class View2D implements IView2D {
     context: CanvasRenderingContext2D;
+    size: number;
 
     constructor(k: number, size: number) {
         // Create Canvas
         var canvas = makeCanvas(k * size, k * size, true);
+        this.size = size;
         this.context = canvas.getContext("2d");
 
     }

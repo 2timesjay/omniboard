@@ -31,7 +31,8 @@ const DEFAULT_DISPLAY_STATE_COLORS = new Map<DisplayState, string>([
 type Mixinable = new (...args: any[]) => {};
 type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 
-const size: number = 100;
+const SIZE: number = 100;
+const size: number = 1;
 const k: number = 4; // TODO: un-hardcode.
 
 // TODO: ILocatable -> ILocatable<ICoordinate>
@@ -141,7 +142,7 @@ export class CircleInPlace extends BaseAnimation {
 
     * _delta_x(): DeltaGen {
         while(true){
-            var gen = yield Math.cos(Date.now()/100 + this.phase_shift);
+            var gen = yield 0.01*Math.cos(Date.now()/100 + this.phase_shift);
             if (gen != null) {
                 return gen;
             }
@@ -150,7 +151,7 @@ export class CircleInPlace extends BaseAnimation {
 
     * _delta_y(): DeltaGen {
         while(true){
-            var gen = yield Math.sin(Date.now()/100 + this.phase_shift);
+            var gen = yield 0.01*Math.sin(Date.now()/100 + this.phase_shift);
             if (gen != null) {
                 return gen;
             }
@@ -172,7 +173,7 @@ export class JumpInPlace extends BaseAnimation {
 
     * _delta_y(): DeltaGen {
         while(true){
-            var gen = yield -5*Math.abs(Math.sin(Date.now()/500 + this.phase_shift));
+            var gen = yield -0.05*Math.abs(Math.sin(Date.now()/500 + this.phase_shift));
             if (gen != null) {
                 return gen;
             }
@@ -818,8 +819,8 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
-        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
-            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
+        if (mouseCo.x >= SIZE*this.xOffset && mouseCo.x < SIZE*(this.xOffset + this.width)) {
+            if (mouseCo.y >= SIZE*this.yOffset && mouseCo.y < SIZE*(this.yOffset + this.height)) {
                 return true;
             }
         } else {
@@ -983,8 +984,8 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
-        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
-            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
+        if (mouseCo.x >= SIZE*this.xOffset && mouseCo.x < SIZE*(this.xOffset + this.width)) {
+            if (mouseCo.y >= SIZE*this.yOffset && mouseCo.y < SIZE*(this.yOffset + this.height)) {
                 return true;
             }
         } else {
@@ -1163,8 +1164,8 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
-        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
-            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
+        if (mouseCo.x >= SIZE*this.xOffset && mouseCo.x < SIZE*(this.xOffset + this.width)) {
+            if (mouseCo.y >= SIZE*this.yOffset && mouseCo.y < SIZE*(this.yOffset + this.height)) {
                 return true;
             }
         } else {
@@ -1228,8 +1229,8 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     }
 
     isHit(mouseCo: InputCoordinate): boolean {
-        if (mouseCo.x >= this.xOffset && mouseCo.x < this.xOffset + this.width) {
-            if (mouseCo.y >= this.yOffset && mouseCo.y < this.yOffset + this.height) {
+        if (mouseCo.x >= SIZE*this.xOffset && mouseCo.x < SIZE*(this.xOffset + this.width)) {
+            if (mouseCo.y >= SIZE*this.yOffset && mouseCo.y < SIZE*(this.yOffset + this.height)) {
                 return true;
             }
         } else {
