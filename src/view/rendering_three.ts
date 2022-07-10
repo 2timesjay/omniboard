@@ -229,10 +229,10 @@ function makeCamera (view_width: number, view_height: number) {
     // const fov = 180;
     const aspect = view_width/view_height;
     const near = 0.1;
-    const far = 12000;
+    const far = 120;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     // const camera = new THREE.OrthographicCamera(-5, 5, -5, 5, -100, 100)
-    camera.position.set(800, 800, 800)
+    camera.position.set(8, 8, 8)
     // camera.position.set(0, 0, 5);
     // camera.rotation.y=10/180 * Math.PI;
     camera.up = new THREE.Vector3(0, 0, 1)

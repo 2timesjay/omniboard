@@ -31,8 +31,6 @@ const DEFAULT_DISPLAY_STATE_COLORS = new Map<DisplayState, string>([
 type Mixinable = new (...args: any[]) => {};
 type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 
-const SIZE: number = 100;
-const size: number = 1;
 const k: number = 4; // TODO: un-hardcode.
 
 // TODO: ILocatable -> ILocatable<ICoordinate>
@@ -268,9 +266,9 @@ export class Move implements IAnimation {
     ) {
         var {x: dx, y: dy, z: dz} = v
         this.parent = parent;
-        this.x_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dx*size/duration);
-        this.y_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dy*size/duration);
-        this.z_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dz*size/duration);
+        this.x_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dx/duration);
+        this.y_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dy/duration);
+        this.z_walk = [ ...Array(duration+1).keys() ].map( i => (i)*dz/duration);
         this.finished = false;
     }
 
@@ -323,9 +321,9 @@ export class Bump implements IAnimation {
     constructor(
         dx:number, dy: number, duration: number
     ) {
-        this.x_walk = [ ...Array(Math.round(duration/2)).keys() ].map( i => (i)*dx*size/duration*2);
+        this.x_walk = [ ...Array(Math.round(duration/2)).keys() ].map( i => (i)*dx/duration*2);
         this.x_walk.push(...this.x_walk.slice().reverse());
-        this.y_walk = [ ...Array(Math.round(duration/2)).keys() ].map( i => (i)*dy*size/duration*2);
+        this.y_walk = [ ...Array(Math.round(duration/2)).keys() ].map( i => (i)*dy/duration*2);
         this.y_walk.push(...this.y_walk.slice().reverse());
         this.finished = false;
     }
@@ -531,8 +529,8 @@ export class LinearVisual3D extends AbstractVisual {
 
     render(view: IView3D, clr: string) {
         // TODO: Fix arbitrary z offset determined by Unit sizing
-        var co_from = {x: this.from.xOffset, y: this.from.yOffset, z: this.from.zOffset + size*0.7};
-        var co_to = {x: this.to.xOffset, y: this.to.yOffset, z: this.to.zOffset + size*0.7};
+        var co_from = {x: this.from.xOffset, y: this.from.yOffset, z: this.from.zOffset + 0.7};
+        var co_to = {x: this.to.xOffset, y: this.to.yOffset, z: this.to.zOffset + 0.7};
         view.drawLine(
             co_from, co_to, 10, clr,
         )
@@ -735,12 +733,12 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
 
     constructor(loc: GridLocation) {
         super(loc);
-        this._zOffset = this.selectable.z != null ? this.selectable.z * size * k: 0;
-        this._xOffset = this.selectable.x * size + 0.1 * size;
-        this._yOffset = this.selectable.y * size + 0.1 * size;
-        this._size = size * 0.8;
-        this.width = size * 0.8;
-        this.height = size * 0.8;
+        this._zOffset = this.selectable.z != null ? this.selectable.z * k: 0;
+        this._xOffset = this.selectable.x + 0.1;
+        this._yOffset = this.selectable.y + 0.1;
+        this._size = 0.8;
+        this.width = 0.8;
+        this.height = 0.8;
     }
 
     get xOffset(): number {
@@ -792,12 +790,12 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
 
     constructor(loc: GridLocation) {
         super(loc);
-        this._zOffset = this.selectable.z != null ? this.selectable.z * size: 0;
-        this._xOffset = this.selectable.x * size + 0.1 * size;
-        this._yOffset = this.selectable.y * size + 0.1 * size;
-        this._size = size * 0.8;
-        this.width = size * 0.8;
-        this.height = size * 0.8;
+        this._zOffset = this.selectable.z != null ? this.selectable.z: 0;
+        this._xOffset = this.selectable.x + 0.1;
+        this._yOffset = this.selectable.y + 0.1;
+        this._size = 0.8;
+        this.width = 0.8;
+        this.height = 0.8;
     }
 
     updateActive(active_region?: ActiveRegion): boolean {
@@ -926,14 +924,14 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         // @ts-ignore Actualy GridLocation
         console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
         // @ts-ignore Actualy GridLocation
-        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * size * k: 0;
+        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * k: 0;
         // @ts-ignore Actualy GridLocation
-        this._xOffset = this.selectable.loc.x * size + 0.2 * size;
+        this._xOffset = this.selectable.loc.x + 0.2;
         // @ts-ignore Actualy GridLocation
-        this._yOffset = this.selectable.loc.y * size + 0.2 * size;
-        this._size = size * 0.6;
-        this.width = size * 0.6;
-        this.height = size * 0.6;
+        this._yOffset = this.selectable.loc.y + 0.2;
+        this._size = 0.6;
+        this.width = 0.6;
+        this.height = 0.6;
     }
 
     render(view: IView2D, clr: string): RenderObject {
@@ -999,21 +997,21 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
         console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
         
         // TODO: Fix to 0.2 * size after I fix offsets for gridLocations
-        var margin = 0.1 * size;
+        var margin = 0.1;
         // @ts-ignore Actualy GridLocation
-        this._xOffset = this.selectable.loc.x * size + margin;
+        this._xOffset = this.selectable.loc.x + margin;
         // @ts-ignore Actualy GridLocation
-        this._yOffset = this.selectable.loc.y * size + margin;
+        this._yOffset = this.selectable.loc.y + margin;
         this._zOffset = (
             // @ts-ignore Actualy GridLocation
             this.selectable.loc.z != null ? 
             // @ts-ignore Actualy GridLocation
-            (this.selectable.loc.z) * size + size*0.6 + margin: 
+            (this.selectable.loc.z) + 0.6 + margin: 
             margin
         );
-        this._size = size * 0.6;
-        this.width = size * 0.6;
-        this.height = size * 0.6;
+        this._size = 0.6;
+        this.width = 0.6;
+        this.height = 0.6;
     }
 
     updateActive(active_region?: ActiveRegion): boolean {
@@ -1092,12 +1090,12 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
     update_pos() {
         console.log("MOVING UNIT: ", this.selectable)
         console.log("UPDATED LOC: ", this.selectable.loc.co.x, this.selectable.loc.y, this.selectable.loc.z);
-        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * size * k: 0;
-        this._xOffset = this.selectable.loc.x * size + 0.2 * size;
-        this._yOffset = this.selectable.loc.y * size + 0.2 * size;
-        this._size = size * 0.6;
-        this.width = size * 0.6;
-        this.height = size * 0.6;
+        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * k: 0;
+        this._xOffset = this.selectable.loc.x + 0.2;
+        this._yOffset = this.selectable.loc.y + 0.2;
+        this._size = 0.6;
+        this.width = 0.6;
+        this.height = 0.6;
     }
 
     render(view: IView2D, clr: string): RenderObject {
@@ -1140,8 +1138,8 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     constructor(selectable: IMenuable, parent: ILocatable) {
         super(selectable);
         this.parent = parent;
-        this.size = size*0.4;
-        this.width = this.selectable.text.length*0.5*this.size + 0.2*this.size,
+        this.size = 0.4;
+        this.width = this.selectable.text.length * 0.5 * this.size + 0.2 * this.size,
         this.height = this.size;
     }
 
