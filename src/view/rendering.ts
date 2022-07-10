@@ -174,6 +174,13 @@ export interface IView<C> {
         clr?: string | null, 
         lfa?: number | null
     ) => RenderObject;
+    drawText(
+        co: GridCoordinate,
+        text: string, 
+        font_size: number,
+        clr?: string | null,
+        lfa?: number | null,
+    ): RenderObject
     getHitObjects: (mouse_co: InputCoordinate, render_objects?: Array<RenderObject>) => Array<RenderObject>;
 }
 
@@ -230,6 +237,31 @@ export class View2D implements IView2D {
         lfa?: number | null
     ): RenderObject {
         return makeLine(co_from, co_to, this.context, line_width, clr, lfa);
+    }
+
+    drawText(
+        co: GridCoordinate,
+        text: string, 
+        font_size: number,
+        clr?: string | null,
+        lfa?: number | null,
+    ): RenderObject {
+        var {x, y} = co;
+        var context = this.context;
+        context.fillStyle = clr;
+        context.font = SIZE*font_size + "px Trebuchet MS";
+        console.log(
+            
+            text, 
+            SIZE*(x), 
+            SIZE*(y),
+        )
+        context.fillText(
+            text, 
+            SIZE * x, 
+            SIZE * y,
+        );
+        return null;
     }
 }
 

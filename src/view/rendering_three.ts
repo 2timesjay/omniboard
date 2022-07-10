@@ -9,6 +9,9 @@ import { GridCoordinate } from '../model/space';
 import { InputCoordinate } from './broker';
 import { IView, makeCanvas, RenderObject } from './rendering';
 
+// NOTE: used only for textures
+const SIZE = 100;
+
 export interface IView3D extends IView<GridCoordinate> {
     context: WebGL2RenderingContext;
     scene: THREE.Scene;
@@ -119,35 +122,38 @@ function makeLine3D(
     return line;
 }
 
-// function makeTexture() {
-//     var canvas = document.createElement("canvas");
-//     canvas.setAttribute("width", 128);
-//     canvas.setAttribute("height", 128);
-//     const context = canvas.getContext("2d");
-//     context.canvas.value = context;
-//     context.fillStyle = 'darkslategrey';
-//     context.fillRect(0, 0, 128, 128);
-//     return context;
-// }
+function textureHelper() {
+    var canvas = document.createElement("canvas");
+    // TODO: Should this be string???
+    canvas.setAttribute("width", "128");
+    canvas.setAttribute("height", "128");
+    const context = canvas.getContext("2d");
+    context.fillStyle = 'darkslategrey';
+    context.fillRect(0, 0, 128, 128);
+    return context;
+}
 
-// function makeText3D(obj, co, context, text, size, clr, lfa) {
-//     const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
-//     const color = clr == undefined ? "#000000" : clr;
-//     let texture = makeTexture();
-//     texture.fillStyle = color;
-//     texture.font =  128 + "px consolas";
-//     texture.fillText(text, 0, 128);
-//     let geometry = new THREE.PlaneGeometry(size, size);
-//     textureMaterial = new THREE.MeshBasicMaterial();
-//     textureMaterial.map = new THREE.CanvasTexture(texture.canvas);
-//     let mesh = new THREE.Mesh(geometry, textureMaterial);
-//     mesh.position.x = co[0];
-//     mesh.position.y = co[1];
-//     mesh.position.z = co[2];
-//     mesh.coords = co;
-//     mesh.obj = obj;
-//     getGroup(context.scene).add(mesh);
-// }
+function makeText3D(
+    co: GridCoordinate,
+    scene: THREE.Scene,
+    text: string,
+    font_size: number,
+    clr?: string,
+    lfa?: number
+) {
+    const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
+    const color = clr == undefined ? "#000000" : clr;
+    let texture = textureHelper();
+    texture.fillStyle = color;
+    texture.font =  font_size + "px consolas";
+    texture.fillText(text, 0, 128);
+    let geometry = new THREE.PlaneGeometry(SIZE, SIZE);
+    let textureMaterial = new THREE.MeshBasicMaterial();
+    textureMaterial.map = new THREE.CanvasTexture(texture.canvas);
+    let mesh = new THREE.Mesh(geometry, textureMaterial);
+    getGroup(scene).add(mesh);
+    return mesh;
+}
 
 /** THREE objects necessary for rendering */
 function makeRenderer(parameters: Object): THREE.Renderer {
@@ -353,6 +359,16 @@ export class View3D implements IView3D {
         lfa?: number | null
     ): THREE.Object3D {
         return makeLine3D(co_from, co_to, this.scene, line_width, clr, lfa);
+    }
+
+    drawText(
+        co: GridCoordinate,
+        text: string, 
+        font_size: number,
+        clr?: string | null,
+        lfa?: number | null,
+    ): RenderObject {
+        return makeText3D(co, this.scene, text, font_size, clr, lfa);
     }
 
     clear(){

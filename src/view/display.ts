@@ -1155,19 +1155,14 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
 
 
     render(view: IView2D, clr: string, lfa?: number): RenderObject {
-        var co = {x: this.xOffset, y: this.yOffset};
+        var hit_co = {x: this.xOffset, y: this.yOffset};
+        var text_co = {x: this.xOffset, y: this.yOffset + this.height};
+        var text_size = 0.8 * this.size;
         var render_object = view.drawRect(
-            co, this.width, this.height, "white", 0.5
+            hit_co, this.width, this.height, "white", 0.5
         );
+        view.drawText(text_co, this.selectable.text, text_size, clr)
         // TODO: Do all this in "view.drawText"
-        var context = view.context;
-        context.fillStyle = clr;
-        context.font = 100*(0.8 * this.size) + "px Trebuchet MS";
-        context.fillText(
-            this.selectable.text, 
-            100*(this.xOffset + 0.2 * this.size), 
-            100*(this.yOffset + 0.7 * this.size),
-        );
         return render_object;
     }
 

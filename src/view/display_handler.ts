@@ -119,7 +119,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
      *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
      */ 
     on_selection(selection: InputResponse<ISelectable>, phase: IPhase) {
-        // TODO: pass partial acquirer inputs to DisplayHandler 
+        // TODO: Unify 2d and 3d versions of this method.
         // TODO: Factor this into BaseDisplayHandler and sanitize
         // TODO: Would be nice to display first loc as "queued".
         // TODO: Rework with "SelectionView", outlined in Notebook.
