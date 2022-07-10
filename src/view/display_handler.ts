@@ -59,6 +59,24 @@ export class BaseDisplayHandler implements IDisplayHandler {
         this.refresh();
     }    
 
+    update_queued(pending_inputs: Array<ISelectable>) { 
+        for(let pending_selectable of pending_inputs) {
+            if (!(pending_selectable instanceof Action)) {
+                var display = this.display_map.get(pending_selectable);
+                display.selection_state = DisplayState.Queue;
+            }
+        }
+    }
+
+    clear_queued() {
+        for (var display of this.display_map.values()) {
+            display.selection_state = DisplayState.Neutral;
+            display.state = DisplayState.Neutral;
+        }
+        while(this.stateful_selectables.length > 0) {
+            this.stateful_selectables.pop();
+        }
+    }
     
     _refresh() {
         this.view.clear();
@@ -121,7 +139,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
         var acquirer_inputs_arr = acquirer_inputs instanceof Stack ? acquirer_inputs.to_array() : (
             acquirer_inputs == null ? [] : [acquirer.current_input]
         )
-        console.log(acquirer_inputs);
+        this.update_queued(acquirer_inputs_arr);
         this.pathy_inputs = acquirer_inputs_arr;
 
         this.stateful_selectables.push(...acquirer_inputs_arr);
@@ -137,6 +155,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
         console.log("Game End");
         // Clear states and clear stateful_selectables
         // TODO: Clumsy Clear
+        this.clear_queued();
         for (var display of this.display_map.values()) {
             display.selection_state = DisplayState.Neutral;
             display.state = DisplayState.Neutral;
@@ -167,7 +186,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
             var from: IPathable = this.display_map.get(this.pathy_inputs[i]);
             // @ts-ignore TODO: Add type guard
             var to: IPathable = this.display_map.get(this.pathy_inputs[i+1]);
-            from.pathDisplay(this.view.context, to);
+            from.pathDisplay(this.view, to);
         }
     }
 }

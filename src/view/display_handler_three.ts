@@ -40,25 +40,6 @@ import { RenderObject } from "./rendering";
         this.view.animate();
     }
 
-    update_queued(pending_inputs: Array<ISelectable>) {  
-        for(let pending_selectable of pending_inputs) {
-            if (!(pending_selectable instanceof Action)) {
-                var display = this.display_map.get(pending_selectable);
-                display.selection_state = DisplayState.Queue;
-            }
-        }
-    }
-
-    clear_queued() {
-        for (var display of this.display_map.values()) {
-            display.selection_state = DisplayState.Neutral;
-            display.state = DisplayState.Neutral;
-        }
-        while(this.stateful_selectables.length > 0) {
-            this.stateful_selectables.pop();
-        }
-    }
-
     render_pathy_inputs() {
         // TODO: turn into a function of Action or some object that encapsulates it.
         for (var i = 0; i < this.pathy_inputs.length - 1; i++) {

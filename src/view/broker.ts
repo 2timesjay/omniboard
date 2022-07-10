@@ -48,12 +48,10 @@ export function inputEventToSelectable2D(
         getMouseCo(canvas, e), 
         Array.from(display_handler.render_object_map.keys()),
     );
-    console.log("Hit objects: ", hit_objects);
     for (var hit_object of hit_objects) {
         if (display_handler.render_object_map.has(hit_object)) {
             var hit_display = display_handler.render_object_map.get(hit_object);
             if (hit_display.state != DisplayState.Neutral) {
-                console.log("Hit selectable: ", hit_display.selectable);
                 return hit_display.selectable;
             }
         }

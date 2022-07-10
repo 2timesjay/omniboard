@@ -71,9 +71,9 @@ export function makeCircle(
     var {x, y} = co;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
-    var centerX = SIZE*(x + size/2.0);
-    var centerY = SIZE*(y + size/2.0);
-    var radius = SIZE*(size/2.0);
+    var centerX = (x + size/2.0);
+    var centerY = (y + size/2.0);
+    var radius = (size/2.0);
 
     context.globalAlpha = alpha;
     context.beginPath();
@@ -126,10 +126,10 @@ export function makeArc(
     const fraction_filled = frac_filled == undefined ? 1.0: frac_filled;
     const alpha = lfa == undefined ? 1.0 : lfa;
     const color = clr == undefined ? "#000000" : clr;
-    var centerX = SIZE*(x + size/2.0);
-    var centerY = SIZE*(y + size/2.0);
-    var radius = SIZE*(size/2.0);
-
+    var centerX = (x + size/ 2.0);
+    var centerY = (y + size/ 2.0);
+    var radius = (size/ 2.0);
+    
     context.globalAlpha = alpha;
     context.beginPath();
     context.arc(SIZE*centerX, SIZE*centerY, SIZE*radius, 0, fraction_filled * 2 * Math.PI, false);

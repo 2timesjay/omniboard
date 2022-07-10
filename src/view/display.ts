@@ -51,7 +51,7 @@ interface ILocatable {
 
 // TODO: Consider unifying ILocatable and IPathable
 // TODO: Make 3D-safe
-interface IPathable extends ILocatable {
+export interface IPathable extends ILocatable {
     pathDisplay: (view: IView<ICoordinate>, to: IPathable) => void;
 }
 
@@ -463,8 +463,8 @@ export class HealthVisual extends UnitaryVisual {
     }
 
     render(view: IView2D, clr: string) {
-        const RADIUS_INCR = 5;
-        var radius_delta: number = (this.num_health_bars - this.index)  * RADIUS_INCR;
+        const RADIUS_INCR = 0.05;
+        var radius_delta: number = (this.num_health_bars - this.index) * RADIUS_INCR;
 
         var parent = this.parent;
         var x = parent.xOffset - radius_delta;
@@ -602,7 +602,7 @@ export class AbstractDisplay<T extends ISelectable> {
     }
 
     alt_render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
-        return this.alt_render(view, clr, lfa);
+        return null;
     }
 
     neutralDisplay(view: IView<ICoordinate>): RenderObject {
@@ -1159,14 +1159,14 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
         var render_object = view.drawRect(
             co, this.width, this.height, "white", 0.5
         );
-        // TODO: Add "view.drawText"
+        // TODO: Do all this in "view.drawText"
         var context = view.context;
         context.fillStyle = clr;
-        context.font = 0.8 * this.size + "px Trebuchet MS";
+        context.font = 100*(0.8 * this.size) + "px Trebuchet MS";
         context.fillText(
             this.selectable.text, 
-            this.xOffset + 0.2 * this.size, 
-            this.yOffset + 0.8 * this.size
+            100*(this.xOffset + 0.2 * this.size), 
+            100*(this.yOffset + 0.7 * this.size),
         );
         return render_object;
     }
