@@ -19,9 +19,9 @@ enum GameType {
     Playground3D = 2,
 }
 
-const game_type = GameType.Tactics;
+// const game_type = GameType.Tactics;
 // const game_type = GameType.Playground2D;
-// const game_type = GameType.Playground3D;
+const game_type = GameType.Playground3D;
 
 // @ts-ignore - just a switch
 if (game_type == GameType.Tactics) {

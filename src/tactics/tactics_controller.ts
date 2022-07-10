@@ -1,6 +1,6 @@
 import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
-import { Confirmation, InputOptions, InputRequest, InputResponse, SimpleInputAcquirer } from "../model/input";
+import { Confirmation, InputOptions, InputRequest, InputResponse, InputSelection, SimpleInputAcquirer } from "../model/input";
 import { Inputs, IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, IState } from "../model/state";
@@ -52,6 +52,16 @@ export class TacticsPhase implements IPhase {
     set_display_handler(display_handler: DisplayHandler) {
         this.display_handler = display_handler;
     }
+    
+    get pending_inputs(): InputSelection<ISelectable> {
+        var action = this.current_inputs.action;
+        // Action_input is a special case because they're currently the 
+        // only application of SequentialInputAcquirer.
+        // TODO: Replace this with generic handling of SequentialInputAcquirer
+        var acquirer = action != null ? action.acquirer : null;
+        var acquirer_inputs = acquirer == null ? null : acquirer.current_input ;
+        return acquirer_inputs;
+    }    
 
     // TODO: Efficient way to represent "sequential state machine" without GOTO
     async * run_phase(state: BoardState, cur_team: number

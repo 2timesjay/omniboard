@@ -50,29 +50,6 @@ import { RenderObject } from "./rendering";
             from.pathDisplay(this.view, to);
         }
     }
-    
-    // TODO: add on_* methods to IGameDisplayHandler interface?
-    /**
-     * NOTE: Implicitly relies on subtle hack; final confirmation via "confirm click" 
-     *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
-     */ 
-    on_selection(selection: InputResponse<ISelectable>, phase: IPhase) {
-        this.clear_queued();
-
-        // TODO: Update to reflect phase.current_inputs change to `Input` object-like
-        var current_inputs = [...Object.values(phase.current_inputs)]; // Shallow Copy
-        var pending_inputs = phase.pending_inputs;
-        this.stateful_selectables = current_inputs;
-
-        // TODO: Validate pending_inputs
-        var pending_inputs_arr = pending_inputs instanceof Stack ? pending_inputs.to_array() : (
-            pending_inputs == null ? [] : [pending_inputs]
-        )
-        this.update_queued(pending_inputs_arr);
-        this.pathy_inputs = pending_inputs_arr;
-
-        this.stateful_selectables.push(...pending_inputs_arr);
-    }
 
     on_phase_end(phase: IPhase){
         console.log("Phase End");

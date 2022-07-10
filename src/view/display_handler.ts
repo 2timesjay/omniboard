@@ -45,6 +45,8 @@ export class BaseDisplayHandler implements IDisplayHandler {
     render_object_map: RenderObjectToDisplayMap<ISelectable>;
     stateful_selectables: Array<ISelectable>;
     active_region: ActiveRegion;
+    // TODO: Placeholder for handling sequential input displays
+    pathy_inputs: Array<ISelectable>;
 
     constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
         this.view = view;
@@ -58,6 +60,30 @@ export class BaseDisplayHandler implements IDisplayHandler {
     on_tick() {
         this.refresh();
     }    
+
+    /**
+     * NOTE: Implicitly relies on subtle hack; final confirmation via "confirm click" 
+     *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
+     */ 
+    // TODO: add on_* methods to IGameDisplayHandler interface?
+     on_selection(selection: InputResponse<ISelectable>, phase: IPhase) {
+        this.clear_queued();
+
+        // TODO: Update to reflect phase.current_inputs change to `Input` object-like
+        var current_inputs = [...Object.values(phase.current_inputs)]; // Shallow Copy
+        var pending_inputs = phase.pending_inputs;
+        this.stateful_selectables = current_inputs;
+
+        // TODO: Validate pending_inputs
+        var pending_inputs_arr = pending_inputs instanceof Stack ? pending_inputs.to_array() : (
+            pending_inputs == null ? [] : [pending_inputs]
+        )
+        this.pathy_inputs = pending_inputs_arr;
+        this.update_queued(pending_inputs_arr);
+
+        this.stateful_selectables.push(...pending_inputs_arr);
+    }
+
 
     update_queued(pending_inputs: Array<ISelectable>) { 
         for(let pending_selectable of pending_inputs) {
@@ -106,43 +132,10 @@ export class BaseDisplayHandler implements IDisplayHandler {
  */
  export class DisplayHandler extends BaseDisplayHandler {
     view: IView2D;
-    // TODO: Placeholder for handling sequential input displays
-    pathy_inputs: Array<ISelectable>;
 
     constructor(view: IView2D, display_map: DisplayMap<ISelectable>, state: IState) {
         super(view, display_map, state);
         this.pathy_inputs = [];
-    }
-
-    /**
-     * NOTE: Implicitly relies on subtle hack; final confirmation via "confirm click" 
-     *     does not change `this.current_input`, so whole set of inputs can be correctly cleared.
-     */ 
-    on_selection(selection: InputResponse<ISelectable>, phase: IPhase) {
-        // TODO: Unify 2d and 3d versions of this method.
-        // TODO: Factor this into BaseDisplayHandler and sanitize
-        // TODO: Would be nice to display first loc as "queued".
-        // TODO: Rework with "SelectionView", outlined in Notebook.
-        this.clear_queued();
-
-        // TODO: Update to reflect phase.current_inputs change to `Input` object-like
-        var current_inputs = [...Object.values(phase.current_inputs)]; // Shallow Copy
-        this.stateful_selectables = current_inputs;
-
-        // Update and queue-display selection state
-        var top_sel = current_inputs[current_inputs.length - 1];
-        // Action_input is a special case because they're currently the 
-        // only application of SequentialInputAcquirer.
-        // TODO: Replace this with generic handling of SequentialInputAcquirer
-        var acquirer = (top_sel instanceof Action) ? top_sel.acquirer : null;
-        var acquirer_inputs = acquirer == null ? null : acquirer.current_input ;
-        var acquirer_inputs_arr = acquirer_inputs instanceof Stack ? acquirer_inputs.to_array() : (
-            acquirer_inputs == null ? [] : [acquirer.current_input]
-        )
-        this.update_queued(acquirer_inputs_arr);
-        this.pathy_inputs = acquirer_inputs_arr;
-
-        this.stateful_selectables.push(...acquirer_inputs_arr);
     }
 
     on_phase_end(phase: IPhase){
