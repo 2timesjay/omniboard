@@ -683,28 +683,6 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
         super(selectable);
     }
 
-    updateActive(active_region?: ActiveRegion): boolean {
-        if (active_region == null) {
-            this.active = true;
-        } else {
-            var z_match = active_region.z;
-            if (z_match == null) {
-                this.active = true;
-            } else {
-                // TODO: Handle case where this is not an ILocatable
-                this.active = (
-                    // @ts-ignore
-                    this.selectable.loc != null ? 
-                    // @ts-ignore
-                    this.selectable.loc.z == z_match :
-                    // @ts-ignore
-                    this.selectable.co.z == z_match
-                ) 
-            }
-        }
-        return this.active;
-    }
-
     createOnclick(canvas: HTMLCanvasElement): OnInputEvent<T> {
         // Select by click - clicks off this element de-select.
         let self = this;
@@ -820,6 +798,28 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
         this._size = size * 0.8;
         this.width = size * 0.8;
         this.height = size * 0.8;
+    }
+
+    updateActive(active_region?: ActiveRegion): boolean {
+        if (active_region == null) {
+            this.active = true;
+        } else {
+            var z_match = active_region.z;
+            if (z_match == null) {
+                this.active = true;
+            } else {
+                // TODO: Handle case where this is not an ILocatable
+                this.active = (
+                    // @ts-ignore
+                    this.selectable.loc != null ? 
+                    // @ts-ignore
+                    this.selectable.loc.z == z_match :
+                    // @ts-ignore
+                    this.selectable.co.z == z_match
+                ) 
+            }
+        }
+        return this.active;
     }
 
     get xOffset(): number {
