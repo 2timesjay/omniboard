@@ -250,12 +250,6 @@ export class View2D implements IView2D {
         var context = this.context;
         context.fillStyle = clr;
         context.font = SIZE*font_size + "px Trebuchet MS";
-        console.log(
-            
-            text, 
-            SIZE*(x), 
-            SIZE*(y),
-        )
         context.fillText(
             text, 
             SIZE * x, 
