@@ -70,7 +70,7 @@ function makeRect3D(
     mesh.position.y = co.y;
     mesh.position.z = co.z;
     // mesh.obj = obj;
-    console.log(co, mesh, getGroup(scene))
+    // console.log(co, mesh, getGroup(scene))
     getGroup(scene).add(mesh);
     return mesh;
 }
@@ -169,7 +169,7 @@ function makeText3D(
     font_size: number,
     clr?: string,
     lfa?: number
-) {
+): RenderObject {
     loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
         const color = 0x006699;
 
@@ -186,16 +186,19 @@ function makeText3D(
         } );
 
         const message = '   Three.js\nSimple text.';
-        const shapes = font.generateShapes( message, 100 );
+        const shapes = font.generateShapes( message, 1 );
         const geometry = new THREE.ShapeGeometry( shapes );
         geometry.computeBoundingBox();
         const xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+        console.log("BB: ", xMid, geometry.boundingBox)
         geometry.translate( xMid, 0, 0 );
 
         // make shape ( N.B. edge view not visible )
         const text = new THREE.Mesh( geometry, matLite );
+        // const text = new THREE.Mesh( geometry, matDark );
         text.position.z = - 150;
-        scene.add( text );
+        // NOTE: have to include group checks for some reason?
+        getGroup(scene).add( text );
 
         // make line shape ( N.B. edge view remains visible )
         const holeShapes = [];
@@ -209,7 +212,7 @@ function makeText3D(
             }
         }
         shapes.push.apply( shapes, holeShapes );
-        const lineText = new THREE.Object3D();
+        var lineText = new THREE.Object3D();
 
         for ( let i = 0; i < shapes.length; i ++ ) {
             const shape = shapes[ i ];
@@ -288,6 +291,7 @@ function makeScene(): THREE.Scene {
 
     _addLights(scene);
 
+    // TODO: Remove
     _populateScene(scene);
 
     return scene;
@@ -437,10 +441,7 @@ export class View3D implements IView3D {
         clr?: string | null,
         lfa?: number | null,
     ): RenderObject {
-        console.log("Drawing text")
         return makeText3D(co, this.scene, text, font_size, clr, lfa);
-        // console.log("Dummy draw text");
-        // return null;
     }
 
     clear(){
