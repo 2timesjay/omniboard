@@ -70,6 +70,7 @@ function makeRect3D(
     mesh.position.y = co.y;
     mesh.position.z = co.z;
     // mesh.obj = obj;
+    console.log(co, mesh, getGroup(scene))
     getGroup(scene).add(mesh);
     return mesh;
 }
@@ -218,7 +219,7 @@ function makeText3D(
             const lineMesh = new THREE.Line( geometry, matDark );
             lineText.add( lineMesh );
         }
-        scene.add( lineText );
+        getGroup(scene).add(lineText);
         return lineText;
     } ); //end load function
 }
@@ -438,6 +439,8 @@ export class View3D implements IView3D {
     ): RenderObject {
         console.log("Drawing text")
         return makeText3D(co, this.scene, text, font_size, clr, lfa);
+        // console.log("Dummy draw text");
+        // return null;
     }
 
     clear(){
