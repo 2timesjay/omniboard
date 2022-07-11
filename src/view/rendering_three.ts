@@ -8,7 +8,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { GridCoordinate } from '../model/space';
 import { InputCoordinate } from './broker';
-import { IView, makeCanvas, RenderObject } from './rendering';
+import { IView, makeCanvas, makeRect, RenderObject } from './rendering';
 
 
 const loader = new FontLoader();
@@ -58,7 +58,7 @@ function makeRect3D(
     lfa?: number,
 ): THREE.Object3D {
     const alpha = lfa == undefined ? 1.0 : lfa;
-
+    
     let geometry = new THREE.BoxGeometry(width, height, depth);
     let material = new THREE.MeshStandardMaterial({
         opacity: alpha,
@@ -69,8 +69,6 @@ function makeRect3D(
     mesh.position.x = co.x;
     mesh.position.y = co.y;
     mesh.position.z = co.z;
-    // mesh.obj = obj;
-    // console.log(co, mesh, getGroup(scene))
     getGroup(scene).add(mesh);
     return mesh;
 }
@@ -171,60 +169,75 @@ function makeText3D(
     lfa?: number
 ): RenderObject {
     loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
-        const color = 0x006699;
+        makeRect3D(co, scene, 4, 4, 4, clr, lfa)
 
-        const matDark = new THREE.LineBasicMaterial( {
-            color: color,
-            side: THREE.DoubleSide
-        } );
+        // let geometry = new THREE.BoxGeometry(4, 4, 4);
+        // let material = new THREE.MeshStandardMaterial({
+        //     opacity: 1,
+        //     color: Math.random() * 0xffffff, 
+        // });
+        // let mesh = new THREE.Mesh(geometry, material);
+        // mesh.position.x = co.x;
+        // mesh.position.y = co.y;
+        // mesh.position.z = co.z;
+        // getGroup(scene).add(mesh);
 
-        const matLite = new THREE.MeshBasicMaterial( {
-            color: color,
-            transparent: true,
-            opacity: 0.4,
-            side: THREE.DoubleSide
-        } );
 
-        const message = '   Three.js\nSimple text.';
-        const shapes = font.generateShapes( message, 1 );
-        const geometry = new THREE.ShapeGeometry( shapes );
-        geometry.computeBoundingBox();
-        const xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
-        console.log("BB: ", xMid, geometry.boundingBox)
-        geometry.translate( xMid, 0, 0 );
+        // const color = 0x006699;
 
-        // make shape ( N.B. edge view not visible )
-        const text = new THREE.Mesh( geometry, matLite );
-        // const text = new THREE.Mesh( geometry, matDark );
-        text.position.z = - 150;
-        // NOTE: have to include group checks for some reason?
-        getGroup(scene).add( text );
+        // const matDark = new THREE.LineBasicMaterial( {
+        //     color: color,
+        //     side: THREE.DoubleSide
+        // } );
 
-        // make line shape ( N.B. edge view remains visible )
-        const holeShapes = [];
-        for ( let i = 0; i < shapes.length; i ++ ) {
-            const shape = shapes[ i ];
-            if ( shape.holes && shape.holes.length > 0 ) {
-                for ( let j = 0; j < shape.holes.length; j ++ ) {
-                    const hole = shape.holes[ j ];
-                    holeShapes.push( hole );
-                }
-            }
-        }
-        shapes.push.apply( shapes, holeShapes );
-        var lineText = new THREE.Object3D();
+        // const matLite = new THREE.MeshBasicMaterial( {
+        //     color: color,
+        //     transparent: true,
+        //     opacity: 0.4,
+        //     side: THREE.DoubleSide
+        // } );
 
-        for ( let i = 0; i < shapes.length; i ++ ) {
-            const shape = shapes[ i ];
-            const points = shape.getPoints();
-            const geometry = new THREE.BufferGeometry().setFromPoints( points );
-            geometry.translate( xMid, 0, 0 );
-            const lineMesh = new THREE.Line( geometry, matDark );
-            lineText.add( lineMesh );
-        }
-        getGroup(scene).add(lineText);
-        return lineText;
+        // const message = '   Three.js\nSimple text.';
+        // const shapes = font.generateShapes( message, 1 );
+        // const geometry = new THREE.ShapeGeometry( shapes );
+        // geometry.computeBoundingBox();
+        // const xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+        // console.log("BB: ", xMid, geometry.boundingBox)
+        // geometry.translate( xMid, 0, 0 );
+
+        // // make shape ( N.B. edge view not visible )
+        // const text = new THREE.Mesh( geometry, matLite );
+        // // const text = new THREE.Mesh( geometry, matDark );
+        // text.position.z = - 150;
+        // // NOTE: have to include group checks for some reason?
+        // getGroup(scene).add( text );
+
+        // // make line shape ( N.B. edge view remains visible )
+        // const holeShapes = [];
+        // for ( let i = 0; i < shapes.length; i ++ ) {
+        //     const shape = shapes[ i ];
+        //     if ( shape.holes && shape.holes.length > 0 ) {
+        //         for ( let j = 0; j < shape.holes.length; j ++ ) {
+        //             const hole = shape.holes[ j ];
+        //             holeShapes.push( hole );
+        //         }
+        //     }
+        // }
+        // shapes.push.apply( shapes, holeShapes );
+        // var lineText = new THREE.Object3D();
+
+        // for ( let i = 0; i < shapes.length; i ++ ) {
+        //     const shape = shapes[ i ];
+        //     const points = shape.getPoints();
+        //     const geometry = new THREE.BufferGeometry().setFromPoints( points );
+        //     geometry.translate( xMid, 0, 0 );
+        //     const lineMesh = new THREE.Line( geometry, matDark );
+        //     lineText.add( lineMesh );
+        // }
+        // getGroup(scene).add(lineText);
+        // return lineText;
     } ); //end load function
+    return null;
 }
 
 /** THREE objects necessary for rendering */
@@ -441,7 +454,8 @@ export class View3D implements IView3D {
         clr?: string | null,
         lfa?: number | null,
     ): RenderObject {
-        return makeText3D(co, this.scene, text, font_size, clr, lfa);
+        // return makeText3D(co, this.scene, text, font_size, clr, lfa);
+        return makeRect3D(co, this.scene, 3, 3, 3, clr, lfa);
     }
 
     clear(){

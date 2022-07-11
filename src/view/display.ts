@@ -1191,23 +1191,29 @@ export class MenuElementDisplay3D extends AbstractDisplay3D<IMenuable> {
     }
 
     get yOffset() {
-        return this.parent._yOffset + this.size * this.selectable.index;
+        return this.parent._yOffset;
+    }
+
+    get zOffset() {
+        return this.parent._zOffset + this.size * this.selectable.index;
     }
 
 
     render(view: IView3D, clr: string, lfa?: number): RenderObject {
-        var hit_co = {x: this.xOffset, y: this.yOffset};
-        var text_co = {x: this.xOffset, y: this.yOffset + this.height};
+        var hit_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+        var text_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
         var text_size = 0.8 * this.size;
-        var render_object = view.drawRect(
-            hit_co, this.width, this.height, "white", 0.5
-        );
-        view.drawText(text_co, this.selectable.text, text_size, clr)
+        // var render_object = view.drawRect(
+        //     hit_co, this.width, this.height, "white", 0.5
+        // );
+        console.log("Rendering 3d text: ", this.state, this.selection_state)
+        // var render_object = view.drawText(text_co, this.selectable.text, text_size, clr)
+        var render_object = view.drawRect(text_co, 4, 4, clr)
         // TODO: Do all this in "view.drawText"
         return render_object;
     }
 
-    // Do not render neutral DisplayState IMenuables
+    // // Do not render neutral DisplayState IMenuables
     neutralDisplay(view: IView3D): RenderObject {
         return null;
     }
