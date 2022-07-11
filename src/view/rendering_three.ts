@@ -6,9 +6,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { textChangeRangeIsUnchanged } from 'typescript';
 import helvetiker_reg from '../../fonts/helvetiker_regular.typeface.json'
 import { GridCoordinate } from '../model/space';
-import { InputCoordinate } from './broker';
+import { InputCoordinate, ThreeBroker } from './broker';
 import { IView, makeCanvas, makeRect, RenderObject } from './rendering';
 
 
@@ -170,9 +171,8 @@ function makeText3D(
     clr?: string,
     lfa?: number
 ): RenderObject {
-    console.log("Font", font);
-
-    const color = 0x006699;
+    const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
+    const color = clr == undefined ? "#000000" : clr;
 
     const matDark = new THREE.LineBasicMaterial( {
         color: color,
@@ -187,44 +187,21 @@ function makeText3D(
     } );
 
     const message = '   Three.js\nSimple text.';
-    const shapes = font.generateShapes( message, 1 );
+    const shapes = font.generateShapes( message, font_size );
     const geometry = new THREE.ShapeGeometry( shapes );
     geometry.computeBoundingBox();
-    const xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
-    console.log("BB: ", xMid, geometry.boundingBox)
-    geometry.translate( xMid, 0, 0 );
 
     // make shape ( N.B. edge view not visible )
-    const textMesh = new THREE.Mesh( geometry, matLite );
-    // const text = new THREE.Mesh( geometry, matDark );
-    textMesh.position.z = - 150;
+    const textMesh = new THREE.Mesh( geometry, matDark );
+    textMesh.position.x = co.x + geometry.boundingBox.min.x;
+    textMesh.position.y = co.y + 1 + geometry.boundingBox.min.y;
+    textMesh.position.z = co.z + 1 + geometry.boundingBox.min.z;
+    // textMesh.position.z = - 150;
     // NOTE: have to include group checks for some reason?
     getGroup(scene).add( textMesh );
-
+    // For stroke-style see https://threejs.org/examples/?q=text#webgl_geometry_text_stroke
     // make line shape ( N.B. edge view remains visible )
-    const holeShapes = [];
-    for ( let i = 0; i < shapes.length; i ++ ) {
-        const shape = shapes[ i ];
-        if ( shape.holes && shape.holes.length > 0 ) {
-            for ( let j = 0; j < shape.holes.length; j ++ ) {
-                const hole = shape.holes[ j ];
-                holeShapes.push( hole );
-            }
-        }
-    }
-    shapes.push.apply( shapes, holeShapes );
-    var lineText = new THREE.Object3D();
-
-    for ( let i = 0; i < shapes.length; i ++ ) {
-        const shape = shapes[ i ];
-        const points = shape.getPoints();
-        const geometry = new THREE.BufferGeometry().setFromPoints( points );
-        geometry.translate( xMid, 0, 0 );
-        const lineMesh = new THREE.Line( geometry, matDark );
-        lineText.add( lineMesh );
-    }
-    getGroup(scene).add(lineText);
-    return lineText;
+    return textMesh;
     // loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
     //     return makeRect3D(co, scene, 4, 4, 4, clr, lfa)
 
@@ -456,8 +433,11 @@ export class View3D implements IView3D {
         clr?: string | null,
         lfa?: number | null,
     ): RenderObject {
-        var textObject = makeText3D(co, this.scene, text, font_size, clr, lfa);
-        // textObject.lookAt(this.camera)
+        // @ts-ignore We know it'd 3d.
+        var textObject: THREE.Object3D = makeText3D(co, this.scene, text, font_size, clr, lfa);
+        textObject.up = new THREE.Vector3(0, 0, 1);
+        textObject.lookAt(this.camera.position)
+        console.log(textObject);
         return textObject;
         // return makeRect3D(co, this.scene, 3, 3, 3, clr, lfa);
     }
