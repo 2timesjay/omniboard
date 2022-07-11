@@ -1209,7 +1209,6 @@ export class MenuElementDisplay3D extends AbstractDisplay3D<IMenuable> {
 
     // Do not render neutral DisplayState IMenuables
     neutralDisplay(view: IView3D): RenderObject {
-        console.log("Neutral")
         return null;
     }
 }

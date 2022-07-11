@@ -5,9 +5,13 @@
 // export default THREE;
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { GridCoordinate } from '../model/space';
 import { InputCoordinate } from './broker';
 import { IView, makeCanvas, RenderObject } from './rendering';
+
+
+const loader = new FontLoader();
 
 // NOTE: used only for textures
 const SIZE = 100;
@@ -125,15 +129,16 @@ function makeLine3D(
 function textureHelper() {
     var canvas = document.createElement("canvas");
     // TODO: Should this be string???
-    canvas.setAttribute("width", "128");
-    canvas.setAttribute("height", "128");
+    canvas.setAttribute("width", "1");
+    canvas.setAttribute("height", "1");
     const context = canvas.getContext("2d");
     context.fillStyle = 'darkslategrey';
     context.fillRect(0, 0, 128, 128);
     return context;
 }
 
-function makeText3D(
+// TODO: Not working
+function makeFlatText3D(
     co: GridCoordinate,
     scene: THREE.Scene,
     text: string,
@@ -144,15 +149,78 @@ function makeText3D(
     const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
     const color = clr == undefined ? "#000000" : clr;
     let texture = textureHelper();
-    texture.fillStyle = color;
+    // texture.fillStyle = color;
+    texture.fillStyle = "white";
     texture.font =  font_size + "px consolas";
     texture.fillText(text, 0, 128);
-    let geometry = new THREE.PlaneGeometry(SIZE, SIZE);
+    let geometry = new THREE.PlaneGeometry(10, 10);
     let textureMaterial = new THREE.MeshBasicMaterial();
     textureMaterial.map = new THREE.CanvasTexture(texture.canvas);
     let mesh = new THREE.Mesh(geometry, textureMaterial);
     getGroup(scene).add(mesh);
     return mesh;
+}
+
+function makeText3D(
+    co: GridCoordinate,
+    scene: THREE.Scene,
+    text: string,
+    font_size: number,
+    clr?: string,
+    lfa?: number
+) {
+    loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+        const color = 0x006699;
+
+        const matDark = new THREE.LineBasicMaterial( {
+            color: color,
+            side: THREE.DoubleSide
+        } );
+
+        const matLite = new THREE.MeshBasicMaterial( {
+            color: color,
+            transparent: true,
+            opacity: 0.4,
+            side: THREE.DoubleSide
+        } );
+
+        const message = '   Three.js\nSimple text.';
+        const shapes = font.generateShapes( message, 100 );
+        const geometry = new THREE.ShapeGeometry( shapes );
+        geometry.computeBoundingBox();
+        const xMid = - 0.5 * ( geometry.boundingBox.max.x - geometry.boundingBox.min.x );
+        geometry.translate( xMid, 0, 0 );
+
+        // make shape ( N.B. edge view not visible )
+        const text = new THREE.Mesh( geometry, matLite );
+        text.position.z = - 150;
+        scene.add( text );
+
+        // make line shape ( N.B. edge view remains visible )
+        const holeShapes = [];
+        for ( let i = 0; i < shapes.length; i ++ ) {
+            const shape = shapes[ i ];
+            if ( shape.holes && shape.holes.length > 0 ) {
+                for ( let j = 0; j < shape.holes.length; j ++ ) {
+                    const hole = shape.holes[ j ];
+                    holeShapes.push( hole );
+                }
+            }
+        }
+        shapes.push.apply( shapes, holeShapes );
+        const lineText = new THREE.Object3D();
+
+        for ( let i = 0; i < shapes.length; i ++ ) {
+            const shape = shapes[ i ];
+            const points = shape.getPoints();
+            const geometry = new THREE.BufferGeometry().setFromPoints( points );
+            geometry.translate( xMid, 0, 0 );
+            const lineMesh = new THREE.Line( geometry, matDark );
+            lineText.add( lineMesh );
+        }
+        scene.add( lineText );
+        return lineText;
+    } ); //end load function
 }
 
 /** THREE objects necessary for rendering */
