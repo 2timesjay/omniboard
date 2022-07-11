@@ -1,7 +1,7 @@
 import { ISelectable } from "../model/core";
 import { BoardState } from "../model/state";
 import { GLOBAL_CONFIRMATION, Unit } from "../model/unit";
-import { GridLocationDisplay, UnitDisplay, MenuElementDisplay, AbstractDisplay, HealthVisual, EntityDisplay, GridLocationDisplay3D, EntityDisplay3D, AbstractDisplay3D } from "../view/display";
+import { GridLocationDisplay, UnitDisplay, MenuElementDisplay, AbstractDisplay, HealthVisual, EntityDisplay, GridLocationDisplay3D, EntityDisplay3D, AbstractDisplay3D, MenuElementDisplay3D } from "../view/display";
 import { IView, IView2D } from "../view/rendering";
 import { IView3D } from "../view/rendering_three";
 import { PlaygroundState } from "./playground_state";
@@ -27,6 +27,11 @@ export function playground_display_setup(
         let entity_display = new EntityDisplay(entity);
         display_map.set(entity, entity_display);
         entity_display.display(view);
+        for (let action of entity.actions) {
+            let action_display = new MenuElementDisplay(action, entity_display)
+            display_map.set(action, action_display);
+            action_display.display(view);
+        }
     }
 
     return display_map
@@ -58,6 +63,11 @@ export function playground_display_setup(
         display_map.set(entity, entity_display);
         // @ts-ignore
         entity_display.display(view);
+        for (let action of entity.actions) {
+            let action_display = new MenuElementDisplay3D(action, entity_display)
+            display_map.set(action, action_display);
+            action_display.display(view);
+        }
     }
 
     return display_map

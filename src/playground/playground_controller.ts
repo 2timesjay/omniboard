@@ -1,6 +1,6 @@
 import { ISelectable, Stack } from "../model/core";
 import { Effect } from "../model/effect";
-import { IInputAcquirer, InputOptions, InputRequest, InputSelection, SequentialInputAcquirer, SimpleInputAcquirer } from "../model/input";
+import { AutoInputAcquirer, IInputAcquirer, InputOptions, InputRequest, InputSelection, SequentialInputAcquirer, SimpleInputAcquirer } from "../model/input";
 import { Inputs, IPhase } from "../model/phase";
 import { GridLocation, ILocation } from "../model/space";
 import { IState } from "../model/state";
@@ -9,6 +9,8 @@ import { PlaygroundMoveEffect } from "./playground_effect";
 import { Entity } from "../model/entity";
 import { LineSpace } from "./playground_space";
 import { PlaygroundState } from "./playground_state";
+import { Action } from "../model/action";
+import { EntityMoveAction } from "./playground_action";
 
 type SelectionLabel = ContinuousSelectionLabel | DiscreteSelectionLabel;
 
@@ -22,8 +24,9 @@ enum DiscreteSelectionLabel {
 
 enum PlaygroundInputState {
     Entity = 0,
-    Location = 1,
-    Confirmation = 2,
+    Action = 1,
+    Location = 2,
+    Confirmation = 3,
 }
 
 interface LabeledSelection {
@@ -32,7 +35,7 @@ interface LabeledSelection {
 }
 
 // TODO: Label input selections based on InputState
-class PlaygroundInputs implements Inputs {
+export class PlaygroundInputs implements Inputs {
     input_state: PlaygroundInputState;
     // input_queue: Array<LabeledSelection>;
     input_queue: Array<InputSelection<ISelectable>>;
@@ -86,6 +89,8 @@ export class PlaygroundPhase implements IPhase {
         console.log("Inputs: ", inputs.input_queue);
         // @ts-ignore
         var source: Entity = inputs.consume_input();
+        // @ts-ignore
+        var action: Action = inputs.consume_input();
         // @ts-ignore
         var loc: ILocation = inputs.consume_input().value; // Extract tail of path.
         return [new PlaygroundMoveEffect(source, loc)];
@@ -143,6 +148,14 @@ export class PlaygroundPhase implements IPhase {
                     this.current_inputs.pop_input();
                 }
             }
+            if (this.current_inputs.input_state == PlaygroundInputState.Action){
+                var selection = yield *this.action_selection(state);
+                if (selection != null) {
+                    this.current_inputs.push_input(selection);
+                } else {
+                    this.current_inputs.pop_input();
+                }
+            }
             if (this.current_inputs.input_state == PlaygroundInputState.Location){
                 var selection = yield *this.location_selection(state);
                 if (selection != null) {
@@ -168,32 +181,34 @@ export class PlaygroundPhase implements IPhase {
         var selection = yield *acquirer.input_option_generator();
         return selection;
     }
+
+    * action_selection (
+        state: PlaygroundState
+    ): Generator<Array<ISelectable>, ISelectable, ISelectable> {
+        // var action_options = entity.actions
+        //     .filter((a) => a.enabled);
+        // @ts-ignore
+        var source: Entity = this.current_inputs.peek();
+        // TODO: Allow global actions
+        var action_options = source.actions;
+        console.log("Source: ", source, "Actions: ", action_options)
+        // var acquirer = new AutoInputAcquirer<ISelectable>(
+        //     action_options[0]
+        // );
+        var acquirer = new SimpleInputAcquirer<ISelectable>(
+            () => action_options, false
+        );
+        var action_sel = yield *acquirer.input_option_generator();
+        var action = action_sel;
+        return action;
+    }
     
     * location_selection (
-    state: PlaygroundState
+        state: PlaygroundState
     ): Generator<Array<ISelectable>, ISelectable, ISelectable> { // TODO: Type alias
         // @ts-ignore
-        var source : Entity = this.current_inputs.peek();
-        var increment_fn = (stack: Stack<GridLocation>): Array<GridLocation> => {
-            var entities = state.entities;
-            // @ts-ignore
-            var space: LineSpace = state.space;
-            // @ts-ignore
-            var neighborhood = space.getNaturalNeighborhood(stack.value);
-            var occupied = new Set(entities.map((u) => u.loc));
-            var options = neighborhood
-                .filter(l => !occupied.has(l))
-                .filter(l => l.traversable);
-            return options;
-        };
-        var termination_fn = (stack: Stack<GridLocation>): boolean => {
-            return stack.depth >= 3; // + 1 because stack starts at root.
-        }
-        var acquirer = new SequentialInputAcquirer<GridLocation>(
-            increment_fn,
-            termination_fn,
-        )
-        this._current_acquirer = acquirer;
+        var action : EntityMoveAction = this.current_inputs.peek();
+        this._current_acquirer = action.acquirer;
         // @ts-ignore
         var selection = yield *acquirer.input_option_generator(new Stack(source.loc));
         return selection;

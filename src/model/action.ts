@@ -3,6 +3,7 @@ import { Flinch, Bump } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { ISelectable, OptionFn, Stack } from "./core";
 import { AlterStatusEffect, AlterTerrainEffect, AlterType, DamageEffect, Effect, ExhaustEffect, MoveEffect, ShoveEffect } from "./effect";
+import { Entity } from "./entity";
 import { IInputAcquirer, InputResponse, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer, ChainedInputAcquirer } from "./input";
 import { Inputs } from "./phase";
 import { GridLocation, Vector } from "./space";

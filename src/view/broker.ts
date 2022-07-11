@@ -205,6 +205,7 @@ export function build_broker_callback<T extends ISelectable>(
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
         console.log("Setup Selection Callbacks on Canvas: ", options);
         var displays = options.map((o) => display_map.get(o));
+        console.log("Display callback targets: ", displays);
         var onclicks = displays.map(
             (d) => d.createOnclick(canvas)
         );

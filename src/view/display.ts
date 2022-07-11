@@ -1169,3 +1169,47 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
         return null;
     }
 }
+
+// TODO: Merge with 2D version
+export class MenuElementDisplay3D extends AbstractDisplay3D<IMenuable> {
+    selectable: IMenuable;
+    parent: ILocatable;
+    size: number;
+    width: number;
+    height: number;
+    
+    constructor(selectable: IMenuable, parent: ILocatable) {
+        super(selectable);
+        this.parent = parent;
+        this.size = 0.4;
+        this.width = this.selectable.text.length * 0.5 * this.size + 0.2 * this.size,
+        this.height = this.size;
+    }
+
+    get xOffset() {
+        return this.parent._xOffset;
+    }
+
+    get yOffset() {
+        return this.parent._yOffset + this.size * this.selectable.index;
+    }
+
+
+    render(view: IView3D, clr: string, lfa?: number): RenderObject {
+        var hit_co = {x: this.xOffset, y: this.yOffset};
+        var text_co = {x: this.xOffset, y: this.yOffset + this.height};
+        var text_size = 0.8 * this.size;
+        var render_object = view.drawRect(
+            hit_co, this.width, this.height, "white", 0.5
+        );
+        view.drawText(text_co, this.selectable.text, text_size, clr)
+        // TODO: Do all this in "view.drawText"
+        return render_object;
+    }
+
+    // Do not render neutral DisplayState IMenuables
+    neutralDisplay(view: IView3D): RenderObject {
+        console.log("Neutral")
+        return null;
+    }
+}

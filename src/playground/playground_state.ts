@@ -64,6 +64,8 @@ export class PlaygroundState implements IState {
         // TODO: selectable order = Draw order - shouldn't be case.
         selectables.push(...this.space.to_array());
         selectables.push(...this.entities);
+        // TODO: Generalize adding "children" here and in display
+        selectables.push(...this.entities.flatMap(e => e.actions));
         return selectables;
     }
 

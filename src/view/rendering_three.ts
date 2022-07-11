@@ -368,6 +368,7 @@ export class View3D implements IView3D {
         clr?: string | null,
         lfa?: number | null,
     ): RenderObject {
+        console.log("Drawing text")
         return makeText3D(co, this.scene, text, font_size, clr, lfa);
     }
 
