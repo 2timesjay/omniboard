@@ -1206,9 +1206,7 @@ export class MenuElementDisplay3D extends AbstractDisplay3D<IMenuable> {
         // var render_object = view.drawRect(
         //     hit_co, this.width, this.height, "white", 0.5
         // );
-        console.log("Rendering 3d text: ", this.state, this.selection_state)
-        // var render_object = view.drawText(text_co, this.selectable.text, text_size, clr)
-        var render_object = view.drawRect(text_co, 4, 4, clr)
+        var render_object = view.drawText(text_co, this.selectable.text, text_size, clr)
         // TODO: Do all this in "view.drawText"
         return render_object;
     }
