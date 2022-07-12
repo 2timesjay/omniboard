@@ -186,7 +186,7 @@ function makeText3D(
         side: THREE.DoubleSide
     } );
 
-    const message = '   Three.js\nSimple text.';
+    const message = text;
     const shapes = font.generateShapes( message, font_size );
     const geometry = new THREE.ShapeGeometry( shapes );
     geometry.computeBoundingBox();
@@ -194,9 +194,9 @@ function makeText3D(
     // make shape ( N.B. edge view not visible )
     const textMesh = new THREE.Mesh( geometry, matDark );
     // TODO: Recalculate these positions - do I need to add co and bb?
-    textMesh.position.x = co.x + geometry.boundingBox.min.x;
-    textMesh.position.y = co.y + 1 + geometry.boundingBox.min.y;
-    textMesh.position.z = co.z + 1 + geometry.boundingBox.min.z;
+    // textMesh.position.x = co.x + geometry.boundingBox.min.x;
+    // textMesh.position.y = co.y + 1 + geometry.boundingBox.min.y;
+    // textMesh.position.z = co.z + 1 + geometry.boundingBox.min.z;
     // textMesh.position.z = - 150;
     // NOTE: have to include group checks for some reason?
     getGroup(scene).add( textMesh );
@@ -427,6 +427,7 @@ export class View3D implements IView3D {
         return makeLine3D(co_from, co_to, this.scene, line_width, clr, lfa);
     }
 
+    // TODO: Improve Menu rendering and colors for visibility
     drawText(
         co: GridCoordinate,
         text: string, 
@@ -436,22 +437,36 @@ export class View3D implements IView3D {
     ): RenderObject {
         // @ts-ignore We know it'd 3d.
         var textObject: THREE.Object3D = makeText3D(co, this.scene, text, font_size, clr, lfa);
-        textObject.up = new THREE.Vector3(0, 0, 1);
-        textObject.lookAt(this.camera.position);
+        // textObject.up = new THREE.Vector3(0, 0, 1);
+        // textObject.lookAt(this.camera.position);
         // @ts-ignore Geometry is present on mesh
         var geometry: THREE.BoxGeometry = textObject.geometry;
         geometry.computeBoundingBox();
         console.log(geometry);
-        
-        var {x: x_min, y: y_min, z: z_min}= geometry.boundingBox.min;
+
+        // NOTE: Alternatives in https://stackoverflow.com/questions/15492857/any-way-to-get-a-bounding-box-from-a-three-js-object3d
+        const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
+        const color = clr == undefined ? "#000000" : clr;
+        var {x: x_min, y: y_min, z: z_min} = geometry.boundingBox.min;
         var {x: x_max, y: y_max, z: z_max} = geometry.boundingBox.max;
+        var inset = 0.1;
+        var margin = 1.4;
+        var width = (x_max - x_min)
+        var height = (y_max - y_min)
+        var depth = (z_max - z_min)
         var box = makeRect3D(
-            {x: co.x + 1 + x_min, y: co.y + 1 + y_min, z: co.z + 1 + z_min}, 
+            {x: co.x + x_min, y: co.y + y_min, z: co.z + 1 + z_min}, 
+            // {x: x_min - 0.5*width, y: y_min, z: z_min},
             this.scene, 
-            x_max - x_min, y_max - y_min, z_max - z_min, 
-            clr, lfa);
+            margin*width, margin*height, depth + inset, 
+            clr, 0.25 * alpha);
+        textObject.position.x = -0.5 * width;
+        textObject.position.y = -0.5 * height;
+        box.add(textObject);
+        box.position.z = 2
         box.up = new THREE.Vector3(0, 0, 1);
         box.lookAt(this.camera.position);
+        console.log(textObject, box)
         return box;
     }
 
