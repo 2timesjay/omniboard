@@ -193,6 +193,7 @@ function makeText3D(
 
     // make shape ( N.B. edge view not visible )
     const textMesh = new THREE.Mesh( geometry, matDark );
+    // TODO: Recalculate these positions - do I need to add co and bb?
     textMesh.position.x = co.x + geometry.boundingBox.min.x;
     textMesh.position.y = co.y + 1 + geometry.boundingBox.min.y;
     textMesh.position.z = co.z + 1 + geometry.boundingBox.min.z;
@@ -436,10 +437,22 @@ export class View3D implements IView3D {
         // @ts-ignore We know it'd 3d.
         var textObject: THREE.Object3D = makeText3D(co, this.scene, text, font_size, clr, lfa);
         textObject.up = new THREE.Vector3(0, 0, 1);
-        textObject.lookAt(this.camera.position)
-        console.log(textObject);
-        return textObject;
-        // return makeRect3D(co, this.scene, 3, 3, 3, clr, lfa);
+        textObject.lookAt(this.camera.position);
+        // @ts-ignore Geometry is present on mesh
+        var geometry: THREE.BoxGeometry = textObject.geometry;
+        geometry.computeBoundingBox();
+        console.log(geometry);
+        
+        var {x: x_min, y: y_min, z: z_min}= geometry.boundingBox.min;
+        var {x: x_max, y: y_max, z: z_max} = geometry.boundingBox.max;
+        var box = makeRect3D(
+            {x: co.x + 1 + x_min, y: co.y + 1 + y_min, z: co.z + 1 + z_min}, 
+            this.scene, 
+            x_max - x_min, y_max - y_min, z_max - z_min, 
+            clr, lfa);
+        box.up = new THREE.Vector3(0, 0, 1);
+        box.lookAt(this.camera.position);
+        return box;
     }
 
     clear(){

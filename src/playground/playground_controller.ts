@@ -207,7 +207,11 @@ export class PlaygroundPhase implements IPhase {
         state: PlaygroundState
     ): Generator<Array<ISelectable>, ISelectable, ISelectable> { // TODO: Type alias
         // @ts-ignore
-        var action : EntityMoveAction = this.current_inputs.peek();
+        var source: Entity = this.current_inputs.input_queue[0];
+        // @ts-ignore
+        var action : EntityMoveAction = this.current_inputs.input_queue[1];
+        console.log("Selecting location target for:", action)
+        var acquirer = action.acquirer;
         this._current_acquirer = action.acquirer;
         // @ts-ignore
         var selection = yield *acquirer.input_option_generator(new Stack(source.loc));
