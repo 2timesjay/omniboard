@@ -1,13 +1,8 @@
-// NOTE: OrbitControl import problems: https://stackoverflow.com/questions/19444592/using-threejs-orbitcontols-in-typescript/56338877#56338877
-// import * as THREE from 'three';
-// window.THREE = THREE;
-// require('three/examples/js/controls/OrbitControls');
-// export default THREE;
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
-import { textChangeRangeIsUnchanged } from 'typescript';
-import helvetiker_reg from '../../fonts/helvetiker_regular.typeface.json'
+// @ts-ignore has no exported member 'helvetiker_reg'
+import { helvetiker_reg } from '../../fonts/helvetiker_regular.typeface.json'
 import { GridCoordinate } from '../model/space';
 import { InputCoordinate, ThreeBroker } from './broker';
 import { IView, makeCanvas, makeRect, RenderObject } from './rendering';
@@ -87,6 +82,37 @@ function makeCircle3D(
     const color = clr == undefined ? "#000000" : clr;
 
     let geometry = new THREE.CircleGeometry(size/2.0, 32);
+    let mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ 
+        color: clr,
+        opacity: alpha,
+    }));
+    mesh.position.x = co.x;
+    mesh.position.y = co.y;
+    mesh.position.z = co.z;
+    getGroup(scene).add(mesh);
+    return mesh;
+}
+
+function makeArc3D(
+    co: GridCoordinate,  
+    scene: THREE.Scene,
+    size: number, 
+    frac_filled?: number,
+    clr?: string,
+    lfa?: number,
+): THREE.Object3D {
+    const fraction_filled = frac_filled == undefined ? 1.0: frac_filled;
+    const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
+    const color = clr == undefined ? "#000000" : clr;
+
+    const curve = new THREE.EllipseCurve(
+        0, 0, 
+        size/2.0, size/2.0, 
+        0, frac_filled * 2 * Math.PI,
+        true,
+        0);
+    const points = curve.getPoints( 50 );
+    const geometry = new THREE.BufferGeometry().setFromPoints( points );
     let mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ 
         color: clr,
         opacity: alpha,
@@ -399,7 +425,7 @@ export class View3D implements IView3D {
     drawArc(
         co: GridCoordinate, size: number, frac_filled?: number, clr?: string, lfa?: number
     ): THREE.Object3D {
-        // makeArc3D(x, y, this.context, size, frac_filled, clr, lfa);
+        makeArc3D(co, this.scene, size, frac_filled, clr, lfa);
         throw new Error('Method not implemented.');
     }
 
