@@ -442,8 +442,7 @@ export class View3D implements IView3D {
         // @ts-ignore Geometry is present on mesh
         var geometry: THREE.BoxGeometry = textObject.geometry;
         geometry.computeBoundingBox();
-        console.log(geometry);
-
+        
         // NOTE: Alternatives in https://stackoverflow.com/questions/15492857/any-way-to-get-a-bounding-box-from-a-three-js-object3d
         const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
         const color = clr == undefined ? "#000000" : clr;
@@ -466,7 +465,6 @@ export class View3D implements IView3D {
         box.position.z = 2
         box.up = new THREE.Vector3(0, 0, 1);
         box.lookAt(this.camera.position);
-        console.log(textObject, box)
         return box;
     }
 
