@@ -259,7 +259,7 @@ export class View2D implements IView2D {
     }
 }
 
-class View2DWithZ extends View2D {
+class View2DPseudoZ extends View2D {
     context: CanvasRenderingContext2D;
 
     constructor(k: number, size: number, d: number) {

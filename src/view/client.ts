@@ -20,8 +20,8 @@ enum GameType {
 }
 
 // const game_type = GameType.Tactics;
-// const game_type = GameType.Playground2D;
-const game_type = GameType.Playground3D;
+const game_type = GameType.Playground2D;
+// const game_type = GameType.Playground3D;
 
 // @ts-ignore - just a switch
 if (game_type == GameType.Tactics) {
@@ -58,7 +58,7 @@ if (game_type == GameType.Tactics) {
     // Create Canvas
     const size = 100 * d;
     // const context = canvas.getContext("2d");
-    const view = new View2D(k, size)
+    const view = new View2DPseudoZ(k, size)
 
     // Create Displays
     var display_map = playground_display_setup(pg_state, view);

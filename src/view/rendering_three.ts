@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 // @ts-ignore has no exported member 'helvetiker_reg'
-import { helvetiker_reg } from '../../fonts/helvetiker_regular.typeface.json'
+import helvetiker_reg from '../../fonts/helvetiker_regular.typeface.json'
 import { GridCoordinate } from '../model/space';
 import { InputCoordinate, ThreeBroker } from './broker';
 import { IView, makeCanvas, makeRect, RenderObject } from './rendering';
