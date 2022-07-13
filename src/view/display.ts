@@ -35,7 +35,7 @@ const k: number = 4; // TODO: un-hardcode.
 
 // TODO: ILocatable -> ILocatable<ICoordinate>
 // TODO: Add size, add center;
-interface ILocatable {
+export interface ILocatable {
     _xOffset: number;
     _yOffset: number;
     _zOffset: number
@@ -86,7 +86,7 @@ function interruptable_generator(
     }
 }
 
-class BaseAnimation implements IAnimation {
+export class BaseAnimation implements IAnimation {
     parent: AbstractDisplay<ILocatable>;
 
     constructor(parent: AbstractDisplay<ILocatable>) {
@@ -362,7 +362,7 @@ export class Bump implements IAnimation {
 
 // NOTE: TS Mixins are some sicko stuff.
 type Animatable = ConstrainedMixinable<ILocatable>;
-function Animate<TBase extends Animatable>(
+export function Animate<TBase extends Animatable>(
     Base: TBase, BaseAnimation: new(parent: AbstractDisplay<ILocatable>) => BaseAnimation
 ){
     return class Animated extends Base {  
@@ -970,7 +970,7 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
 export const EntityDisplay = Animate(_EntityDisplay, BaseAnimation);
 
 
-class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, IPathable {
+export class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, IPathable {
     selectable: Entity;
     _xOffset: number;
     _yOffset: number;
