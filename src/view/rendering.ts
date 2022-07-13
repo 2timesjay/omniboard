@@ -188,13 +188,15 @@ export interface IView2D extends IView<GridCoordinate> {
     context: CanvasRenderingContext2D;
 }
 
+interface View2DArgs {}
+
 export class View2D implements IView2D {
     context: CanvasRenderingContext2D;
     size: number;
 
-    constructor(k: number, size: number) {
+    constructor(k: number, size: number, extra_args?: View2DArgs) {
         // Create Canvas
-        var canvas = makeCanvas(k * size, k * size, true);
+        var canvas = this.buildCanvas(k, size, extra_args);
         this.size = size;
         this.context = canvas.getContext("2d");
     }
@@ -203,6 +205,10 @@ export class View2D implements IView2D {
         var context = this.context;
         var canvas = context.canvas;
         context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    buildCanvas(k: number, size: number, extra_args?: View2DArgs): HTMLCanvasElement {
+        return makeCanvas(k * size, k * size, true);
     }
 
     // TODO: Bizarre to smuggle render_objects in here but not in 3d.
@@ -259,26 +265,91 @@ export class View2D implements IView2D {
     }
 }
 
-class View2DPseudoZ extends View2D {
+interface View2DZArgs extends View2DArgs {
+    depth: number
+}
+
+export class View2DPseudoZ extends View2D {
     context: CanvasRenderingContext2D;
+    k: number;
 
-    constructor(k: number, size: number, d: number) {
-        super(k, size);
-        // Create Canvas
-        var canvas = makeCanvas(k * size, k * size * d, true);
-        this.context = canvas.getContext("2d");
+    constructor(k: number, size: number, extra_args: View2DZArgs) {
+        super(k, size, extra_args);
+        this.k = k;
+    }
 
+    buildCanvas(k: number, size: number, extra_args: View2DZArgs): HTMLCanvasElement {
+        var depth = extra_args.depth;
+        console.log(k * size, (k + 1) * size * depth, true)
+        return makeCanvas(k * size, (k + 1) * size * depth, true);
+    }
+
+    _apply_coordinate_transform(co: GridCoordinate): GridCoordinate {
+        if (co.z == undefined) {
+            console.log("Z-less coordinate: ", co)
+        }
+        return { x: co.x, y: co.y + (this.k + 1) * co.z, z: 0}
+    }
+    
+    drawArc(
+        co: GridCoordinate, size: number, frac_filled?: number, clr?: string, lfa?: number
+    ): RenderObject {
+        var co = this._apply_coordinate_transform(co);
+        return makeArc(co, this.context, size, frac_filled, clr, lfa);
+    }
+
+    drawCircle(
+        co: GridCoordinate, size: number, clr?: string, lfa?: number
+    ): RenderObject {
+        var co = this._apply_coordinate_transform(co);
+        return makeCircle(co, this.context, size, clr, lfa);
+    }
+
+    drawRect(
+        co: GridCoordinate, width: number, height: number, clr?: string, lfa?: number
+    ): RenderObject {
+        var co = this._apply_coordinate_transform(co);
+        return makeRect(co, this.context, width, height, clr, lfa);
+    }
+
+    drawLine(
+        co_from: GridCoordinate,
+        co_to: GridCoordinate,  
+        line_width: number, 
+        clr?: string | null, 
+        lfa?: number | null
+    ): RenderObject {
+        var co_from = this._apply_coordinate_transform(co_from);
+        var co_to = this._apply_coordinate_transform(co_to);
+        return makeLine(co_from, co_to, this.context, line_width, clr, lfa);
+    }
+
+    drawText(
+        co: GridCoordinate,
+        text: string, 
+        font_size: number,
+        clr?: string | null,
+        lfa?: number | null,
+    ): RenderObject {
+        var co = this._apply_coordinate_transform(co);
+        var {x, y} = co;
+        // TODO: Move into makeText, as in 3D.
+        var context = this.context;
+        context.fillStyle = clr;
+        context.font = SIZE*font_size + "px Trebuchet MS";
+        context.fillText(
+            text, 
+            SIZE * x, 
+            SIZE * y,
+        );
+        return null;
     }
 }
 
-class View2DIsometric extends View2D {
+export class View2DIsometric extends View2D {
     context: CanvasRenderingContext2D;
 
-    constructor(k: number, size: number, d: number) {
-        super(k, size);
-        // Create Canvas
-        var canvas = makeCanvas(k * size, k * size * d, true);
-        this.context = canvas.getContext("2d");
-
+    constructor(k: number, size: number, extra_args: View2DZArgs) {
+        super(k, size, extra_args);
     }
 }

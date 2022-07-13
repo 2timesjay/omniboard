@@ -1,5 +1,5 @@
 /* Imports */
-import { makeCanvas, View2D } from "./rendering";
+import { makeCanvas, View2D, View2DPseudoZ } from "./rendering";
 import { TacticsController, TacticsPhase } from "../tactics/tactics_controller";
 import { tactics_setup } from "../tactics/tactics_setup";
 import { display_setup } from "../tactics/tactics_display_setup";
@@ -52,13 +52,13 @@ if (game_type == GameType.Tactics) {
 } else if (game_type == GameType.Playground2D) {
     // State Setup
     var k = 4;
-    var d = 2;
+    var d = 3;
     var pg_state = playground_setup(k, d)
 
     // Create Canvas
-    const size = 100 * d;
+    const size = 100;
     // const context = canvas.getContext("2d");
-    const view = new View2DPseudoZ(k, size)
+    const view = new View2DPseudoZ(k, size, {depth: 3})
 
     // Create Displays
     var display_map = playground_display_setup(pg_state, view);

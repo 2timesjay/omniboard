@@ -3,7 +3,7 @@ import { ISelectable } from "../model/core";
 import { IView, IView2D, RenderObject } from "./rendering";
 import { getMouseCo, InputCoordinate, OnInputEvent } from "./broker";
 import { Awaited } from "../model/utilities";
-import { GridLocation, ICoordinate, Vector } from "../model/space";
+import { GridCoordinate, GridLocation, ICoordinate, Vector } from "../model/space";
 import { Unit } from "../model/unit";
 import { createWatchCompilerHost } from "typescript";
 import { Entity } from "../model/entity";
@@ -733,7 +733,7 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
 
     constructor(loc: GridLocation) {
         super(loc);
-        this._zOffset = this.selectable.z != null ? this.selectable.z * k: 0;
+        this._zOffset = this.selectable.z != null ? this.selectable.z: 0;
         this._xOffset = this.selectable.x + 0.1;
         this._yOffset = this.selectable.y + 0.1;
         this._size = 0.8;
@@ -742,15 +742,19 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 
     get xOffset(): number {
-        return this._xOffset + this._zOffset;
+        return this._xOffset;
     }
 
     get yOffset(): number {
-        return this._yOffset + this._zOffset;
+        return this._yOffset;
     }
 
     get zOffset(): number {
-        return 0;
+        return this._zOffset;
+    }
+
+    get co(): GridCoordinate {
+        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
     }
 
     get size(): number {
@@ -758,13 +762,11 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 
     render(view: IView2D, clr: string, lfa?: number) {
-        var co = {x: this.xOffset, y: this.yOffset};
-        return view.drawRect(co, this.size, this.size, clr, lfa);
+        return view.drawRect(this.co, this.size, this.size, clr, lfa);
     }
 
     alt_render(view: IView2D, clr: string) {
-        var co = {x: this.xOffset, y: this.yOffset};
-        return view.drawCircle(co, this.size, clr);
+        return view.drawCircle(this.co, this.size, clr);
     }
 
     neutralDisplay(view: IView2D): RenderObject {
@@ -830,6 +832,10 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
 
     get zOffset(): number {
         return this._zOffset;
+    }
+
+    get co(): GridCoordinate {
+        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
     }
 
     get size(): number {
@@ -904,15 +910,19 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     }
 
     get xOffset(): number {
-        return this._xOffset + this._zOffset;
+        return this._xOffset;
     }
 
     get yOffset(): number {
-        return this._yOffset + this._zOffset;
+        return this._yOffset;
     }
 
     get zOffset(): number {
-        return 0;
+        return this._zOffset;
+    }
+
+    get co(): GridCoordinate {
+        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
     }
 
     get size(): number {
@@ -924,7 +934,7 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         // @ts-ignore Actualy GridLocation
         console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
         // @ts-ignore Actualy GridLocation
-        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * k: 0;
+        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z: 0;
         // @ts-ignore Actualy GridLocation
         this._xOffset = this.selectable.loc.x + 0.2;
         // @ts-ignore Actualy GridLocation
@@ -935,13 +945,12 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     }
 
     render(view: IView2D, clr: string): RenderObject {
-        var co = {x: this.xOffset, y: this.yOffset};
-        return view.drawRect(co, this.size, this.size, clr);
+        return view.drawRect(this.co, this.size, this.size, clr);
     }
 
     alt_render(view: IView2D, clr: string): RenderObject {
         var offset = 0.2 * this.size;
-        var co = {x: this.xOffset + offset, y: this.yOffset + offset};
+        var co = {x: this.co.x + offset, y: this.co.y + offset, z: this.co.z};
         return view.drawRect(co, this.size*.6, this.size*.6, clr);
     }
 
@@ -985,6 +994,10 @@ class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, 
 
     get zOffset(): number {
         return this._zOffset;
+    }
+
+    get co(): GridCoordinate {
+        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
     }
 
     get size(): number {
@@ -1070,17 +1083,20 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         this.update_pos();
     }
 
-    // TODO: Factor this into 2D With Z view
     get xOffset(): number {
-        return this._xOffset + this._zOffset;
+        return this._xOffset;
     }
 
     get yOffset(): number {
-        return this._yOffset + this._zOffset;
+        return this._yOffset;
     }
 
     get zOffset(): number {
-        return 0;
+        return this._zOffset;
+    }
+
+    get co(): GridCoordinate {
+        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
     }
 
     get size(): number {
@@ -1090,7 +1106,7 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
     update_pos() {
         console.log("MOVING UNIT: ", this.selectable)
         console.log("UPDATED LOC: ", this.selectable.loc.co.x, this.selectable.loc.y, this.selectable.loc.z);
-        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z * k: 0;
+        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z : 0;
         this._xOffset = this.selectable.loc.x + 0.2;
         this._yOffset = this.selectable.loc.y + 0.2;
         this._size = 0.6;
@@ -1105,13 +1121,12 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
             0.2 + 0.8 * unit.hp / unit.max_hp :
             1
         );
-        var co = {x: this.xOffset, y: this.yOffset};
-        return view.drawRect(co, this.size,  this.size, clr, unit_alpha);
+        return view.drawRect(this.co, this.size,  this.size, clr, unit_alpha);
     }
 
     alt_render(view: IView2D, clr: string): RenderObject {
         var offset = 0.2 * this.size;
-        var co = {x: this.xOffset + offset, y: this.yOffset + offset};
+        var co = {x: this.co.x + offset, y: this.co.y + offset, z: this.co.z};
         return view.drawRect(co, this.size*.6, this.size*.6, clr);
     }
 
@@ -1151,10 +1166,18 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
         return this.parent._yOffset + this.size * this.selectable.index;
     }
 
+    get zOffset() {
+        return this.parent._zOffset;
+    }
+
+    get co(): GridCoordinate {
+        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+    }
+
 
     render(view: IView2D, clr: string, lfa?: number): RenderObject {
-        var hit_co = {x: this.xOffset, y: this.yOffset};
-        var text_co = {x: this.xOffset, y: this.yOffset + this.height};
+        var hit_co = this.co
+        var text_co = {x: this.co.x, y: this.co.y + this.height, z: this.co.z};
         var text_size = 0.8 * this.size;
         var render_object = view.drawRect(
             hit_co, this.width, this.height, "white", 0.5
@@ -1198,6 +1221,9 @@ export class MenuElementDisplay3D extends AbstractDisplay3D<IMenuable> {
         return this.parent._zOffset + this.size * this.selectable.index;
     }
 
+    get co(): GridCoordinate {
+        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+    }
 
     render(view: IView3D, clr: string, lfa?: number): RenderObject {
         var hit_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
