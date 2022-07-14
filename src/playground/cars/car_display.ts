@@ -1,42 +1,74 @@
-import THREE = require("three");
-import { Entity } from "../../model/entity";
-import { GridCoordinate } from "../../model/space";
-import { ThreeBroker } from "../../view/broker";
-import { AbstractDisplay3D, Animate, BaseAnimation, EntityDisplay3D, ILocatable, IPathable, LinearVisual3D, _EntityDisplay3D } from "../../view/display";
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { Entity } from '../../model/entity';
+import { GridCoordinate } from '../../model/space';
+import { EntityDisplay3D, ILocatable, IPathable, _EntityDisplay3D } from "../../view/display";
 import { ActiveRegion } from "../../view/display_handler";
-import { View2D } from "../../view/rendering";
 import { IView3D } from "../../view/rendering_three";
+import { car_display_setup } from './car_display_setup';
 
-// instantiate a loader
-const loader = new THREE.ObjectLoader;
+// instantiate an OBJLoader
+/// https://discourse.threejs.org/t/three-cant-parse-https-cywarr-github-io-small-shop-kirche3d-obj-unexpected-token-in-json-at-position-0/5622/5
+const loader = new OBJLoader;
 
-function drawCar(view: IView3D): THREE.Object3D {
+// TODO: Generalize
+class Loader {
+    _car: THREE.Object3D;
+
+    constructor() {
+        console.log("Constructing car")
+        var self = this;
+        loader.load(
+            // resource URL
+            'models/car_model.obj',
+            // called when resource is loaded
+            function ( object ) {
+                console.log(object);
+                self._car = object;
+                console.log("Loaded CAR", self._car);
+            },
+            // called when loading is in progresses
+            function ( xhr ) {
+                console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+            // called when loading has errors
+            function ( error ) {
+                console.log( 'An error happened', error );
+            }
+        );
+        console.log("CAR", this._car);
+    }
+
+    get car(): THREE.Object3D {
+        return this._car;
+    }
+}
+
+function drawCar(co: GridCoordinate, view: IView3D, loader: Loader): THREE.Object3D {
+    var mesh = loader.car;
     var scene = view.scene;
-    var car = null;
-
-    // load a resource
-    loader.load(
-        // resource URL
-        'models/car_model.obj',
-        // called when resource is loaded
-        function ( object ) {
-            car = object;
-            scene.add( car );
-        },
-        // called when loading is in progresses
-        function ( xhr ) {
-            console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-        },
-        // called when loading has errors
-        function ( error ) {
-            console.log( 'An error happened' );
-        }
-    );
-    return car;
+    scene.add( mesh );
+    try {
+        console.log("Car Mesh", mesh);
+        console.log("Car Pos", mesh.position)
+        mesh.position.x = co.x;
+        mesh.position.y = co.y;
+        mesh.position.z = co.z;
+    } catch {
+        console.log("Car mesh error")
+    }
+    return mesh;
 }
 
 
 export class CarDisplay3D extends EntityDisplay3D implements ILocatable, IPathable {
+    loader: Loader;
+
+    constructor(entity: Entity) {
+        super(entity);
+        this.loader = new Loader();
+    }
+
     update_pos() {
         console.log("MOVING ENTITY: ", this.selectable)
         // @ts-ignore Actualy GridLocation
@@ -68,10 +100,10 @@ export class CarDisplay3D extends EntityDisplay3D implements ILocatable, IPathab
 
     // TODO: Re-add alpha.
     render(view: IView3D, clr: string): THREE.Object3D {
-        return drawCar(view);
+        return drawCar(this.co, view, this.loader);
     }
 
     alt_render(view: IView3D, clr: string): THREE.Object3D {
-        return drawCar(view);
+        return drawCar(this.co, view, this.loader);
     }
 }

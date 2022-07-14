@@ -10,6 +10,7 @@ import { PlaygroundController, PlaygroundPhase } from "../playground/playground_
 import { View3D } from "./rendering_three";
 import { DisplayHandler3D } from "./display_handler_three";
 import { Canvas2DBroker, ThreeBroker } from "./broker";
+import { car_setup } from "../playground/cars/car_setup";
 
 export const TICK_DURATION_MS = 20
 
@@ -17,11 +18,15 @@ enum GameType {
     Tactics = 0,
     Playground2D = 1,
     Playground3D = 2,
+    Cars3D = 3,
 }
 
-// const game_type = GameType.Tactics;
-const game_type = GameType.Playground2D;
-// const game_type = GameType.Playground3D;
+const game_type = (
+    // GameType.Tactics
+    // GameType.Playground2D
+    // GameType.Playground3D
+    GameType.Cars3D
+)
 
 // @ts-ignore - just a switch
 if (game_type == GameType.Tactics) {
@@ -103,5 +108,6 @@ if (game_type == GameType.Tactics) {
     // Start main game loop
     // @ts-ignore
     pg_c.run(pg_p, input_request, three_display_handler);
-
+} else if (game_type == GameType.Cars3D) {
+    car_setup();
 }
