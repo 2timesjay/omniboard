@@ -91,19 +91,19 @@ export class CarDisplay3D extends EntityDisplay3D implements ILocatable, IPathab
 
     update_pos() {
         console.log("MOVING ENTITY: ", this.selectable)
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
         
         // TODO: Fix to 0.2 * size after I fix offsets for gridLocations
         var margin = 0.1;
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         this._xOffset = this.selectable.loc.x + margin;
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         this._yOffset = this.selectable.loc.y + margin;
         this._zOffset = (
-            // @ts-ignore Actualy GridLocation
+            // @ts-ignore Actually GridLocation
             this.selectable.loc.z != null ? 
-            // @ts-ignore Actualy GridLocation
+            // @ts-ignore Actually GridLocation
             (this.selectable.loc.z) + 0.6 + margin: 
             margin
         );

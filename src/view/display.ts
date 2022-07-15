@@ -931,13 +931,13 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
 
     update_pos() {
         console.log("MOVING ENTITY: ", this.selectable)
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z: 0;
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         this._xOffset = this.selectable.loc.x + 0.2;
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         this._yOffset = this.selectable.loc.y + 0.2;
         this._size = 0.6;
         this.width = 0.6;
@@ -1006,19 +1006,19 @@ export class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILoca
 
     update_pos() {
         console.log("MOVING ENTITY: ", this.selectable)
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         console.log("UPDATED LOC: ", this.selectable.loc.x, this.selectable.loc.y, this.selectable.loc.z);
         
         // TODO: Fix to 0.2 * size after I fix offsets for gridLocations
         var margin = 0.1;
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         this._xOffset = this.selectable.loc.x + margin;
-        // @ts-ignore Actualy GridLocation
+        // @ts-ignore Actually GridLocation
         this._yOffset = this.selectable.loc.y + margin;
         this._zOffset = (
-            // @ts-ignore Actualy GridLocation
+            // @ts-ignore Actually GridLocation
             this.selectable.loc.z != null ? 
-            // @ts-ignore Actualy GridLocation
+            // @ts-ignore Actually GridLocation
             (this.selectable.loc.z) + 0.6 + margin: 
             margin
         );
