@@ -24,6 +24,7 @@ import { CarDisplay3D } from "./car_display";
     }
 
     for (let entity of state.entities) {
+        // let entity_display = new EntityDisplay3D(entity);
         let entity_display = new CarDisplay3D(entity);
         // @ts-ignore fix Display3D inheritance
         display_map.set(entity, entity_display);

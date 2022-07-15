@@ -69,6 +69,8 @@ export function inputEventToSelectable3D(
         if (display_handler.render_object_map.has(hit_object)) {
             var hit_display = display_handler.render_object_map.get(hit_object);
             if (hit_display.active) {
+                console.log("Hit: ", hit_objects);
+                console.log("Hit Display: ", hit_display);
                 return hit_display.selectable;
             }
         }

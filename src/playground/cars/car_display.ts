@@ -1,10 +1,11 @@
 import * as THREE from 'three';
+import { MeshBasicMaterial } from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { Entity } from '../../model/entity';
 import { GridCoordinate } from '../../model/space';
 import { EntityDisplay3D, ILocatable, IPathable, _EntityDisplay3D } from "../../view/display";
 import { ActiveRegion } from "../../view/display_handler";
-import { IView3D } from "../../view/rendering_three";
+import { getGroup, IView3D } from "../../view/rendering_three";
 import { car_display_setup } from './car_display_setup';
 
 // instantiate an OBJLoader
@@ -16,16 +17,20 @@ class Loader {
     _car: THREE.Object3D;
 
     constructor() {
-        console.log("Constructing car")
+        this.load_model();
+    }
+
+    load_model() {
         var self = this;
         loader.load(
             // resource URL
             'models/car_model.obj',
             // called when resource is loaded
-            function ( object ) {
-                console.log(object);
+            function ( object: THREE.Object3D ) {
+                // Note: ObjectLoader loads Group; we want Mesh.
+                var object = object.children[0];
+                // TODO: Consider using bounding box for collision? https://discourse.threejs.org/t/collision-detection-with-3d-models/16662/3
                 self._car = object;
-                console.log("Loaded CAR", self._car);
             },
             // called when loading is in progresses
             function ( xhr ) {
@@ -36,26 +41,41 @@ class Loader {
                 console.log( 'An error happened', error );
             }
         );
-        console.log("CAR", this._car);
     }
 
-    get car(): THREE.Object3D {
-        return this._car;
+    get car(): THREE.Mesh  {
+        // this.load_model();
+        try {
+            return this._car.clone();
+        } catch(error) {
+            return null;
+        }
     }
 }
 
-function drawCar(co: GridCoordinate, view: IView3D, loader: Loader): THREE.Object3D {
+// TODO: Move into rendering_three.ts, or an extension
+function drawCar(co: GridCoordinate, view: IView3D, loader: Loader, clr?: string, lfa?: alpha): THREE.Object3D {
+    const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
+    const color = clr == undefined ? "#000000" : clr;
+
     var mesh = loader.car;
     var scene = view.scene;
-    scene.add( mesh );
     try {
-        console.log("Car Mesh", mesh);
-        console.log("Car Pos", mesh.position)
-        mesh.position.x = co.x;
-        mesh.position.y = co.y;
-        mesh.position.z = co.z;
-    } catch {
-        console.log("Car mesh error")
+        mesh.position.x = co.x - 0.45;
+        mesh.position.y = co.y + 0.25;
+        mesh.position.z = co.z - 0.35;
+        mesh.scale.x = 0.25;
+        mesh.scale.y = 0.25;
+        mesh.scale.z = 0.25;
+        mesh.rotation.x = Math.PI/2;
+        mesh.material = new THREE.MeshStandardMaterial({ 
+            color: color,
+            opacity: alpha,
+        });
+        getGroup(scene).add( mesh );
+        // console.log(color, alpha, mesh.material)
+    } catch(error) {
+        console.log("Car mesh error: ", error)
     }
     return mesh;
 }
@@ -92,18 +112,12 @@ export class CarDisplay3D extends EntityDisplay3D implements ILocatable, IPathab
         this.height = 0.6;
     }
 
-    updateActive(active_region?: ActiveRegion): boolean {
-        // TODO: Put "always-active" type behavior into mixin or superclass
-        this.active = true;
-        return this.active;
-    }
-
     // TODO: Re-add alpha.
     render(view: IView3D, clr: string): THREE.Object3D {
-        return drawCar(this.co, view, this.loader);
+        return drawCar(this.co, view, this.loader, clr);
     }
 
     alt_render(view: IView3D, clr: string): THREE.Object3D {
-        return drawCar(this.co, view, this.loader);
+        return drawCar(this.co, view, this.loader, clr);
     }
 }

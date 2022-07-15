@@ -353,7 +353,7 @@ function onDocumentMouseClick(event: MouseEvent) {
 }
 
 
-function getGroup(scene: THREE.Scene): THREE.Object3D {
+export function getGroup(scene: THREE.Scene): THREE.Object3D {
     var objects = scene.children
     if (objects.length === 0) { return null; }
     var group = objects[objects.length - 1]
