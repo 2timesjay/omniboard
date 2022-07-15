@@ -1,5 +1,5 @@
 import { Flinch, Bump, Move } from "../view/display";
-import { DisplayHandler } from "../view/display_handler";
+import { BaseDisplayHandler, DisplayHandler } from "../view/display_handler";
 import { Action } from "./action";
 import { ISelectable } from "./core";
 import { GridLocation, Vector } from "./space";
@@ -17,7 +17,7 @@ export interface Effect {
     pre_execute?: Array<Effect>;
     post_execute?: Array<Effect>;
     description?: string;
-    animate?: (state: IState, display_handler: DisplayHandler) => void;
+    animate?: (state: IState, display_handler: BaseDisplayHandler) => void;
 };
 
 export class AbstractEffect implements Effect{

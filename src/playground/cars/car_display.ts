@@ -14,7 +14,7 @@ const loader = new OBJLoader;
 
 // TODO: Generalize
 class Loader {
-    _car: THREE.Object3D;
+    _car: THREE.Mesh;
 
     constructor() {
         this.load_model();
@@ -44,7 +44,6 @@ class Loader {
     }
 
     get car(): THREE.Mesh  {
-        // this.load_model();
         try {
             return this._car.clone();
         } catch(error) {

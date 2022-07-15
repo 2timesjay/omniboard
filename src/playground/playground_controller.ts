@@ -4,7 +4,7 @@ import { AutoInputAcquirer, IInputAcquirer, InputOptions, InputRequest, InputSel
 import { Inputs, IPhase } from "../model/phase";
 import { GridLocation, ILocation } from "../model/space";
 import { IState } from "../model/state";
-import { DisplayHandler } from "../view/display_handler";
+import { BaseDisplayHandler, DisplayHandler } from "../view/display_handler";
 import { PlaygroundMoveEffect } from "./playground_effect";
 import { Entity } from "../model/entity";
 import { LineSpace } from "./playground_space";
@@ -75,13 +75,13 @@ export class PlaygroundInputs implements Inputs {
 export class PlaygroundPhase implements IPhase {
     current_inputs: PlaygroundInputs;
     _current_acquirer: IInputAcquirer<ISelectable>;
-    display_handler: DisplayHandler;
+    display_handler: BaseDisplayHandler;
 
     constructor() {
         this.current_inputs = new PlaygroundInputs();
     }
 
-    set_display_handler(display_handler: DisplayHandler) {
+    set_display_handler(display_handler: BaseDisplayHandler) {
         this.display_handler = display_handler;
     }
 
@@ -237,7 +237,7 @@ export class PlaygroundController {
     async run(
         phase: PlaygroundPhase, 
         input_request: InputRequest<ISelectable>,
-        display_handler: DisplayHandler,
+        display_handler: BaseDisplayHandler,
     ) {
         display_handler.refresh();
         phase.set_display_handler(display_handler);

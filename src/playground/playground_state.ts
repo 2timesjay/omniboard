@@ -4,7 +4,7 @@ import { Observer } from "../model/observer";
 import { ISpace } from "../model/space";
 import { DURATION_MS, DURATION_MS_NO_ANIM, IState } from "../model/state";
 import { sleep } from "../model/utilities";
-import { DisplayHandler } from "../view/display_handler";
+import { BaseDisplayHandler, DisplayHandler } from "../view/display_handler";
 import { Entity } from "../model/entity";
 
 export class PlaygroundState implements IState {
@@ -13,7 +13,7 @@ export class PlaygroundState implements IState {
 
     // Process shouldn't live on state since it requires display_handler too.
     async process(
-        effects: Array<Effect>, display_handler: DisplayHandler
+        effects: Array<Effect>, display_handler: BaseDisplayHandler
     ): Promise<PlaygroundState> {
         var self = this;
         var execution_promise = sleep(0);

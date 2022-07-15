@@ -35,4 +35,9 @@ export function car_setup() {
     // @ts-ignore
     pg_c.run(pg_p, input_request, three_display_handler);
 
+    
+    var alsothree_display_handler = new DisplayHandler3D(view, three_display_map, pg_state);
+    pg_c.run(pg_p, input_request, alsothree_display_handler);
+
+
 }

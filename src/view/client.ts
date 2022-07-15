@@ -21,14 +21,17 @@ enum GameType {
     Cars3D = 3,
 }
 
-const game_type = (
+var game_type = (
     // GameType.Tactics
     // GameType.Playground2D
     // GameType.Playground3D
     GameType.Cars3D
 )
+// Dummy code to avoid type errors in switch check.
+if (Math.random() > 1) {
+    game_type += 1;
+}
 
-// @ts-ignore - just a switch
 if (game_type == GameType.Tactics) {
     // State Setup
     var k = 6;
