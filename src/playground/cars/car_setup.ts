@@ -16,16 +16,27 @@ export function car_setup() {
     // Create Canvas
     const size = 100
     const view = new View3D(k* size, k* size)
+    const dupe_view = new View3D(k* size, k* size)
     
     // Create Displays
+    // NOTE: Shared displays and DisplayMap between views.
     var three_display_map = car_display_setup(pg_state, view);
     
     // Connect View (display) interactions with state through Broker
     var three_display_handler = new DisplayHandler3D(view, three_display_map, pg_state);
+    var dupe_three_display_handler = new DisplayHandler3D(dupe_view, three_display_map, pg_state);
+
     var three_broker = new ThreeBroker(three_display_handler, view);
+    var dupe_three_broker = new ThreeBroker(dupe_three_display_handler, dupe_view);
+    
+    // NOTE: Only one display
     var input_request = three_broker.input_request;
+    // TODO: Add NullInputRequest to prevent error messages.
+
     // TODO: Change to `requestAnimationFrame` everywhere
     setInterval(three_display_handler.on_tick.bind(three_display_handler), TICK_DURATION_MS);
+    // TODO: Change to `requestAnimationFrame` everywhere
+    setInterval(dupe_three_display_handler.on_tick.bind(dupe_three_display_handler), TICK_DURATION_MS);
     
     // Create Controller
     var pg_p = new PlaygroundPhase();
@@ -34,10 +45,5 @@ export function car_setup() {
     // Start main game loop
     // @ts-ignore
     pg_c.run(pg_p, input_request, three_display_handler);
-
-    
-    var alsothree_display_handler = new DisplayHandler3D(view, three_display_map, pg_state);
-    pg_c.run(pg_p, input_request, alsothree_display_handler);
-
-
+    pg_c.run(pg_p, input_request, dupe_three_display_handler);
 }

@@ -50,7 +50,7 @@ export interface ILocatable {
 // TODO: Consider unifying ILocatable and IPathable
 // TODO: Make 3D-safe
 export interface IPathable extends ILocatable {
-    pathDisplay: (view: IView<ICoordinate>, to: IPathable) => void;
+    pathDisplay: (view: IInputView<ICoordinate>, to: IPathable) => void;
 }
 
 export interface IMenuable {// Action<ISelectable>, Confirmation
@@ -401,7 +401,7 @@ export class AbstractVisual {
     constructor() {
     }
 
-    display(view: IView<ICoordinate>) {
+    display(view: IInputView<ICoordinate>) {
     }
 }
 
@@ -422,11 +422,11 @@ export class UnitaryVisual extends AbstractVisual{
         parent.children.push(this);
     }
 
-    display(view: IView<ICoordinate>) {
+    display(view: IInputView<ICoordinate>) {
         this.render(view, null)
     }
 
-    render(view: IView<ICoordinate>, clr: string) {
+    render(view: IInputView<ICoordinate>, clr: string) {
         throw new Error('Method not implemented.');
     }
 }
@@ -569,7 +569,7 @@ export class AbstractDisplay<T extends ISelectable> {
 
     // TODO: Fix up inheritance type errors
     // TODO: replace z_match with more general "active region", here or in display_handler.
-    display(view: IView<ICoordinate>, active_region?: ActiveRegion): RenderObject {
+    display(view: IInputView<ICoordinate>, active_region?: ActiveRegion): RenderObject {
         // TODO: does this need to move?
         this.updateActive(active_region);
 
@@ -595,31 +595,31 @@ export class AbstractDisplay<T extends ISelectable> {
         return render_object;
     }
 
-    render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
+    render(view: IInputView<ICoordinate>, clr: string, lfa?: number): RenderObject {
         return null;
     }
 
-    alt_render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
+    alt_render(view: IInputView<ICoordinate>, clr: string, lfa?: number): RenderObject {
         return null;
     }
 
-    neutralDisplay(view: IView<ICoordinate>): RenderObject {
+    neutralDisplay(view: IInputView<ICoordinate>): RenderObject {
         return this.render(view, this.display_state_colors.get(DisplayState.Neutral));
     }
 
-    optionDisplay(view: IView<ICoordinate>): RenderObject {
+    optionDisplay(view: IInputView<ICoordinate>): RenderObject {
         return this.render(view, this.display_state_colors.get(DisplayState.Option));
     }
 
-    previewDisplay(view: IView<ICoordinate>): RenderObject {
+    previewDisplay(view: IInputView<ICoordinate>): RenderObject {
         return this.render(view, this.display_state_colors.get(DisplayState.Preview));
     }
 
-    queueDisplay(view: IView<ICoordinate>): RenderObject {
+    queueDisplay(view: IInputView<ICoordinate>): RenderObject {
         return this.alt_render(view, this.display_state_colors.get(DisplayState.Queue));
     }
 
-    selectDisplay(view: IView<ICoordinate>): RenderObject {
+    selectDisplay(view: IInputView<ICoordinate>): RenderObject {
         return this.render(view, this.display_state_colors.get(DisplayState.Select));
     }
 
@@ -1219,6 +1219,58 @@ export class MenuElementDisplay3D extends AbstractDisplay3D<IMenuable> {
 
     get zOffset() {
         return this.parent._zOffset + this.size * this.selectable.index;
+    }
+
+    get co(): GridCoordinate {
+        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+    }
+
+    render(view: IView3D, clr: string, lfa?: number): RenderObject {
+        var hit_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+        var text_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+        var text_size = 0.8 * this.size;
+        // var render_object = view.drawRect(
+        //     hit_co, this.width, this.height, "white", 0.5
+        // );
+        var render_object = view.drawText(text_co, this.selectable.text, text_size, clr)
+        // TODO: Do all this in "view.drawText"
+        return render_object;
+    }
+
+    // // Do not render neutral DisplayState IMenuables
+    neutralDisplay(view: IView3D): RenderObject {
+        return null;
+    }
+}
+
+// TODO: Could derive state from "LinkedDisplay"
+export class HudEntityDisplay extends AbstractDisplay<Entity> {
+    selectable: Entity;
+    _xOffset: number;
+    _yOffset: number;
+    _zOffset: number;
+    size: number;
+    width: number;
+    height: number;
+    
+    constructor(selectable: Entity) {
+        super(selectable);
+        this.size = 1.0;
+        this.width = this.size,
+        this.height = this.size;
+        this.update_pos();
+    }
+
+    get xOffset() {
+        return this._xOffset;
+    }
+
+    get yOffset() {
+        return this._yOffset;
+    }
+
+    get zOffset() {
+        return this._zOffset;
     }
 
     get co(): GridCoordinate {

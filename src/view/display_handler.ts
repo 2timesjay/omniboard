@@ -39,7 +39,7 @@ export interface IDisplayHandler {}
  * See DisplayHandler.
  */
 export class BaseDisplayHandler implements IDisplayHandler {
-    view: IView<ICoordinate>;
+    view: IInputView<ICoordinate>;
     display_map: DisplayMap<ISelectable>;
     state: IState;
     render_object_map: RenderObjectToDisplayMap<ISelectable>;
@@ -48,7 +48,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
     // TODO: Placeholder for handling sequential input displays
     pathy_inputs: Array<ISelectable>;
 
-    constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
+    constructor(view: IInputView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
         this.view = view;
         this.display_map = display_map;
         this.state = state;

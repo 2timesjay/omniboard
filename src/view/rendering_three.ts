@@ -14,7 +14,7 @@ const font = loader.parse(helvetiker_reg);
 // NOTE: used only for textures
 const SIZE = 100;
 
-export interface IView3D extends IView<GridCoordinate> {
+export interface IView3D extends IInputView<GridCoordinate> {
     context: WebGL2RenderingContext;
     scene: THREE.Scene;
     drawArc: (

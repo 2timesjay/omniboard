@@ -74,7 +74,7 @@ function drawCar(co: GridCoordinate, view: IView3D, loader: Loader, clr?: string
         getGroup(scene).add( mesh );
         // console.log(color, alpha, mesh.material)
     } catch(error) {
-        console.log("Car mesh error: ", error)
+        console.log("Car mesh error")
     }
     return mesh;
 }

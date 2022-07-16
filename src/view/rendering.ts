@@ -2,7 +2,7 @@ import { GridCoordinate, ICoordinate } from "../model/space";
 import { InputCoordinate } from "./broker";
 
 // Canvas rendering scale constant
-const SIZE = 100;
+export const SIZE = 100;
 export class HitRect2D {
     co: GridCoordinate;
     dims: GridCoordinate; // TODO: wrong dimensionality; ThreeVector instead?
@@ -143,8 +143,8 @@ export function makeArc(
     return null;
 }
 
-// TODO: Return RenderObject from draw methods.
-export interface IView<C> {
+// View without input functions
+export interface IView<C extends ICoordinate> {
     context: RenderingContext
     clear: () => void;
     drawArc: (
@@ -175,16 +175,20 @@ export interface IView<C> {
         lfa?: number | null
     ) => RenderObject;
     drawText(
-        co: GridCoordinate,
+        co: C,
         text: string, 
         font_size: number,
         clr?: string | null,
         lfa?: number | null,
     ): RenderObject
+}
+
+// View with input methods
+export interface IInputView<C extends ICoordinate> extends IView<C> {
     getHitObjects: (mouse_co: InputCoordinate, render_objects?: Array<RenderObject>) => Array<RenderObject>;
 }
 
-export interface IView2D extends IView<GridCoordinate> {
+export interface IView2D extends IInputView<GridCoordinate> {
     context: CanvasRenderingContext2D;
 }
 
@@ -215,53 +219,6 @@ export class View2D implements IView2D {
     getHitObjects(mouse_co: InputCoordinate, render_objects: Array<HitRect2D>): Array<HitRect2D> {
         // find intersections
         return render_objects.filter(hr => hr.isHit(mouse_co))
-    }
-
-    drawArc(
-        co: GridCoordinate, size: number, frac_filled?: number, clr?: string, lfa?: number
-    ): RenderObject {
-        return makeArc(co, this.context, size, frac_filled, clr, lfa);
-    }
-
-    drawCircle(
-        co: GridCoordinate, size: number, clr?: string, lfa?: number
-    ): RenderObject {
-        return makeCircle(co, this.context, size, clr, lfa);
-    }
-
-    drawRect(
-        co: GridCoordinate, width: number, height: number, clr?: string, lfa?: number
-    ): RenderObject {
-        return makeRect(co, this.context, width, height, clr, lfa);
-    }
-
-    drawLine(
-        co_from: GridCoordinate,
-        co_to: GridCoordinate,  
-        line_width: number, 
-        clr?: string | null, 
-        lfa?: number | null
-    ): RenderObject {
-        return makeLine(co_from, co_to, this.context, line_width, clr, lfa);
-    }
-
-    drawText(
-        co: GridCoordinate,
-        text: string, 
-        font_size: number,
-        clr?: string | null,
-        lfa?: number | null,
-    ): RenderObject {
-        var {x, y} = co;
-        var context = this.context;
-        context.fillStyle = clr;
-        context.font = SIZE*font_size + "px Trebuchet MS";
-        context.fillText(
-            text, 
-            SIZE * x, 
-            SIZE * y,
-        );
-        return null;
     }
 }
 
