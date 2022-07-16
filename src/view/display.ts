@@ -10,6 +10,7 @@ import { Entity } from "../model/entity";
 import { IView3D, View3D } from "./rendering_three";
 import { Event, Mesh, Object3D } from "three";
 import { ActiveRegion } from "./display_handler";
+import { View2DHudReadOnly } from "./hud_rendering";
 
 export enum DisplayState {
     Neutral,
@@ -1277,14 +1278,14 @@ export class HudEntityDisplay extends AbstractDisplay<Entity> {
         return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
     }
 
-    render(view: IView3D, clr: string, lfa?: number): RenderObject {
+    render(view: View2DHudReadOnly, clr: string, lfa?: number): RenderObject {
         var hit_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
         var text_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
         var text_size = 0.8 * this.size;
-        // var render_object = view.drawRect(
-        //     hit_co, this.width, this.height, "white", 0.5
-        // );
-        var render_object = view.drawText(text_co, this.selectable.text, text_size, clr)
+        // @ts-ignore known gridLocation
+        var co: GridCoordinate = this.selectable.loc.co
+        var co_str = co.x.toString() + ", " + co.y.toString() + ", " + co.z.toString()
+        var render_object = view.drawText(text_co, co_str, text_size, clr)
         // TODO: Do all this in "view.drawText"
         return render_object;
     }

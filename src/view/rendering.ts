@@ -174,13 +174,13 @@ export interface IView<C extends ICoordinate> {
         clr?: string | null, 
         lfa?: number | null
     ) => RenderObject;
-    drawText(
+    drawText: (
         co: C,
         text: string, 
         font_size: number,
         clr?: string | null,
         lfa?: number | null,
-    ): RenderObject
+    ) => RenderObject;
 }
 
 // View with input methods

@@ -5,7 +5,7 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import helvetiker_reg from '../../fonts/helvetiker_regular.typeface.json'
 import { GridCoordinate } from '../model/space';
 import { InputCoordinate, ThreeBroker } from './broker';
-import { IView, makeCanvas, makeRect, RenderObject } from './rendering';
+import { IInputView, IView, makeCanvas, makeRect, RenderObject } from './rendering';
 
 
 const loader = new FontLoader();
@@ -42,6 +42,13 @@ export interface IView3D extends IInputView<GridCoordinate> {
         width: number, 
         height: number,
         clr?: string | null, 
+        lfa?: number | null
+    ) => THREE.Object3D;
+    drawText: (
+        co: GridCoordinate,
+        text: string, 
+        font_size: number,
+        clr?: string | null,
         lfa?: number | null
     ) => THREE.Object3D;
 }
@@ -460,7 +467,7 @@ export class View3D implements IView3D {
         font_size: number,
         clr?: string | null,
         lfa?: number | null,
-    ): RenderObject {
+    ): THREE.Object3D {
         // @ts-ignore We know it'd 3d.
         var textObject: THREE.Object3D = makeText3D(co, this.scene, text, font_size, clr, lfa);
         // textObject.up = new THREE.Vector3(0, 0, 1);
