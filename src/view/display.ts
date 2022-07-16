@@ -1,6 +1,6 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
-import { IView, IView2D, RenderObject } from "./rendering";
+import { IView, RenderObject } from "./rendering";
 import { getMouseCo, InputCoordinate, OnInputEvent } from "./broker";
 import { Awaited } from "../model/utilities";
 import { GridCoordinate, GridLocation, ICoordinate, Vector } from "../model/space";
@@ -364,11 +364,12 @@ export class Bump implements IAnimation {
 // NOTE: TS Mixins are some sicko stuff.
 type Animatable = ConstrainedMixinable<ILocatable>;
 export function Animate<TBase extends Animatable>(
-    Base: TBase, BaseAnimation: new(parent: AbstractDisplay<ILocatable>) => BaseAnimation
+    Base: TBase, Animation: new(parent: AbstractDisplay<ILocatable>) => IAnimation
 ){
+    console.log("Animating: ", Base, Animation);
     return class Animated extends Base {  
         // @ts-ignore
-        _animation: BaseAnimation = new BaseAnimation(this);
+        _animation: IAnimation = new Animation(this);
         delta_x: DeltaGen = this._animation.delta_x();
         delta_y: DeltaGen = this._animation.delta_y();
         delta_s: DeltaGen = this._animation.delta_s();
@@ -442,7 +443,7 @@ export class HealthVisual extends UnitaryVisual {
         this.index = index;
     }
 
-    display(view: IView2D) {
+    display(view: IView<ICoordinate>) {
         this.render(view, this.color)
     }
 
@@ -461,7 +462,7 @@ export class HealthVisual extends UnitaryVisual {
         }
     }
 
-    render(view: IView2D, clr: string) {
+    render(view: IView<ICoordinate>, clr: string) {
         const RADIUS_INCR = 0.05;
         var radius_delta: number = (this.num_health_bars - this.index) * RADIUS_INCR;
 
@@ -489,11 +490,11 @@ export class LinearVisual extends AbstractVisual {
         this.to = to;    
     }
 
-    display(view: IView2D) {
+    display(view: IView<ICoordinate>) {
         this.render(view, 'indianred')
     }
 
-    render(view: IView2D, clr: string) {
+    render(view: IView<ICoordinate>, clr: string) {
         var from = this.from;
         var to = this.to;
         // @ts-ignore
@@ -762,20 +763,20 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
         return this._size;
     }
 
-    render(view: IView2D, clr: string, lfa?: number) {
+    render(view: IView<ICoordinate>, clr: string, lfa?: number) {
         return view.drawRect(this.co, this.size, this.size, clr, lfa);
     }
 
-    alt_render(view: IView2D, clr: string) {
+    alt_render(view: IView<ICoordinate>, clr: string) {
         return view.drawCircle(this.co, this.size, clr);
     }
 
-    neutralDisplay(view: IView2D): RenderObject {
+    neutralDisplay(view: IView<ICoordinate>): RenderObject {
         var lfa = this.selectable.traversable ? 1.0 : 0.25
         return this.render(view, 'lightgrey', lfa);
     }
 
-    pathDisplay(view: IView2D, to: IPathable) {
+    pathDisplay(view: IView<ICoordinate>, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
         line.display(view);
@@ -945,21 +946,21 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         this.height = 0.6;
     }
 
-    render(view: IView2D, clr: string): RenderObject {
+    render(view: IView<ICoordinate>, clr: string): RenderObject {
         return view.drawRect(this.co, this.size, this.size, clr);
     }
 
-    alt_render(view: IView2D, clr: string): RenderObject {
+    alt_render(view: IView<ICoordinate>, clr: string): RenderObject {
         var offset = 0.2 * this.size;
         var co = {x: this.co.x + offset, y: this.co.y + offset, z: this.co.z};
         return view.drawRect(co, this.size*.6, this.size*.6, clr);
     }
 
-    neutralDisplay(view: IView2D): RenderObject {
+    neutralDisplay(view: IView<ICoordinate>): RenderObject {
         return this.render(view, 'orange');
     }
 
-    pathDisplay(view: IView2D, to: IPathable) {
+    pathDisplay(view: IView<ICoordinate>, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
         line.display(view);
@@ -1115,7 +1116,7 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         this.height = 0.6;
     }
 
-    render(view: IView2D, clr: string): RenderObject {
+    render(view: IView<ICoordinate>, clr: string): RenderObject {
         var unit: Unit = this.selectable;
         var unit_alpha = (
             unit.all_max_hp.length == 1 ? 
@@ -1125,17 +1126,17 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
         return view.drawRect(this.co, this.size,  this.size, clr, unit_alpha);
     }
 
-    alt_render(view: IView2D, clr: string): RenderObject {
+    alt_render(view: IView<ICoordinate>, clr: string): RenderObject {
         var offset = 0.2 * this.size;
         var co = {x: this.co.x + offset, y: this.co.y + offset, z: this.co.z};
         return view.drawRect(co, this.size*.6, this.size*.6, clr);
     }
 
-    neutralDisplay(view: IView2D): RenderObject {
+    neutralDisplay(view: IView<ICoordinate>): RenderObject {
         return this.render(view, this.selectable.team == 0 ? 'orange' : 'blue');
     }
 
-    pathDisplay(view: IView2D, to: IPathable) {
+    pathDisplay(view: IView<ICoordinate>, to: IPathable) {
         var from = this;
         var line = new LinearVisual(from, to);
         line.display(view);
@@ -1176,7 +1177,7 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     }
 
 
-    render(view: IView2D, clr: string, lfa?: number): RenderObject {
+    render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
         var hit_co = this.co
         var text_co = {x: this.co.x, y: this.co.y + this.height, z: this.co.z};
         var text_size = 0.8 * this.size;
@@ -1189,7 +1190,7 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     }
 
     // Do not render neutral DisplayState IMenuables
-    neutralDisplay(view: IView2D): RenderObject {
+    neutralDisplay(view: IView<ICoordinate>): RenderObject {
         return null;
     }
 }
@@ -1245,53 +1246,16 @@ export class MenuElementDisplay3D extends AbstractDisplay3D<IMenuable> {
 }
 
 // TODO: Could derive state from "LinkedDisplay"
-export class HudEntityDisplay extends AbstractDisplay<Entity> {
-    selectable: Entity;
-    _xOffset: number;
-    _yOffset: number;
-    _zOffset: number;
-    size: number;
-    width: number;
-    height: number;
-    
-    constructor(selectable: Entity) {
-        super(selectable);
-        this.size = 1.0;
-        this.width = this.size,
-        this.height = this.size;
-        this.update_pos();
-    }
-
-    get xOffset() {
-        return this._xOffset;
-    }
-
-    get yOffset() {
-        return this._yOffset;
-    }
-
-    get zOffset() {
-        return this._zOffset;
-    }
-
-    get co(): GridCoordinate {
-        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
-    }
-
+// export class _HudEntityDisplay extends _EntityDisplay {
+export class HudEntityDisplay extends EntityDisplay {
+    // TODO: Pretty messy
     render(view: View2DHudReadOnly, clr: string, lfa?: number): RenderObject {
-        var hit_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
-        var text_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
         var text_size = 0.8 * this.size;
         // @ts-ignore known gridLocation
         var co: GridCoordinate = this.selectable.loc.co
         var co_str = co.x.toString() + ", " + co.y.toString() + ", " + co.z.toString()
-        var render_object = view.drawText(text_co, co_str, text_size, clr)
+        var render_object = view.drawText(co, co_str, text_size, clr)
         // TODO: Do all this in "view.drawText"
         return render_object;
-    }
-
-    // // Do not render neutral DisplayState IMenuables
-    neutralDisplay(view: IView3D): RenderObject {
-        return null;
     }
 }

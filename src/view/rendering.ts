@@ -192,7 +192,7 @@ export interface IView2D extends IInputView<GridCoordinate> {
     context: CanvasRenderingContext2D;
 }
 
-interface View2DArgs {}
+export interface View2DArgs {}
 
 export class View2D implements IView2D {
     context: CanvasRenderingContext2D;
@@ -245,7 +245,7 @@ export class View2D implements IView2D {
     ): RenderObject {
         return makeLine(co_from, co_to, this.context, line_width, clr, lfa);
     }
-    
+
     drawText(
         co: GridCoordinate,
         text: string, 
@@ -266,7 +266,7 @@ export class View2D implements IView2D {
     }
 }
 
-interface View2DZArgs extends View2DArgs {
+export interface View2DZArgs extends View2DArgs {
     depth: number
 }
 

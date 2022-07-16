@@ -39,7 +39,7 @@ export interface IDisplayHandler {}
  * See DisplayHandler.
  */
 export class BaseDisplayHandler implements IDisplayHandler {
-    view: IInputView<ICoordinate>;
+    view: IView<ICoordinate>;
     display_map: DisplayMap<ISelectable>;
     state: IState;
     render_object_map: RenderObjectToDisplayMap<ISelectable>;
@@ -48,7 +48,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
     // TODO: Placeholder for handling sequential input displays
     pathy_inputs: Array<ISelectable>;
 
-    constructor(view: IInputView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
+    constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
         this.view = view;
         this.display_map = display_map;
         this.state = state;
@@ -110,6 +110,9 @@ export class BaseDisplayHandler implements IDisplayHandler {
         this.render_object_map = new Map<RenderObject, AbstractDisplay<ISelectable>>()
         for (let selectable of this.state.get_selectables()) {
             var display = this.display_map.get(selectable);
+            if (display == undefined) {
+                continue;
+            }
             // @ts-ignore
             var render_object = display.display(this.view, this.active_region);
             if (render_object != null) { // Can only select rendered elements. 
@@ -131,9 +134,9 @@ export class BaseDisplayHandler implements IDisplayHandler {
  * grid_space and units are for convenient iteration.
  */
  export class DisplayHandler extends BaseDisplayHandler {
-    view: IView2D;
+    view: IView<ICoordinate>;
 
-    constructor(view: IView2D, display_map: DisplayMap<ISelectable>, state: IState) {
+    constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState) {
         super(view, display_map, state);
         this.pathy_inputs = [];
     }

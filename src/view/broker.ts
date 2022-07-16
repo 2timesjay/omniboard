@@ -1,6 +1,7 @@
 import { Mesh, StaticReadUsage } from "three";
 import { ISelectable, Tree } from "../model/core";
 import { async_input_getter, CallbackSelectionFn, InputRequest, InputSignal, PreviewMap } from "../model/input";
+import { ICoordinate } from "../model/space";
 import { Awaited, Rejection } from "../model/utilities";
 import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
 import { BaseDisplayHandler, DisplayHandler } from "./display_handler";
@@ -44,6 +45,8 @@ export function inputEventToSelectable2D(
 ): ISelectable | null {    
     // Pseudo-Raycast (2D) to check for hits.
     var canvas = display_handler.view.context.canvas;
+    // TODO: Resolve typeerror from making everything in Display IView.
+    // @ts-ignore Has getHitObjects when it when it counts
     var hit_objects = display_handler.view.getHitObjects(
         getMouseCo(canvas, e), 
         Array.from(display_handler.render_object_map.keys()),
@@ -247,7 +250,7 @@ export class Canvas2DBroker implements IBroker {
 
     constructor(
         display_handler: DisplayHandler,
-        view: IView2D,
+        view: IView<ICoordinate>,
     ) {
         var canvas = view.context.canvas;
         var selection_broker = new SelectionBroker(display_handler, null, inputEventToSelectable2D);
@@ -263,7 +266,7 @@ export class Canvas2DBroker implements IBroker {
     
     addCanvasListeners(
         selection_broker: SelectionBroker,
-        view: IView2D,
+        view: IView<ICoordinate>,
     ) {
         view.context.canvas.onclick = function (event) {
             selection_broker.onMouseEvent(event);

@@ -45,5 +45,6 @@ export function car_hud_display_setup(
         let entity_display = new HudEntityDisplay(entity);
         display_map.set(entity, entity_display);
     }
+    return display_map;
 
 }

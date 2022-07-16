@@ -92,6 +92,7 @@ if (game_type == GameType.Tactics) {
 
     // Create Canvas
     const size = 100
+    // TODO: Discrepancy in view size inputs between 3d and 2d; blocks vs pixels.
     const view = new View3D(k* size, k* size)
 
     // Create Displays
