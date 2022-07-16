@@ -51,7 +51,7 @@ export interface ILocatable {
 // TODO: Consider unifying ILocatable and IPathable
 // TODO: Make 3D-safe
 export interface IPathable extends ILocatable {
-    pathDisplay: (view: IInputView<ICoordinate>, to: IPathable) => void;
+    pathDisplay: (view: IView<ICoordinate>, to: IPathable) => void;
 }
 
 export interface IMenuable {// Action<ISelectable>, Confirmation
@@ -402,7 +402,7 @@ export class AbstractVisual {
     constructor() {
     }
 
-    display(view: IInputView<ICoordinate>) {
+    display(view: IView<ICoordinate>) {
     }
 }
 
@@ -423,11 +423,11 @@ export class UnitaryVisual extends AbstractVisual{
         parent.children.push(this);
     }
 
-    display(view: IInputView<ICoordinate>) {
+    display(view: IView<ICoordinate>) {
         this.render(view, null)
     }
 
-    render(view: IInputView<ICoordinate>, clr: string) {
+    render(view: IView<ICoordinate>, clr: string) {
         throw new Error('Method not implemented.');
     }
 }
@@ -570,7 +570,7 @@ export class AbstractDisplay<T extends ISelectable> {
 
     // TODO: Fix up inheritance type errors
     // TODO: replace z_match with more general "active region", here or in display_handler.
-    display(view: IInputView<ICoordinate>, active_region?: ActiveRegion): RenderObject {
+    display(view: IView<ICoordinate>, active_region?: ActiveRegion): RenderObject {
         // TODO: does this need to move?
         this.updateActive(active_region);
 
@@ -596,31 +596,31 @@ export class AbstractDisplay<T extends ISelectable> {
         return render_object;
     }
 
-    render(view: IInputView<ICoordinate>, clr: string, lfa?: number): RenderObject {
+    render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
         return null;
     }
 
-    alt_render(view: IInputView<ICoordinate>, clr: string, lfa?: number): RenderObject {
+    alt_render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
         return null;
     }
 
-    neutralDisplay(view: IInputView<ICoordinate>): RenderObject {
+    neutralDisplay(view: IView<ICoordinate>): RenderObject {
         return this.render(view, this.display_state_colors.get(DisplayState.Neutral));
     }
 
-    optionDisplay(view: IInputView<ICoordinate>): RenderObject {
+    optionDisplay(view: IView<ICoordinate>): RenderObject {
         return this.render(view, this.display_state_colors.get(DisplayState.Option));
     }
 
-    previewDisplay(view: IInputView<ICoordinate>): RenderObject {
+    previewDisplay(view: IView<ICoordinate>): RenderObject {
         return this.render(view, this.display_state_colors.get(DisplayState.Preview));
     }
 
-    queueDisplay(view: IInputView<ICoordinate>): RenderObject {
+    queueDisplay(view: IView<ICoordinate>): RenderObject {
         return this.alt_render(view, this.display_state_colors.get(DisplayState.Queue));
     }
 
-    selectDisplay(view: IInputView<ICoordinate>): RenderObject {
+    selectDisplay(view: IView<ICoordinate>): RenderObject {
         return this.render(view, this.display_state_colors.get(DisplayState.Select));
     }
 

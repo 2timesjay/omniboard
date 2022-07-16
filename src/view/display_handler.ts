@@ -6,7 +6,7 @@ import { IPhase } from "../model/phase";
 import { BoardState, IState } from "../model/state";
 import { AbstractDisplay, DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
 import { DisplayMap, RenderObjectToDisplayMap } from "./broker";
-import { IView, IView2D, makeLine, RenderObject } from "./rendering";
+import { IInputView, IView, IView2D, makeLine, RenderObject } from "./rendering";
 import { ICoordinate } from "../model/space";
 
 

@@ -1,5 +1,5 @@
 import { ISelectable } from "../../model/core";
-import { AbstractDisplay, AbstractDisplay3D, EntityDisplay3D, GridLocationDisplay3D, MenuElementDisplay3D } from "../../view/display";
+import { AbstractDisplay, AbstractDisplay3D, EntityDisplay3D, GridLocationDisplay3D, HudEntityDisplay, MenuElementDisplay3D } from "../../view/display";
 import { View2DHudReadOnly } from "../../view/hud_rendering";
 import { IView3D } from "../../view/rendering_three";
 import { PlaygroundState } from "../playground_state";

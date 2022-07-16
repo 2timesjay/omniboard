@@ -28,9 +28,9 @@ class Loader {
             // called when resource is loaded
             function ( object: THREE.Object3D ) {
                 // Note: ObjectLoader loads Group; we want Mesh.
-                var object = object.children[0];
+                var mesh = object.children[0] as THREE.Mesh;
                 // TODO: Consider using bounding box for collision? https://discourse.threejs.org/t/collision-detection-with-3d-models/16662/3
-                self._car = object;
+                self._car = mesh;
             },
             // called when loading is in progresses
             function ( xhr ) {
@@ -52,8 +52,10 @@ class Loader {
     }
 }
 
-// TODO: Move into rendering_three.ts, or an extension
-function drawCar(co: GridCoordinate, view: IView3D, loader: Loader, clr?: string, lfa?: alpha): THREE.Object3D {
+// TODO: rename drawModel, move to rendering_three.ts, or an extension
+function drawCar(
+    co: GridCoordinate, view: IView3D, loader: Loader, clr?: string, lfa?: number
+): THREE.Object3D {
     const alpha = lfa == undefined ? 1.0 : lfa; // Alpha not yet used.
     const color = clr == undefined ? "#000000" : clr;
 
