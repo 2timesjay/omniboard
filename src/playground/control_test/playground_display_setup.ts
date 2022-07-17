@@ -1,10 +1,8 @@
-import { ISelectable } from "../model/core";
-import { BoardState } from "../model/state";
-import { GLOBAL_CONFIRMATION, Unit } from "../model/unit";
-import { GridLocationDisplay, UnitDisplay, MenuElementDisplay, AbstractDisplay, HealthVisual, EntityDisplay, GridLocationDisplay3D, EntityDisplay3D, AbstractDisplay3D, MenuElementDisplay3D } from "../view/display";
-import { IView, IView2D } from "../view/rendering";
-import { IView3D } from "../view/rendering_three";
-import { PlaygroundState } from "./playground_state";
+import { ISelectable } from "../../model/core";
+import { GridLocationDisplay, UnitDisplay, MenuElementDisplay, AbstractDisplay, HealthVisual, EntityDisplay, GridLocationDisplay3D, EntityDisplay3D, AbstractDisplay3D, MenuElementDisplay3D } from "../../view/display";
+import { IView, IView2D } from "../../view/rendering";
+import { IView3D } from "../../view/rendering_three";
+import { PlaygroundState } from "../playground_state";
 
 /**
  * Create Display elements for every selectable in state.

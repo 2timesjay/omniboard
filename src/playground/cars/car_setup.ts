@@ -5,8 +5,7 @@ import { DisplayHandler3D } from "../../view/display_handler_three";
 import { View2DHudReadOnly } from "../../view/hud_rendering";
 import { View3D } from "../../view/rendering_three";
 import { PlaygroundPhase, PlaygroundController } from "../playground_controller";
-import { playground_display_setup_3D } from "../playground_display_setup";
-import { playground_setup } from "../playground_model_setup";
+import { playground_setup } from "../control_test/playground_model_setup";
 import { car_display_setup, car_hud_display_setup } from "./car_display_setup";
 
 export function car_setup() {
@@ -51,5 +50,4 @@ export function car_setup() {
     // Start main game loop
     // @ts-ignore
     pg_c.run(pg_p, input_request, three_display_handler);
-    pg_c.run(pg_p, input_request, dupe_three_display_handler);
 }
