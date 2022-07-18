@@ -43,17 +43,15 @@ export class BaseDisplayHandler implements IDisplayHandler {
     display_map: DisplayMap<ISelectable>;
     state: IState;
     render_object_map: RenderObjectToDisplayMap<ISelectable>;
-    stateful_selectables: Array<ISelectable>;
     active_region: ActiveRegion;
     // TODO: Placeholder for handling sequential input displays
-    pathy_inputs: Array<ISelectable>;
+    pending_inputs: Array<ISelectable>;
 
     constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
         this.view = view;
         this.display_map = display_map;
         this.state = state;
-        this.stateful_selectables = [];
-        this.pathy_inputs = [];
+        this.pending_inputs = [];
         this.active_region = null;
         this.render_object_map = new Map<RenderObject, AbstractDisplay<ISelectable>>();
     }
@@ -73,9 +71,6 @@ export class BaseDisplayHandler implements IDisplayHandler {
             display.selection_state = DisplayState.Neutral;
             display.state = DisplayState.Neutral;
         }
-        while(this.stateful_selectables.length > 0) {
-            this.stateful_selectables.pop();
-        }
     }
     
     _refresh() {
@@ -87,7 +82,6 @@ export class BaseDisplayHandler implements IDisplayHandler {
             if (display == undefined) {
                 continue;
             }
-            // @ts-ignore
             var render_object = display.display(this.view, this.active_region);
             if (render_object != null) { // Can only select rendered elements. 
                 this.render_object_map.set(render_object, display);
@@ -98,17 +92,17 @@ export class BaseDisplayHandler implements IDisplayHandler {
     refresh(){
     }
 
-    render_pathy_inputs() {
+    render_pending_inputs() {
         // TODO: turn into a function of Action or some object that encapsulates it.
-        for (var i = 0; i < this.pathy_inputs.length - 1; i++) {
+        for (var i = 0; i < this.pending_inputs.length - 1; i++) {
             // @ts-ignore TODO: Add type guard
-            var from: IPathable = this.display_map.get(this.pathy_inputs[i]);
+            var from: IPathable = this.display_map.get(this.pending_inputs[i]);
             // @ts-ignore TODO: Add type guard
-            var to: IPathable = this.display_map.get(this.pathy_inputs[i+1]);
+            var to: IPathable = this.display_map.get(this.pending_inputs[i+1]);
             from.pathDisplay(this.view, to);
         }
     }
-    
+
     on_tick() {
         this.refresh();
     }    
@@ -121,30 +115,25 @@ export class BaseDisplayHandler implements IDisplayHandler {
      on_selection(selection: InputResponse<ISelectable>, phase: IPhase) {
         this.clear_queued();
 
-        // TODO: Update to reflect phase.current_inputs change to `Input` object-like
-        var current_inputs = [...Object.values(phase.current_inputs)]; // Shallow Copy
-        var pending_inputs = phase.pending_inputs;
-        this.stateful_selectables = current_inputs;
-
         // TODO: Validate pending_inputs
+        var pending_inputs = phase.pending_inputs;
         var pending_inputs_arr = pending_inputs instanceof Stack ? pending_inputs.to_array() : (
             pending_inputs == null ? [] : [pending_inputs]
         )
-        this.pathy_inputs = pending_inputs_arr;
+        // TODO: Remove assumption that pending inputs are always sequential
+        this.pending_inputs = pending_inputs_arr;
         this.update_queued(pending_inputs_arr);
-
-        this.stateful_selectables.push(...pending_inputs_arr);
     }
 
     on_phase_end(phase: IPhase){
         console.log("Phase End");
-        // Clear states and clear stateful_selectables
+        // Clear states
         this.clear_queued();
     }
 
     on_game_end(){
         console.log("Game End");
-        // Clear states and clear stateful_selectables
+        // Clear states
         // TODO: Clumsy Clear
         this.clear_queued();
         for (var display of this.display_map.values()) {
@@ -168,11 +157,11 @@ export class BaseDisplayHandler implements IDisplayHandler {
 
     constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState) {
         super(view, display_map, state);
-        this.pathy_inputs = [];
+        this.pending_inputs = [];
     }
 
     refresh(){
         this._refresh();
-        this.render_pathy_inputs();
+        this.render_pending_inputs();
     }
 }

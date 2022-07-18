@@ -16,8 +16,7 @@ import { RenderObject } from "./rendering";
     constructor(view: View3D, display_map: DisplayMap3D<ISelectable>, state: IState){
         super(view, display_map, state);
         this.active_region = {z: 0};
-        this.stateful_selectables = [];
-        this.pathy_inputs = [];
+        this.pending_inputs = [];
     }
 
     on_tick() {
@@ -27,13 +26,13 @@ import { RenderObject } from "./rendering";
 
     refresh(){
         this._refresh();
-        this.render_pathy_inputs();
-        this.view.animate();
+        this.render_pending_inputs();
+        this.view.camera_update();
     }
 
     on_phase_end(phase: IPhase){
         console.log("Phase End");
-        // Clear states and clear stateful_selectables
+        // Clear states
         this.clear_queued();
     }
 }

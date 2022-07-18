@@ -420,7 +420,7 @@ export class View3D implements IView3D {
         return intersects.map(intersect => intersect.object);
     }
 
-    animate(): void {
+    camera_update(): void {
         // TODO: Move to `requestAnimationFrame` instead of display_handler on_tick?
         // requestAnimationFrame( this.animate.bind(this) );
         // this._getHit();
