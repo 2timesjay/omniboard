@@ -60,8 +60,6 @@ export class SlidingPuzzlePhase implements IPhase {
         // @ts-ignore
         var source: Entity = inputs.consume_input();
         // @ts-ignore
-        var action: Action = inputs.consume_input();
-        // @ts-ignore
         var loc: ILocation = inputs.consume_input().value; // Extract tail of path.
         return [new SlidingPuzzleMoveEffect(source, loc)];
     }

@@ -1,3 +1,4 @@
+import { ICoordinate } from "../../model/space";
 import { Canvas2DBroker, DisplayMap } from "../../view/broker";
 import { TICK_DURATION_MS } from "../../view/client";
 import { DisplayHandler } from "../../view/display_handler";
@@ -8,11 +9,13 @@ function sliding_puzzle_state_setup(k: number, d: number): DisplayMap {
     throw new Error("Function not implemented.");
 }
 
-function sliding_puzzle_display_setup(k: number, d: number): SlidingPuzzleState {
+function sliding_puzzle_display_setup(
+    state: SlidingPuzzleState, view: View2D,
+): SlidingPuzzleState {
     throw new Error("Function not implemented.");
 }
 
-export function setup() {
+export function sliding_puzzle_setup() {
     // State Setup
     var k = 4;
     var d = 3;
@@ -32,7 +35,7 @@ export function setup() {
     var broker = new Canvas2DBroker(display_handler, view);
     
     // NOTE: Only one display
-    var input_request = three_broker.input_request;
+    var input_request = broker.input_request;
     // TODO: Add NullInputRequest to prevent error messages if I need a ReadOnlyBroker???
 
     // TODO: Change to `requestAnimationFrame` everywhere

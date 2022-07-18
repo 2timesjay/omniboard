@@ -11,6 +11,7 @@ import { View3D } from "./rendering_three";
 import { DisplayHandler3D } from "./display_handler_three";
 import { Canvas2DBroker, ThreeBroker } from "./broker";
 import { car_setup } from "../playground/cars/car_setup";
+import { sliding_puzzle_setup } from "../examples/sliding_puzzle/sliding_puzzle_setup";
 
 export const TICK_DURATION_MS = 20
 
@@ -114,4 +115,7 @@ if (game_type == GameType.Tactics) {
     pg_c.run(pg_p, input_request, three_display_handler);
 } else if (game_type == GameType.Cars3D) {
     car_setup();
+} else if (game_type == GameType.SlidingPuzzle) {
+    sliding_puzzle_setup();
 }
+
