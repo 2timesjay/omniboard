@@ -1,4 +1,6 @@
 import { FalseLiteral } from "typescript";
+import { SlidingPuzzleInputs } from "../examples/sliding_puzzle/sliding_puzzle_controller";
+import { SlidingPuzzleState } from "../examples/sliding_puzzle/sliding_puzzle_state";
 import { IMenuable } from "../view/display";
 import { 
     bfs,
@@ -9,6 +11,7 @@ import {
     TerminationFn,
     Tree,
 } from "./core";
+import { IState } from "./state";
 import { Awaited, Rejection } from "./utilities";
 
 export type PreviewMap<T> = Map<T, Tree<T>>;
@@ -422,13 +425,22 @@ export class TreeInputAcquirer<T> extends SequentialInputAcquirer<T> {
  * InputStep: Contains an field for input (InputSelection), an acquirer to populate it,
  * and a next_step (InputStep),
  */
-export class IInputStep<T extends ISelectable, U extends ISelectable> {
+
+export type IInputNext<T> = IInputStep<T, any> | IInputStop;
+
+// TODO: Add ConsumeChildren to assist with inputs_to_effects
+export interface IInputStep<T extends ISelectable, U extends ISelectable> {
     input: InputSelection<T>;
     acquirer: IInputAcquirer<T>;
-    get_next_step: () => IInputStep<U, any> | IInputFinal<U>;
+    get_next_step: (state?: IState) => IInputNext<U>;
 }
 
-export class IInputFinal<T extends ISelectable> {
-    input: InputSelection<T>;
-    acquirer: IInputAcquirer<T>;
+export interface IInputStop {}
+
+export class InputStop implements IInputStop {}
+
+// https://www.typescriptlang.org/docs/handbook/advanced-types.html
+// TODO: not sure about the `any`
+export function isInputStep(step: IInputNext<any>): step is IInputStep<any, any> {
+    return (step as IInputStep<any, any>).get_next_step !== undefined;
 }

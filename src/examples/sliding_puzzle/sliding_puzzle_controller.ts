@@ -1,66 +1,61 @@
-import { IInputAcquirer, IInputFinal, IInputStep, InputSelection, SimpleInputAcquirer } from "../../model/input";
-import { BaseInputs } from "../../model/phase";
+import { ISelectable } from "../../model/core";
+import { Effect } from "../../model/effect";
+import { IInputAcquirer, IInputStop, IInputStep, InputSelection, InputSignal, isInputSignal, SimpleInputAcquirer, InputStop, InputOptions, InputRequest } from "../../model/input";
+import { BaseInputs, IPhase } from "../../model/phase";
 import { GridLocation } from "../../model/space";
-import { Piece } from "./sliding_puzzle_state";
+import { BaseDisplayHandler } from "../../view/display_handler";
+import { Piece, SlidingPuzzleState } from "./sliding_puzzle_state";
 
 class PieceInputStep implements IInputStep<Piece, GridLocation> { 
-    input: InputSelection<Piece>;
     acquirer: IInputAcquirer<Piece>;
 
     constructor(state: SlidingPuzzleState) {
         this.acquirer = new SimpleInputAcquirer(
-            () => state.pieces, false
+            () => state.entities, false
         ); 
     }
 
     get input(): InputSelection<Piece> {
-        return this.acquirer.current_input;
+        var input_response = this.acquirer.current_input;
+        if (isInputSignal(input_response)) {
+            return null;
+        } else {
+            return input_response;
+        }
     }
     
-    get_next_step(): IInputStep<GridLocation, null> {
-        return new 
+    get_next_step(state: SlidingPuzzleState): GridLocationInputStep {
+        return new GridLocationInputStep(state);
     }
 }
 
-class GridLocationInputFinal implements IInputFinal<GridLocation> {
-    input: InputSelection<GridLocation>;
+class GridLocationInputStep implements IInputStep<GridLocation, null> {
     acquirer: IInputAcquirer<GridLocation>;
-    get_next_step: () => IInputStep<null, any>;
 
+    constructor(state: SlidingPuzzleState) {
+        this.acquirer = new SimpleInputAcquirer(
+            () => state.space.to_array(), false
+        ); 
+    }
+
+    get input(): InputSelection<GridLocation> {
+        var input_response = this.acquirer.current_input;
+        if (isInputSignal(input_response)) {
+            return null;
+        } else {
+            return input_response;
+        }
+    }
+    
+    get_next_step(state: SlidingPuzzleState): InputStop {
+        return new InputStop();
+    }
 }
 
 // TODO: Label input selections based on InputState
 export class SlidingPuzzleInputs extends BaseInputs {
-    input_state: SlidingPuzzleInputState;
-    // input_queue: Array<LabeledSelection>;
-    input_queue: Array<InputSelection<ISelectable>>;
-
     constructor() {
-        this.input_state = 0;
-        this.input_queue = [];
-    }
-
-    push_input(input: InputSelection<ISelectable>) {
-        this.input_queue.push(input);
-        this.input_state += 1;
-    }
-
-    pop_input() {
-        this.input_queue.pop();
-        this.input_state = Math.max(0, this.input_state - 1);
-    }
-
-    consume_input(): InputSelection<ISelectable> {
-        return this.input_queue.shift();
-    }
-
-    peek(): InputSelection<ISelectable> {
-        return this.input_queue[0];
-    }
-
-    reset() {
-        this.input_queue.length = 0;
-        this.input_state = 0;
+        super((state: SlidingPuzzleState) => new PieceInputStep(state))
     }
 }
 
@@ -81,7 +76,7 @@ export class SlidingPuzzlePhase implements IPhase {
     }
 
     inputs_to_effects(inputs: SlidingPuzzleInputs): Array<Effect> {
-        console.log("Inputs: ", inputs.input_queue);
+        console.log("Inputs: ", inputs.input_steps);
         // @ts-ignore
         var source: Entity = inputs.consume_input();
         // @ts-ignore
