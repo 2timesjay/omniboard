@@ -1,46 +1,45 @@
 import { BaseDisplayHandler } from "../view/display_handler";
-import { ISelectable } from "./core";
+import { ISelectable, Stack } from "./core";
 import { Effect } from "./effect";
-import { IInputAcquirer, InputOptions, InputSelection } from "./input";
+import { IInputAcquirer, IInputStep, InputOptions, InputSelection } from "./input";
 import { BaseState, IState } from "./state";
 
-export type Inputs = {};
+type GeneralInputStep = IInputStep<ISelectable, ISelectable>
 
-enum BaseInputState {};
+export interface Inputs {
+    input_steps: Stack<GeneralInputStep>;
+    push_input: (input_step: GeneralInputStep) => void;
+    // TODO: Standard meaning of "pop"
+    pop_input: () => void;
+    peek: () => GeneralInputStep;
+    reset: () => void;
+};
 
 // TODO: Bundle acquirers + InputState + Input Type info into a new class.
 // TODO: Label input selections based on InputState
 export class BaseInputs implements Inputs {
-    input_state: BaseInputState;
-    // input_queue: Array<LabeledSelection>;
-    input_queue: Array<InputSelection<ISelectable>>;
+    base_step_factory: () => GeneralInputStep;
+    input_steps: Stack<GeneralInputStep>;
 
-    constructor() {
-        this.input_state = 0;
-        this.input_queue = [];
+    constructor(base_step_factory: () => GeneralInputStep) {
+        this.base_step_factory = base_step_factory;
+        this.input_steps = new Stack(base_step_factory());
     }
 
-    push_input(input: InputSelection<ISelectable>) {
-        this.input_queue.push(input);
-        this.input_state += 1;
+    push_input(input_step: GeneralInputStep) {
+        this.input_steps.push(input_step)
     }
 
     pop_input() {
-        this.input_queue.pop();
-        this.input_state = Math.max(0, this.input_state - 1);
+        this.input_steps = this.input_steps.pop();
     }
 
-    consume_input(): InputSelection<ISelectable> {
-        return this.input_queue.shift();
-    }
-
-    peek(): InputSelection<ISelectable> {
-        return this.input_queue[0];
+    peek(): GeneralInputStep {
+        return this.input_steps.value;
     }
 
     reset() {
-        this.input_queue.length = 0;
-        this.input_state = 0;
+        this.input_steps = new Stack(null);
     }
 }
 

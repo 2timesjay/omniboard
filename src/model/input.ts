@@ -417,3 +417,18 @@ export class TreeInputAcquirer<T> extends SequentialInputAcquirer<T> {
         return this.current_input;
     }
 }
+
+/**
+ * InputStep: Contains an field for input (InputSelection), an acquirer to populate it,
+ * and a next_step (InputStep),
+ */
+export class IInputStep<T extends ISelectable, U extends ISelectable> {
+    input: InputSelection<T>;
+    acquirer: IInputAcquirer<T>;
+    get_next_step: () => IInputStep<U, any> | IInputFinal<U>;
+}
+
+export class IInputFinal<T extends ISelectable> {
+    input: InputSelection<T>;
+    acquirer: IInputAcquirer<T>;
+}

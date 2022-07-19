@@ -1,11 +1,36 @@
-enum SlidingPuzzleInputState {
-    Entity = 0,
-    Location = 1,
-    Confirmation = 2,
+import { IInputAcquirer, IInputFinal, IInputStep, InputSelection, SimpleInputAcquirer } from "../../model/input";
+import { BaseInputs } from "../../model/phase";
+import { GridLocation } from "../../model/space";
+import { Piece } from "./sliding_puzzle_state";
+
+class PieceInputStep implements IInputStep<Piece, GridLocation> { 
+    input: InputSelection<Piece>;
+    acquirer: IInputAcquirer<Piece>;
+
+    constructor(state: SlidingPuzzleState) {
+        this.acquirer = new SimpleInputAcquirer(
+            () => state.pieces, false
+        ); 
+    }
+
+    get input(): InputSelection<Piece> {
+        return this.acquirer.current_input;
+    }
+    
+    get_next_step(): IInputStep<GridLocation, null> {
+        return new 
+    }
+}
+
+class GridLocationInputFinal implements IInputFinal<GridLocation> {
+    input: InputSelection<GridLocation>;
+    acquirer: IInputAcquirer<GridLocation>;
+    get_next_step: () => IInputStep<null, any>;
+
 }
 
 // TODO: Label input selections based on InputState
-export class SlidingPuzzleInputs implements Inputs {
+export class SlidingPuzzleInputs extends BaseInputs {
     input_state: SlidingPuzzleInputState;
     // input_queue: Array<LabeledSelection>;
     input_queue: Array<InputSelection<ISelectable>>;
