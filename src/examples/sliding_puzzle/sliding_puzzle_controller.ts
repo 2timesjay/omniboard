@@ -1,9 +1,11 @@
-import { ISelectable } from "../../model/core";
+import { ISelectable, Stack } from "../../model/core";
 import { Effect } from "../../model/effect";
-import { IInputAcquirer, IInputStop, IInputStep, InputSelection, InputSignal, isInputSignal, SimpleInputAcquirer, InputStop, InputOptions, InputRequest } from "../../model/input";
-import { BaseInputs, IPhase } from "../../model/phase";
+import { IInputAcquirer, IInputStop, IInputStep, InputSelection, InputSignal, isInputSignal, SimpleInputAcquirer, InputStop, InputOptions, InputRequest, IInputNext } from "../../model/input";
+import { AbstractBasePhase, BaseInputs, IPhase } from "../../model/phase";
 import { GridLocation } from "../../model/space";
+import { IState } from "../../model/state";
 import { BaseDisplayHandler } from "../../view/display_handler";
+import { SlidingPuzzleMoveEffect } from "./sliding_puzzle_effect";
 import { Piece, SlidingPuzzleState } from "./sliding_puzzle_state";
 
 class PieceInputStep implements IInputStep<Piece, GridLocation> { 
@@ -15,14 +17,20 @@ class PieceInputStep implements IInputStep<Piece, GridLocation> {
         ); 
     }
 
-    get input(): InputSelection<Piece> {
+    get input(): Piece {
         var input_response = this.acquirer.current_input;
         if (isInputSignal(input_response)) {
             return null;
+        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
+            return input_response.value;
         } else {
             return input_response;
         }
     }
+
+    consume_children(next_step: GridLocationInputStep): Array<Effect> {
+        return [new SlidingPuzzleMoveEffect(this.input, next_step.input)];
+    };
     
     get_next_step(state: SlidingPuzzleState): GridLocationInputStep {
         return new GridLocationInputStep(state);
@@ -38,10 +46,26 @@ class GridLocationInputStep implements IInputStep<GridLocation, null> {
         ); 
     }
 
-    get input(): InputSelection<GridLocation> {
+    get input(): GridLocation {
         var input_response = this.acquirer.current_input;
         if (isInputSignal(input_response)) {
             return null;
+        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
+            return input_response.value;
+        } else {
+            return input_response;
+        }
+    }
+
+    consume_children(next_step: InputStop): GridLocation {
+        if (InputStop == null) {
+            throw new Error("Must pass InputStop to verify Inputs are complete.");
+        }
+        var input_response = this.acquirer.current_input;
+        if (isInputSignal(input_response)) {
+            return null;
+        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
+            return input_response.value;
         } else {
             return input_response;
         }
@@ -52,129 +76,19 @@ class GridLocationInputStep implements IInputStep<GridLocation, null> {
     }
 }
 
-// TODO: Label input selections based on InputState
-export class SlidingPuzzleInputs extends BaseInputs {
-    constructor() {
-        super((state: SlidingPuzzleState) => new PieceInputStep(state))
-    }
-}
-
 /**
  * Phase is simplified to allow exploration of input acquisition.
  */
-export class SlidingPuzzlePhase implements IPhase {
-    current_inputs: SlidingPuzzleInputs;
-    _current_acquirer: IInputAcquirer<ISelectable>;
-    display_handler: BaseDisplayHandler;
-
-    constructor() {
-        this.current_inputs = new SlidingPuzzleInputs();
+export class SlidingPuzzlePhase extends AbstractBasePhase {
+    constructor(state: SlidingPuzzleState) {
+        super();
+        // TODO: Do I need this? nullish until built in subphase, currently.
+        this.current_inputs = new BaseInputs(this.base_step_factory);
+        this.current_inputs.reset(state);
     }
 
-    set_display_handler(display_handler: BaseDisplayHandler) {
-        this.display_handler = display_handler;
-    }
-
-    inputs_to_effects(inputs: SlidingPuzzleInputs): Array<Effect> {
-        console.log("Inputs: ", inputs.input_steps);
-        // @ts-ignore
-        var source: Entity = inputs.consume_input();
-        // @ts-ignore
-        var loc: ILocation = inputs.consume_input().value; // Extract tail of path.
-        return [new SlidingPuzzleMoveEffect(source, loc)];
-    }
-
-    phase_condition(): boolean {
-        return true;
-    }
-
-    // TODO: Maybe move into partial_inputs
-    get pending_inputs(): InputSelection<ISelectable> {
-        if (this._current_acquirer == null) {
-            return null;
-        } else { 
-            return this._current_acquirer.current_input;
-        }
-    }    
-
-    async * run_phase(
-        state: SlidingPuzzleState
-    ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
-        while (this.phase_condition()) {
-            console.log("Running Subphase")
-            var inputs: SlidingPuzzleInputs = yield *this.run_subphase(state); 
-            console.log("Resetting Inputs")
-            var effects = this.inputs_to_effects(inputs);
-            console.log("Effects: ", effects);
-            this.current_inputs.reset();           
-
-            // TODO: Side effect that queue display doesn't clear before effect execution
-            await state.process(effects, this.display_handler).then(() => {});
-        }
-    }
-
-    // TODO: Explicit and well-typed, but some generic patterns could be abstracted. 
-    * run_subphase(
-        state: SlidingPuzzleState
-    ): Generator<InputOptions<ISelectable>, SlidingPuzzleInputs, InputSelection<ISelectable>> {
-        /**
-         * Occupies one of three states:
-         *  Acquiring Unit,
-         *  Acquiring Actions,
-         *  Acquiring ActionInputs,
-         * 
-         * Increment state on selection.
-         * Decrement state on rejection.
-         */    
-         while (true) {
-            // Note: Fine to hit these all in one loop
-            if (this.current_inputs.input_state == SlidingPuzzleInputState.Entity){
-                var selection = yield *this.entity_selection(state);
-                if (selection != null) {
-                    this.current_inputs.push_input(selection);
-                } else {
-                    this.current_inputs.pop_input();
-                }
-            }
-            if (this.current_inputs.input_state == SlidingPuzzleInputState.Location){
-                var selection = yield *this.location_selection(state);
-                if (selection != null) {
-                    this.current_inputs.push_input(selection);
-                } else {
-                    this.current_inputs.pop_input();
-                }
-            }
-            if (this.current_inputs.input_state == SlidingPuzzleInputState.Confirmation) {
-                break;
-            }
-        }
-        return this.current_inputs;
-    }
-
-    // TODO: further simplify to SimpleInputAcquirer direct usage?
-    * entity_selection (
-        state: SlidingPuzzleState
-    ): Generator<Array<ISelectable>, ISelectable, ISelectable> {
-        var selection_options: Array<ISelectable> = state.entities;
-        var acquirer = new SimpleInputAcquirer<ISelectable>(() => selection_options, false);
-        this._current_acquirer = acquirer;
-        var selection = yield *acquirer.input_option_generator();
-        return selection;
-    }
-    
-    * location_selection (
-        state: SlidingPuzzleState
-    ): Generator<Array<ISelectable>, ISelectable, ISelectable> { // TODO: Type alias
-        // @ts-ignore
-        var source: Entity = this.current_inputs.input_queue[0];
-        // @ts-ignore
-        var action : EntityMoveAction = this.current_inputs.input_queue[1];
-        console.log("Selecting location target for:", action)
-        var acquirer = action.acquirer;
-        this._current_acquirer = action.acquirer;
-        // @ts-ignore
-        var selection = yield *acquirer.input_option_generator(new Stack(source.loc));
-        return selection;
+    get base_step_factory(): (state: IState) => IInputNext<ISelectable> {
+        return (state: SlidingPuzzleState) => new PieceInputStep(state);
     }
 }
 

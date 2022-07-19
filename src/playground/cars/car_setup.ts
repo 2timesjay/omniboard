@@ -5,14 +5,14 @@ import { DisplayHandler3D } from "../../view/display_handler_three";
 import { View2DHudReadOnly } from "../../view/hud_rendering";
 import { View3D } from "../../view/rendering_three";
 import { PlaygroundPhase, PlaygroundController } from "../playground_controller";
-import { playground_setup } from "../control_test/playground_model_setup";
+import { playground_model_setup } from "../control_test/playground_model_setup";
 import { car_display_setup, car_hud_display_setup } from "./car_display_setup";
 
 export function car_setup() {
     // State Setup
     var k = 4;
     var d = 3;
-    var pg_state = playground_setup(k, d)
+    var pg_state = playground_model_setup(k, d)
     
     // Create Canvas
     const size = 100

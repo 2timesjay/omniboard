@@ -49,7 +49,7 @@ export class BaseInputs implements Inputs {
 
     is_stopped() {
         var head = this.input_steps.peek();
-        return !isInputStep(head);
+        return !isInputStep(head) && head != null;
     }
 }
 
@@ -61,24 +61,18 @@ export interface IPhase {
     run_phase: (state: IState, cur_team: number) => AnyGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>>;
 }
 
-/**
- * Phase is simplified to allow exploration of input acquisition.
- */
+// TODO: Complicated state around class members, e.g. current_inputs is used several ways.
 export class AbstractBasePhase implements IPhase {
+    // TODO: Must make Inputs class Generic
     current_inputs: BaseInputs;
     _current_acquirer: IInputAcquirer<ISelectable>;
     display_handler: BaseDisplayHandler;
 
     constructor() {
-        throw new Error("Function not implemented.");
     }
 
     set_display_handler(display_handler: BaseDisplayHandler) {
         this.display_handler = display_handler;
-    }
-
-    inputs_to_effects(inputs: BaseInputs): Array<Effect> {
-        throw new Error("Function not implemented.");
     }
 
     phase_condition(): boolean {
@@ -120,7 +114,24 @@ export class AbstractBasePhase implements IPhase {
         }
     }
 
-    get base_step_factory(): () => IInputNext<ISelectable> {
+    digest_inputs(): Array<Effect> {
+        var inputs = this.current_inputs;
+        var input_steps = inputs.input_steps;
+        if (!inputs.is_stopped()) {
+            // NOTE: Must receive inputs with InputStop.
+            return null;
+        } 
+
+        // TODO: Typing is preeeeetty loose here.
+        var partial_digest = input_steps.value;
+        var parent_step = input_steps.parent.value;
+        while(parent_step != null && isInputStep(parent_step) {
+            partial_digest = parent_step.consume_children(partial_digest)
+        }
+        input_steps = input_steps.pop();
+    }
+
+    get base_step_factory(): (state: IState) => IInputNext<ISelectable> {
         throw new Error("Function not implemented.");
     }
 

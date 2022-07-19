@@ -432,6 +432,7 @@ export type IInputNext<T> = IInputStep<T, any> | IInputStop;
 export interface IInputStep<T extends ISelectable, U extends ISelectable> {
     input: InputSelection<T>;
     acquirer: IInputAcquirer<T>;
+    consume_children: (next_step: IInputNext<U>) => any;
     get_next_step: (state?: IState) => IInputNext<U>;
 }
 
