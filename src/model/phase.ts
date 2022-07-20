@@ -29,13 +29,16 @@ export class BaseInputs implements Inputs {
         var head = this.peek();
         if (isInputStep(head)) {
             // TODO: This should always be true already? Or acquirer should have it.
-            head.input = input; 
-            this.input_steps.push(head.get_next_step(state)))
+            // head.input = input;
+            var next = head.get_next_step(state) ;
+            this.input_steps = this.input_steps.push(next);
         }
     }
 
     pop_input() {
-        this.input_steps = this.input_steps.pop();
+        if (!this.input_steps.parent == null) {
+            this.input_steps = this.input_steps.pop();
+        }
     }
 
     // TODO: Convert to `get head()`
@@ -104,10 +107,11 @@ export class AbstractBasePhase implements IPhase {
         while (this.phase_condition()) {
             console.log("Running Subphase")
             var inputs: BaseInputs = yield *this.run_subphase(state); 
-            console.log("Resetting Inputs")
-            var effects = this.inputs_to_effects(inputs);
+            console.log("Digesting Inputs")
+            var effects = this.digest_inputs();
             console.log("Effects: ", effects);
-            this.current_inputs.reset(state);           
+            this.current_inputs.reset(state); 
+            console.log("Resetting Inputs")          
 
             // TODO: Side effect that queue display doesn't clear before effect execution
             await state.process(effects, this.display_handler).then(() => {});
@@ -125,10 +129,19 @@ export class AbstractBasePhase implements IPhase {
         // TODO: Typing is preeeeetty loose here.
         var partial_digest = input_steps.value;
         var parent_step = input_steps.parent.value;
-        while(parent_step != null && isInputStep(parent_step) {
-            partial_digest = parent_step.consume_children(partial_digest)
+        // TODO: Whole section is messy and incorrect; Rethink partial_digest
+        while(parent_step != null && isInputStep(parent_step)) {
+            console.log("consuming children of ", parent_step)
+            partial_digest = parent_step.consume_children(input_steps.value)
+            console.log("partial digest: ", partial_digest)
+            input_steps = input_steps.pop();
+            if (input_steps.parent != null){
+                parent_step = input_steps.parent.value;
+            } else {
+                break
+            }
         }
-        input_steps = input_steps.pop();
+        return partial_digest;
     }
 
     get base_step_factory(): (state: IState) => IInputNext<ISelectable> {
@@ -144,7 +157,7 @@ export class AbstractBasePhase implements IPhase {
         this.current_inputs.reset(state);
         while (!this.current_inputs.is_stopped()) {
             // @ts-ignore InputSignal not handled
-            var selection = yield *this.current_acquirer.input_option_generator();;
+            var selection = yield *this.current_acquirer.input_option_generator();
             if (selection != null) {
                 this.current_inputs.push_input(selection, state);
             } else {

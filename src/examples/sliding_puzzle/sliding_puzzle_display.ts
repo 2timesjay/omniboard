@@ -1,3 +1,8 @@
+import { Loader } from "three";
+import { Entity } from "../../model/entity";
+import { EntityDisplay, ILocatable, IPathable } from "../../view/display";
+import { IView3D } from "../../view/rendering_three";
+
 export class PuzzlePieceDisplay extends EntityDisplay implements ILocatable, IPathable {
     loader: Loader;
 

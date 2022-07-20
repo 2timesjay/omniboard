@@ -4,7 +4,7 @@ import { TacticsController, TacticsPhase } from "../tactics/tactics_controller";
 import { tactics_setup } from "../tactics/tactics_setup";
 import { display_setup } from "../tactics/tactics_display_setup";
 import { DisplayHandler } from "./display_handler";
-import { playground_setup } from "../playground/control_test/playground_model_setup";
+import { playground_model_setup } from "../playground/control_test/playground_model_setup";
 import { playground_display_setup, playground_display_setup_3D } from "../playground/control_test/playground_display_setup";
 import { PlaygroundController, PlaygroundPhase } from "../playground/playground_controller";
 import { View3D } from "./rendering_three";
@@ -20,14 +20,17 @@ enum GameType {
     Playground2D = 1,
     Playground3D = 2,
     Cars3D = 3,
+    SlidingPuzzle = 4,
 }
 
 var game_type = (
     // GameType.Tactics
     // GameType.Playground2D
     // GameType.Playground3D
-    GameType.Cars3D
+    // GameType.Cars3D
+    GameType.SlidingPuzzle
 )
+
 // Dummy code to avoid type errors in switch check.
 if (Math.random() > 1) {
     game_type += 1;
@@ -62,7 +65,7 @@ if (game_type == GameType.Tactics) {
     // State Setup
     var k = 4;
     var d = 3;
-    var pg_state = playground_setup(k, d)
+    var pg_state = playground_model_setup(k, d)
 
     // Create Canvas
     const size = 100;
@@ -89,7 +92,7 @@ if (game_type == GameType.Tactics) {
     // State Setup
     var k = 4;
     var d = 3;
-    var pg_state = playground_setup(k, d)
+    var pg_state = playground_model_setup(k, d)
 
     // Create Canvas
     const size = 100

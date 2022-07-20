@@ -967,9 +967,9 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
     }
 }
 
-
+// TODO: WORKED: Miscellaneous problems. See https://www.typescriptlang.org/docs/handbook/mixins.html. Extend class?
 // export const EntityDisplay = Animate(_EntityDisplay, JumpInPlace);
-export const EntityDisplay = Animate(_EntityDisplay, BaseAnimation);
+export class EntityDisplay extends Animate(_EntityDisplay, BaseAnimation) {};
 
 
 export class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, IPathable {

@@ -226,6 +226,8 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
                 }
             } while(true);
         } else {
+            // TODO: Not set consistently across cases.
+            this.current_input = input_resp;
             return input_resp;
         }
         return this.current_input;

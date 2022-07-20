@@ -17,7 +17,7 @@ function sliding_puzzle_state_setup(k: number): SlidingPuzzleState {
     const grid_space = new GridSpace(k, k);
     var entities: Array<Piece> = [];
     for (var loc of grid_space.to_array()) {
-        if (loc.co.x != 0 && loc.co.y != 0) { 
+        if (!(loc.co.x == 0 && loc.co.y == 0)) { 
             entities.push(new Piece(loc));
         }
     }
@@ -58,7 +58,7 @@ export function sliding_puzzle_setup() {
     
     // Create Canvas
     const size = 100
-    const view = new View2D(k * size, k * size)
+    const view = new View2D(k, size)
     
     // Create Displays
     // NOTE: Shared displays and DisplayMap between views.
