@@ -37,7 +37,7 @@ export class SlidingPuzzleMoveEffect extends AbstractEffect {
     source: Piece;
     loc: GridLocation;
 
-    kernel: EffectKernel;
+    kernel: SlidingPuzzleMoveKernel;
     description: string;
 
     constructor(source: Piece, loc: GridLocation) {

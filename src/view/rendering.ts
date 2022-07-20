@@ -188,6 +188,7 @@ export interface IInputView<C extends ICoordinate> extends IView<C> {
     getHitObjects: (mouse_co: InputCoordinate, render_objects?: Array<RenderObject>) => Array<RenderObject>;
 }
 
+// TODO: Return HitRect2D instead of RenderObject
 export interface IView2D extends IInputView<GridCoordinate> {
     context: CanvasRenderingContext2D;
 }

@@ -7,6 +7,7 @@ import { AbstractDisplay, EntityDisplay, GridLocationDisplay } from "../../view/
 import { DisplayHandler } from "../../view/display_handler";
 import { View2D } from "../../view/rendering";
 import { SlidingPuzzlePhase, SlidingPuzzleController } from "./sliding_puzzle_controller";
+import { PuzzlePieceDisplay } from "./sliding_puzzle_display";
 import { Piece, SlidingPuzzleState } from "./sliding_puzzle_state";
 
 
@@ -43,7 +44,7 @@ function sliding_puzzle_display_setup(
     }
 
     for (let entity of state.entities) {
-        let entity_display = new EntityDisplay(entity);
+        let entity_display = new PuzzlePieceDisplay(entity);
         display_map.set(entity, entity_display);
         entity_display.display(view);
     }

@@ -931,6 +931,7 @@ class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPat
         return this._size;
     }
 
+    // TODO: Offsets should be handled in getter methods.
     update_pos() {
         console.log("MOVING ENTITY: ", this.selectable)
         // @ts-ignore Actually GridLocation
@@ -1068,7 +1069,7 @@ export class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILoca
 }
 
 
-export const EntityDisplay3D = Animate(_EntityDisplay3D, BaseAnimation);
+export class EntityDisplay3D extends Animate(_EntityDisplay3D, BaseAnimation) {}
 
 
 class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathable {
@@ -1143,7 +1144,7 @@ class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathabl
     }
 }
 
-export const UnitDisplay = Animate(_UnitDisplay, CircleInPlace);
+export class UnitDisplay extends Animate(_UnitDisplay, CircleInPlace) {};
 
 export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     selectable: IMenuable;
