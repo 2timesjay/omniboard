@@ -34,6 +34,7 @@ function drawPuzzlePiece(
 }
 
 export class PuzzlePieceDisplay extends EntityDisplay implements ILocatable, IPathable {
+    // TODO: Store in Piece.
     original_co: GridCoordinate;
     ref_image: CanvasImageSource;
 

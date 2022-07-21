@@ -6,14 +6,22 @@ import { GridLocation } from "../../model/space";
 import { IState } from "../../model/state";
 import { BaseDisplayHandler } from "../../view/display_handler";
 import { SlidingPuzzleMoveEffect } from "./sliding_puzzle_effect";
+import { SlidingPuzzleShuffler } from "./sliding_puzzle_shuffler";
 import { Piece, SlidingPuzzleState } from "./sliding_puzzle_state";
 
-class PieceInputStep implements IInputStep<Piece, GridLocation> { 
+export class PieceInputStep implements IInputStep<Piece, GridLocation> { 
     acquirer: IInputAcquirer<Piece>;
 
     constructor(state: SlidingPuzzleState) {
+        var occupied = new Set(state.entities.map(e => e.loc));
+        var open_locs = state.space.to_array().filter((l) => !occupied.has(l))
+        var open_locs_neighbors = new Set(
+            open_locs.flatMap(loc => state.space.getGridNeighborhood(loc))
+        );
+        var movable_pieces = state.entities.filter(
+            e => open_locs_neighbors.has(e.loc));
         this.acquirer = new SimpleInputAcquirer(
-            () => state.entities, false
+            () => movable_pieces, false
         ); 
     }
 
@@ -33,16 +41,21 @@ class PieceInputStep implements IInputStep<Piece, GridLocation> {
     };
     
     get_next_step(state: SlidingPuzzleState): GridLocationInputStep {
-        return new GridLocationInputStep(state);
+        return new GridLocationInputStep(state, this.input);
     }
 }
 
-class GridLocationInputStep implements IInputStep<GridLocation, null> {
+export class GridLocationInputStep implements IInputStep<GridLocation, null> {
     acquirer: IInputAcquirer<GridLocation>;
 
-    constructor(state: SlidingPuzzleState) {
+    constructor(state: SlidingPuzzleState, piece: Piece) {
+        // Restrict to unoccupied neighbors of source piece.
+        var occupied = new Set(state.entities.map(e => e.loc));
+        var open_neighbor_locs = state.space
+            .getGridNeighborhood(piece.loc)
+            .filter(loc => !occupied.has(loc));
         this.acquirer = new SimpleInputAcquirer(
-            () => state.space.to_array(), false
+            () => open_neighbor_locs, false
         ); 
     }
 
@@ -112,9 +125,31 @@ export class SlidingPuzzleController {
         input_request: InputRequest<ISelectable>,
         display_handler: BaseDisplayHandler,
     ) {
+        // Player input
         display_handler.refresh();
         phase.set_display_handler(display_handler);
         display_handler.on_selection(null, phase);
+        
+        /**
+         * Automated Shuffle performed.
+         * TODO: Make invisible to user, or otherwise fix buggy graphics
+         * TODO: Optimize Shuffle, avoid backtracks.
+         */
+         var shuffler = new SlidingPuzzleShuffler(this.state);
+         var phase_runner = phase.run_phase(this.state);
+         var input_options = await phase_runner.next();
+         var sel_count = 20;
+         while (input_options.value && sel_count >= 0) {      
+             var input_selection = await shuffler.get_input(
+                 phase, 
+                 input_options.value, 
+                 phase.current_inputs,
+             );
+             sel_count--;
+             input_options = await phase_runner.next(input_selection);
+             display_handler.on_selection(input_selection, phase);
+         }
+        
         // Note: No Victory Conditions. Go forever.
         display_handler.refresh();
         while (true) {

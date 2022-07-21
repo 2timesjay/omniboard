@@ -36,7 +36,8 @@ export class BaseInputs implements Inputs {
     }
 
     pop_input() {
-        if (!this.input_steps.parent == null) {
+        // TODO: Pop leaves item in "selected" or queued state.
+        if (this.input_steps.parent != null) {
             this.input_steps = this.input_steps.pop();
         }
     }
@@ -161,7 +162,7 @@ export class AbstractBasePhase implements IPhase {
             if (selection != null) {
                 this.current_inputs.push_input(selection, state);
             } else {
-                // TODO: Reset input_step
+                // TODO: Pop leaves item in queued state
                 this.current_inputs.pop_input();
             }
         };
