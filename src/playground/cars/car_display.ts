@@ -24,7 +24,7 @@ class Loader {
         var self = this;
         loader.load(
             // resource URL
-            'models/car_model.obj',
+            'assets/models/car_model.obj',
             // called when resource is loaded
             function ( object: THREE.Object3D ) {
                 // Note: ObjectLoader loads Group; we want Mesh.

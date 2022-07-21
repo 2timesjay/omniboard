@@ -43,11 +43,33 @@ function sliding_puzzle_display_setup(
         loc_display.display(view);
     }
 
+    // TODO: Requires placeholders while waiting for image to load. 
     for (let entity of state.entities) {
-        let entity_display = new PuzzlePieceDisplay(entity);
+        let entity_display = new EntityDisplay(entity);
         display_map.set(entity, entity_display);
         entity_display.display(view);
     }
+
+    // TODO: Oddly requires 1-2 extra clicks.
+    // TODO: Maybe better handled w/in PuzzlePiece?
+    // TODO: Weird black border on lower-right piece. Out-of-order draw???
+    // https://developer.mozilla.org/en-US/docs/Web/API/createImageBitmap#creating_sprites_from_a_sprite_sheets
+    var puzzle_image = new Image();
+    puzzle_image.onload = function() {
+        console.log("loaded image");
+        createImageBitmap(
+            puzzle_image
+        ).then(function(image_bitmap: ImageBitmap) {   
+            console.log("loading bitmap: ", image_bitmap);    
+            for (let entity of state.entities) {
+                let entity_display = new PuzzlePieceDisplay(entity, image_bitmap);
+                display_map.set(entity, entity_display);
+                entity_display.display(view);
+            }
+            console.log("built pieces");    
+        })
+    };
+    puzzle_image.src = "/assets/images/square_bear_cub.png"
 
     return display_map
 }

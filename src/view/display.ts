@@ -366,7 +366,6 @@ type Animatable = ConstrainedMixinable<ILocatable>;
 export function Animate<TBase extends Animatable>(
     Base: TBase, Animation: new(parent: AbstractDisplay<ILocatable>) => IAnimation
 ){
-    console.log("Animating: ", Base, Animation);
     return class Animated extends Base {  
         // @ts-ignore
         _animation: IAnimation = new Animation(this);

@@ -1,27 +1,51 @@
-import { Loader } from "three";
-import { Entity } from "../../model/entity";
 import { GridCoordinate } from "../../model/space";
 import { EntityDisplay, ILocatable, IPathable } from "../../view/display";
 import { HitRect2D, IView2D, makeRect, View2D } from "../../view/rendering";
-import { IView3D } from "../../view/rendering_three";
+import { Piece } from "./sliding_puzzle_state";
 
 
 
-// TODO: rename drawModel, move to rendering_three.ts, or an extension
+// TODO: rename drawImage, move to rendering.ts, or an extension
 function drawPuzzlePiece(
-    co: GridCoordinate, view: IView2D, width: number, height: number, clr?: string, lfa?: number
+    co: GridCoordinate, view: IView2D, image: CanvasImageSource, image_co: GridCoordinate, size: number, clr?: string,
 ): HitRect2D {
-    var rect = makeRect(co, view.context, width, height, clr, lfa);
+    // TODO: Generalize below assumptions
+    // NOTE: assumes image_dim = 552, k = 3
+    var slice_size = 552/3;
+    var size_factor = 100; // TODO: inconsistent with other `size`\size_factor vars
+    var draw_size = size*size_factor;
+    const color = clr == undefined ? "#000000" : clr;
+    const context = view.context;
+
+    context.drawImage(
+        image, 
+        image_co.x*slice_size, image_co.y*slice_size, slice_size, slice_size, 
+        co.x*size_factor, co.y*size_factor, draw_size, draw_size
+    )
+    context.strokeStyle = color;
+    context.lineWidth = 4;
+    context.strokeRect(
+        co.x*size_factor, co.y*size_factor, draw_size, draw_size
+    ); 
+    context.strokeStyle = 'black';
+    context.stroke();
     // @ts-ignore
-    return rect;
+    return new HitRect2D(co, {x: size, y: size});
 }
 
 export class PuzzlePieceDisplay extends EntityDisplay implements ILocatable, IPathable {
+    original_co: GridCoordinate;
+    ref_image: CanvasImageSource;
 
     // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Using_images#slicing
-    constructor(entity: Entity, ref_image, image_slice_x?: number, image_slice_y?: number) {
-        super(entity);
+    constructor(
+        piece: Piece, 
+        ref_image: CanvasImageSource,
+    ) {
+        super(piece);
         this._size = 0.9;
+        this.original_co = {x: piece.loc.x, y: piece.loc.y}
+        this.ref_image = ref_image
     }
 
     update_pos() {
@@ -36,7 +60,7 @@ export class PuzzlePieceDisplay extends EntityDisplay implements ILocatable, IPa
         this._yOffset = this.selectable.loc.y + 0.05;
         this._size = 0.9;
         this.width = 0.9;
-        this.height = 0.9;
+        this.height = 0.9; 
     }
 
 
@@ -45,12 +69,14 @@ export class PuzzlePieceDisplay extends EntityDisplay implements ILocatable, IPa
         return drawPuzzlePiece(
             {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
             view,
-            this.size, this.size, // TODO: Fix 3d rect hack
+            this.ref_image,
+            this.original_co,
+            this.size, // TODO: Fix 3d rect hack
             clr,
         );
     }
 
     alt_render(view: IView2D, clr: string): HitRect2D {
-        this.render(view, clr);
+        return this.render(view, clr);
     }
 }
