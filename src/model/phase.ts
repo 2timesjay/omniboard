@@ -116,6 +116,7 @@ export class AbstractBasePhase implements IPhase {
 
             // TODO: Side effect that queue display doesn't clear before effect execution
             await state.process(effects, this.display_handler).then(() => {});
+            break;
         }
     }
 
@@ -142,6 +143,7 @@ export class AbstractBasePhase implements IPhase {
                 break
             }
         }
+        // @ts-ignore final partial_digest is effect list (see todo above)
         return partial_digest;
     }
 

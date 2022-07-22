@@ -134,11 +134,13 @@ export class SlidingPuzzleController {
          * Automated Shuffle performed.
          * TODO: Make invisible to user, or otherwise fix buggy graphics
          * TODO: Optimize Shuffle, avoid backtracks.
+         * TODO: delineate "turns"/"subphases" since there's no control handoff.
+         * TODO: Image loads after first shuffle, so missing piece changes randomly (fix).
          */
          var shuffler = new SlidingPuzzleShuffler(this.state);
          var phase_runner = phase.run_phase(this.state);
          var input_options = await phase_runner.next();
-         var sel_count = 20;
+         var sel_count = 4;
          while (input_options.value && sel_count >= 0) {      
              var input_selection = await shuffler.get_input(
                  phase, 
@@ -162,6 +164,18 @@ export class SlidingPuzzleController {
                 input_options = await phase_runner.next(input_selection);
                 display_handler.on_selection(input_selection, phase);
             }
+            if (this.victory_condition()) {
+                break;
+            }
         }  
+    }
+    
+    // TODO: This and defeat -> ternary enum?
+    victory_condition(): boolean {
+        var victory = this.state.entities
+            .map(e => e.loc == e.original_loc)
+            .reduce((l, r) => l && r)
+        console.log("Victory!")
+        return victory
     }
 }

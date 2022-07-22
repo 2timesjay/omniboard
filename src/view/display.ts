@@ -80,7 +80,6 @@ function interruptable_generator(
             var base_gen = base_gen_builder();
             var delegate_gen: DeltaGen = yield *base_gen;
             if (delegate_gen != null) {
-                console.log("Received interruption: ", delegate_gen)
                 yield *delegate_gen;
             }
         }
@@ -282,7 +281,6 @@ export class Move implements IAnimation {
 
     // @ts-ignore
     * delta_x(): DeltaGen {
-        console.log("Move DX")
         while(this.x_walk.length > 0) {
             yield this.x_walk.shift();
         }

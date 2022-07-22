@@ -45,7 +45,8 @@ export class PuzzlePieceDisplay extends EntityDisplay implements ILocatable, IPa
     ) {
         super(piece);
         this._size = 0.9;
-        this.original_co = {x: piece.loc.x, y: piece.loc.y}
+        // NOTE: Set now; won't change.
+        this.original_co = {x: piece.original_loc.x, y: piece.original_loc.y}
         this.ref_image = ref_image
     }
 
