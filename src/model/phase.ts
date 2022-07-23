@@ -59,7 +59,7 @@ export class BaseInputs implements Inputs {
     }
 }
 
-type AnyGenerator<T, U, V> = Generator<T, U, V> | AsyncGenerator<T, U, V>
+export type AnyGenerator<T, U, V> = Generator<T, U, V> | AsyncGenerator<T, U, V>
 
 export interface IPhase {
     current_inputs: Inputs;
