@@ -54,20 +54,28 @@ export class CachedGen<T, U, V> { // T, TReturn, TNext
 export class ChainedCachedGen<T, U, V> {
     cached_gens: Array<CachedGen<T, U, V>>;
     cur_gen: CachedGen<T, U, V>;
+    _on_gen_change: () => void;
 
-    constructor(cached_gens: Array<CachedGen<T, U, V>>) {
+    constructor(cached_gens: Array<CachedGen<T, U, V>>, on_gen_change?: () => void) {
         this.cached_gens = cached_gens;
         this.cur_gen = null;
+        // explicit null handling
+        this._on_gen_change = on_gen_change != null ? on_gen_change : () => {};
     }
 
     get cur_value(): T {
         return this.cur_gen != null ? this.cur_gen.cur_value : null;
     }
 
+    on_gen_change() {
+        this._on_gen_change();
+    }
+
     * gen(): Generator<T, U, V> {
         for (var cached_gen of this.cached_gens) {
             this.cur_gen = cached_gen;
             yield *cached_gen.gen();
+            this.on_gen_change();
         }
         return null;
     }
