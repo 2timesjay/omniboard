@@ -21,33 +21,53 @@ interface IAnimation {
     delta_s(): DeltaGen; // TODO: Implement on ILocatable
 }
 
-export class GenWrapper<T, U, V> {
-    generator: Generator<T, U, V>; // T, TReturn, TNext
+export class CachedGen<T, U, V> { // T, TReturn, TNext
+    fn: (input?: V) => T;  
+    _cur_value: T;
     
-    constructor(generator: Generator<T, U, V>) {
-        this.generator = generator;
+    constructor(fn: (input?: V) => T) {
+        this.fn = fn;
     }
 
-    get state(): T {
-        return null;
+    get cur_value(): T {
+        return this._cur_value;
     }
 
-    * gen(): Generator<T, U, V> {
-        yield *this.generator;
+    set cur_value(val: T): void {
+        this._cur_value = val;
+    }
+
+    * gen(initial_input?: V): Generator<T, U, V> {
+        var input = initial_input;
+        while(true) {
+            this.cur_value = this.fn(input);
+            if (this.cur_value == null) {
+                break;
+            } else {
+                var input = yield this.cur_value;
+            }
+        }
         return null;
     }
 }
 
-export class ChainedGenWrapper<T, U, V> {
-    gen_wrappers: Array<GenWrapper<T, U, V>>;
+export class ChainedCachedGen<T, U, V> {
+    cached_gens: Array<CachedGen<T, U, V>>;
+    cur_gen: CachedGen<T, U, V>;
 
-    constructor(gen_wrappers: Array<GenWrapper<T, U, V>>) {
-        this.gen_wrappers = gen_wrappers;
+    constructor(cached_gens: Array<CachedGen<T, U, V>>) {
+        this.cached_gens = cached_gens;
+        this.cur_gen = null;
+    }
+
+    get cur_value(): T {
+        return this.cur_gen != null ? this.cur_gen.cur_value : null;
     }
 
     * gen(): Generator<T, U, V> {
-        for(var gen_wrapper of this.gen_wrappers) {
-            yield *gen_wrapper.gen();
+        for (var cached_gen of this.cached_gens) {
+            this.cur_gen = cached_gen;
+            yield *cached_gen.gen();
         }
         return null;
     }
