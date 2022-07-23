@@ -2,7 +2,8 @@ import { EffectKernel, AbstractEffect } from "../../model/effect";
 import { GridLocation, Vector } from "../../model/space";
 import { IState } from "../../model/state";
 import { DURATION_FRAMES } from "../../model/unit";
-import { EntityDisplay, Move } from "../../view/display";
+import { Move } from "../../view/animation";
+import { EntityDisplay } from "../../view/display";
 import { DisplayHandler } from "../../view/display_handler";
 import { Piece, SlidingPuzzleState } from "./sliding_puzzle_state";
 

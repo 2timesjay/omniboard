@@ -1,4 +1,4 @@
-import { Flinch, Bump, Move } from "../view/display";
+import { Flinch, Bump, Move } from "../view/animation";
 import { BaseDisplayHandler, DisplayHandler } from "../view/display_handler";
 import { Action } from "./action";
 import { ISelectable } from "./core";

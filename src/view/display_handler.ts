@@ -4,11 +4,10 @@ import { ISelectable, Stack } from "../model/core";
 import { InputResponse } from "../model/input";
 import { IPhase } from "../model/phase";
 import { BoardState, IState } from "../model/state";
-import { AbstractDisplay, DisplayState, Flinch, LinearVisual, Move, UnitDisplay } from "./display";
+import { AbstractDisplay, DisplayState } from "./display";
 import { DisplayMap, RenderObjectToDisplayMap } from "./broker";
 import { IInputView, IView, IView2D, makeLine, RenderObject } from "./rendering";
 import { ICoordinate } from "../model/space";
-
 
 // TODO: Add other ActiveRegion types
 export interface ZMatch {z: number}

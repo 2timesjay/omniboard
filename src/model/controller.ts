@@ -1,7 +1,7 @@
 import { BaseDisplayHandler } from "../view/display_handler";
 import { ISelectable } from "./core";
 import { InputRequest } from "./input";
-import { BasePhase, Inputs, IPhase } from "./phase";
+import { AbstractBasePhase, Inputs, IPhase } from "./phase";
 import { BaseState } from "./state";
 
 
@@ -21,7 +21,7 @@ export class BaseController {
      * then feeds input to display_handler.
      */
     async run(
-        phase: BasePhase, 
+        phase: AbstractBasePhase, 
         input_request: InputRequest<ISelectable>,
         display_handler: BaseDisplayHandler,
     ) {

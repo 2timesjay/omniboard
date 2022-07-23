@@ -1,6 +1,3 @@
-import { FalseLiteral } from "typescript";
-import { SlidingPuzzleInputs } from "../examples/sliding_puzzle/sliding_puzzle_controller";
-import { SlidingPuzzleState } from "../examples/sliding_puzzle/sliding_puzzle_state";
 import { IMenuable } from "../view/display";
 import { 
     bfs,

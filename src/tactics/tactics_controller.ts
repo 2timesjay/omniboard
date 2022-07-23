@@ -45,6 +45,7 @@ export class TacticsPhase implements IPhase {
     display_handler: DisplayHandler;
 
     constructor() {
+        // @ts-ignore TacticsPhase on obselete Inputs
         this.current_inputs = {}
         this.input_state = InputState.NoneSelected;
     }
@@ -87,6 +88,7 @@ export class TacticsPhase implements IPhase {
             // TODO: Side effect that queue display doesn't clear before effect execution
             await state.process(effects, this.display_handler).then(() => {});
             // TODO: Slightly messy to couple this with state.
+            // @ts-ignore TacticsPhase on obselete Inputs
             this.current_inputs = {};
             console.log("BoardState: ", state);
             console.log("Units: ", team_units, " Team: ", cur_team);
