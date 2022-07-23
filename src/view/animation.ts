@@ -1,4 +1,4 @@
-import { getGeneratedNameForNode } from "typescript";
+import { lerp } from "three/src/math/MathUtils";
 import { ISelectable } from "../model/core";
 import { AnyGenerator } from "../model/phase";
 import { Vector} from "../model/space";
@@ -12,15 +12,6 @@ import { AbstractDisplay, ILocatable } from "./display";
 // Following https://www.typescriptlang.org/docs/handbook/mixins.html
 type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 
-type DeltaGen = Generator<number, DeltaGen, DeltaGen>;
-
-// Time-varying animations
-interface IAnimation {
-    delta_x(): DeltaGen;
-    delta_y(): DeltaGen;
-    delta_s(): DeltaGen; // TODO: Implement on ILocatable
-}
-
 export class CachedGen<T, U, V> { // T, TReturn, TNext
     fn: (input?: V) => T;  
     _cur_value: T;
@@ -33,15 +24,11 @@ export class CachedGen<T, U, V> { // T, TReturn, TNext
         return this._cur_value;
     }
 
-    set cur_value(val: T): void {
-        this._cur_value = val;
-    }
-
     * gen(initial_input?: V): Generator<T, U, V> {
         var input = initial_input;
         while(true) {
-            this.cur_value = this.fn(input);
-            if (this.cur_value == null) {
+            this._cur_value = this.fn(input);
+            if (this._cur_value == null) {
                 break;
             } else {
                 var input = yield this.cur_value;
@@ -75,10 +62,24 @@ export class ChainedCachedGen<T, U, V> {
         for (var cached_gen of this.cached_gens) {
             this.cur_gen = cached_gen;
             yield *cached_gen.gen();
+            // NOTE: Run on_gen_change after _completion_ of a sub-generator.
             this.on_gen_change();
         }
         return null;
     }
+}
+
+// Time-varying animations
+type DeltaGen = Generator<number, DeltaGen, DeltaGen>;
+
+interface IAnimation {
+    delta_x(): DeltaGen;
+    delta_y(): DeltaGen;
+    delta_s(): DeltaGen; // TODO: Implement on ILocatable
+}
+
+interface IChainableAnimation {
+    delta_vec(): DeltaGen;
 }
  
 function interruptable_generator(
@@ -98,6 +99,65 @@ function interruptable_generator(
         }
     }
 }
+
+/**
+ * Very primitive curves
+ */
+type CurveTransform<T> = (cur_time: number) => T
+
+function clamp(value: number, min: number, max: number): number {
+    return Math.max(Math.min(value, max), min);
+}
+
+function lerp(
+    start: number, end: number, start_time: number, duration: number, current_time: number
+): number {
+    var progress = clamp((current_time-start_time)/duration, 0, 1)
+    return start + (end-start) * progress;
+}
+
+function build_lerp(
+    start: number, end: number, start_time: number, duration: number
+): CurveTransform<number> {
+    return (cur_time: number) => lerp(start, end, start_time, duration, cur_time);
+}
+
+function vector_lerp(
+    start: Vector, end: Vector, start_time: number, duration: number, current_time: number
+): Vector {
+    return {
+        x: lerp(start.x, end.x, start_time, duration, current_time),
+        y: start.y != null ? lerp(start.y, end.y, start_time, duration, current_time) : null,
+        z: start.z != null ? lerp(start.z, end.z, start_time, duration, current_time) : null,
+    }
+}
+
+function build_vector_lerp(
+    start: Vector, end: Vector, start_time: number, duration: number
+): CurveTransform<Vector> {
+    return (cur_time: number) => vector_lerp(start, end, start_time, duration, cur_time);
+}
+
+/**
+ * Curve + Chainable Gen-based Animations
+ */
+
+export class ChainableMove extends CachedGen<Vector, null, number> implements IChainableAnimation { 
+    parent: AbstractDisplay<ISelectable> & ILocatable;
+
+    constructor(
+        delta: Vector, duration: number, parent: AbstractDisplay<ISelectable> & ILocatable
+    ) {
+        var curve = build_vector_lerp(start: {x: 0, y: 0, z: 0})
+        super(curve);
+        var {x: dx, y: dy, z: dz} = v
+        this.parent = parent;
+    }
+}
+
+/**
+ * Older Animations
+ */
 
 export class BaseAnimation implements IAnimation {
     parent: AbstractDisplay<ILocatable>;
