@@ -161,7 +161,7 @@ export class AutoInputAcquirer<T> implements IInputAcquirer<T> {
     }
 
     * input_option_generator(
-        base?: T
+        base?: T 
     ): Generator<Array<T>, T, T | InputSignal> {
         var selection = yield this.get_options(base); // For confirmation only.
         if (!isInputSignal(selection)) {
@@ -179,11 +179,14 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
     _option_fn: OptionFn<T>;
     current_input: T;
     require_confirmation: boolean;
+    _auto_select: boolean;
     
     constructor(
         option_fn: OptionFn<T>,
-        require_confirmation = true,
+        require_confirmation: boolean = true,
+        auto_select: boolean = false
     ) {
+        this._auto_select = auto_select;
         this._option_fn = option_fn;
         // NOTE: State has to return after any complete pop off the stack.
         this.current_input = null;
@@ -204,6 +207,13 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
         // Handles cases where intermediate input is required by yielding it.
         // Coroutine case.
         var options = this.get_options(base);
+
+        // auto_select case
+        if (options.length == 1 && this._auto_select) {
+            this.current_input = options[0];
+            return this.current_input;
+        }
+
         var input_resp = yield options;
         if (this.require_confirmation || isInputSignal(input_resp)) {
             do {
@@ -228,7 +238,6 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
         } else {
             // TODO: Not set consistently across cases.
             this.current_input = input_resp;
-            return input_resp;
         }
         return this.current_input;
     }

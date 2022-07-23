@@ -62,6 +62,10 @@ function sliding_puzzle_display_setup(
         ).then(function(image_bitmap: ImageBitmap) {   
             console.log("loading bitmap: ", image_bitmap);    
             for (let entity of state.entities) {
+                // if (entity.loc.x == 0 && entity.loc.y == 0) {
+                //     console.log("???????")
+                //     continue
+                // }
                 let entity_display = new PuzzlePieceDisplay(entity, image_bitmap);
                 display_map.set(entity, entity_display);
                 entity_display.display(view);

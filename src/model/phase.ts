@@ -20,7 +20,9 @@ export class BaseInputs implements Inputs {
     base_step_factory: (state: IState) => IInputNext<ISelectable>;
     input_steps: Stack<IInputNext<ISelectable>>;
 
-    constructor(base_step_factory: (state: IState) => IInputNext<ISelectable>) {
+    constructor(
+        base_step_factory: (state: IState) => IInputNext<ISelectable>,
+    ) {
         this.base_step_factory = base_step_factory;
     }
 

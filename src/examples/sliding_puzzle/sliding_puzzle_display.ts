@@ -9,7 +9,7 @@ import { Piece } from "./sliding_puzzle_state";
 function drawPuzzlePiece(
     co: GridCoordinate, view: IView2D, image: CanvasImageSource, image_co: GridCoordinate, size: number, clr?: string,
 ): HitRect2D {
-    // TODO: Generalize below assumptions
+    // TODO: Generalize below assumptions - draw from loaded image.
     // NOTE: assumes image_dim = 552, k = 3
     var slice_size = 552/3;
     var size_factor = 100; // TODO: inconsistent with other `size`\size_factor vars
@@ -28,7 +28,6 @@ function drawPuzzlePiece(
         co.x*size_factor, co.y*size_factor, draw_size, draw_size
     ); 
     context.strokeStyle = 'black';
-    context.stroke();
     // @ts-ignore
     return new HitRect2D(co, {x: size, y: size});
 }

@@ -6,6 +6,8 @@ import { EntityDisplay, Move } from "../../view/display";
 import { DisplayHandler } from "../../view/display_handler";
 import { Piece, SlidingPuzzleState } from "./sliding_puzzle_state";
 
+
+const CLACK = new Audio('/assets/sound_effects/quick_clack.ogg');
 class SlidingPuzzleMoveKernel implements EffectKernel {
     source: Piece;
     loc: GridLocation;
@@ -61,5 +63,13 @@ export class SlidingPuzzleMoveEffect extends AbstractEffect {
         var source_display = display_handler.display_map.get(source) as EntityDisplay;
         var animation = new Move(vector, DURATION_FRAMES, source_display);
         source_display.interrupt_animation(animation)
+        // TODO: Play on animation completion
+        this.play_sound();
+    }
+
+    play_sound() {
+        console.log("PLAYING SOUND");
+        CLACK.load();
+        CLACK.play();
     }
 }

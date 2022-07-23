@@ -71,6 +71,7 @@ export class BaseState implements IState {
             }
             console.log("Effect: ", effect);
             if (effect.animate != null){
+                // TODO: Factor animate and play_sound into methods; use inheritance
                 effect.animate(this, display_handler);
                 effect.execute(self);
                 // TODO: Consistent sleep milliseconds vs frames animation dur.

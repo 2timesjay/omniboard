@@ -9,6 +9,10 @@ import { SlidingPuzzleMoveEffect } from "./sliding_puzzle_effect";
 import { SlidingPuzzleShuffler } from "./sliding_puzzle_shuffler";
 import { Piece, SlidingPuzzleState } from "./sliding_puzzle_state";
 
+
+const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
+
+
 export class PieceInputStep implements IInputStep<Piece, GridLocation> { 
     acquirer: IInputAcquirer<Piece>;
 
@@ -41,21 +45,22 @@ export class PieceInputStep implements IInputStep<Piece, GridLocation> {
     };
     
     get_next_step(state: SlidingPuzzleState): GridLocationInputStep {
-        return new GridLocationInputStep(state, this.input);
+        return new GridLocationInputStep(state, this.input, true);
     }
 }
 
 export class GridLocationInputStep implements IInputStep<GridLocation, null> {
     acquirer: IInputAcquirer<GridLocation>;
 
-    constructor(state: SlidingPuzzleState, piece: Piece) {
+    constructor(state: SlidingPuzzleState, piece: Piece, auto_select: boolean = false) {
         // Restrict to unoccupied neighbors of source piece.
         var occupied = new Set(state.entities.map(e => e.loc));
         var open_neighbor_locs = state.space
             .getGridNeighborhood(piece.loc)
             .filter(loc => !occupied.has(loc));
+        // TODO: Is this the right place for auto_select?
         this.acquirer = new SimpleInputAcquirer(
-            () => open_neighbor_locs, false
+            () => open_neighbor_locs, false, auto_select,
         ); 
     }
 
@@ -140,31 +145,45 @@ export class SlidingPuzzleController {
          var shuffler = new SlidingPuzzleShuffler(this.state);
          var phase_runner = phase.run_phase(this.state);
          var input_options = await phase_runner.next();
-         var sel_count = 4;
-         while (input_options.value && sel_count >= 0) {      
-             var input_selection = await shuffler.get_input(
-                 phase, 
-                 input_options.value, 
-                 phase.current_inputs,
-             );
-             sel_count--;
-             input_options = await phase_runner.next(input_selection);
-             display_handler.on_selection(input_selection, phase);
-         }
-        
+
+        // TODO: Factor into "setup"
+        var sel_count = 2;
+        while (sel_count > 0) {
+            console.log("options", input_options)
+            console.log("sel_count", sel_count)
+            while (input_options.value) {      
+                var input_selection = await shuffler.get_input(
+                    phase, 
+                    input_options.value, 
+                    phase.current_inputs,
+                );
+                input_options = await phase_runner.next(input_selection);
+                display_handler.on_selection(input_selection, phase);
+            }
+            sel_count--;
+            phase_runner = phase.run_phase(this.state);
+            input_options = await phase_runner.next();
+            display_handler.refresh();
+        }
+
         // Note: No Victory Conditions. Go forever.
         display_handler.refresh();
         while (true) {
             display_handler.refresh();
-            var phase_runner = phase.run_phase(this.state);
+            phase_runner = phase.run_phase(this.state);
             // TODO: lol what a mess
             var input_options = await phase_runner.next();
+            // TODO: So simple it was fine running only this internal subphase loop.
             while(input_options.value){
                 var input_selection = await input_request(input_options.value);
                 input_options = await phase_runner.next(input_selection);
                 display_handler.on_selection(input_selection, phase);
             }
             if (this.victory_condition()) {
+                console.log("Victory!")
+                // NOTE: Don't forget, input_request also influences display state!
+                input_request(INPUT_OPTIONS_CLEAR);
+                display_handler.on_game_end();
                 break;
             }
         }  
@@ -175,7 +194,6 @@ export class SlidingPuzzleController {
         var victory = this.state.entities
             .map(e => e.loc == e.original_loc)
             .reduce((l, r) => l && r)
-        console.log("Victory!")
         return victory
     }
 }
