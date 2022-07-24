@@ -2,6 +2,7 @@ import { GridCoordinate, ICoordinate } from "../model/space";
 import { InputCoordinate } from "./broker";
 
 // Canvas rendering scale constant
+// TODO: Un-hardcode "SIZE" and "size" = 100 everywhere
 export const SIZE = 100;
 export class HitRect2D {
     co: GridCoordinate;

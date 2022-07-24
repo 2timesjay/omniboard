@@ -49,6 +49,8 @@ export class EntityMoveAction extends Action<ILocation, PlaygroundState> {
         return effects;
     }
 
+    // TODO: Update
+    // @ts-ignore
     get_root(inputs: PlaygroundInputs): Stack<ILocation> {
         // @ts-ignore: Entity type on input queue end depending on InputState
         var entity: Entity = inputs.peek();

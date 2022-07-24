@@ -1,7 +1,7 @@
 import { GridCoordinate } from "../../model/space";
 import { Animate, BaseAnimation, ChainableAnimate, ChainableSteadyAnimation } from "../../view/animation";
-import { _EntityDisplay, ILocatable, IPathable } from "../../view/display";
-import { HitRect2D, IView2D, makeRect, View2D } from "../../view/rendering";
+import { _EntityDisplay, ILocatable, IPathable, AbstractVisual, UnitaryVisual, FixedLocatable } from "../../view/display";
+import { HitRect2D, IView, IView2D, makeRect, View2D } from "../../view/rendering";
 import { Piece } from "./sliding_puzzle_state";
 
 
@@ -80,6 +80,33 @@ class _PuzzlePieceDisplay extends _EntityDisplay implements ILocatable, IPathabl
 
     alt_render(view: IView2D, clr: string): HitRect2D {
         return this.render(view, clr);
+    }
+}
+
+export class VictoryBannerVisual extends UnitaryVisual {
+    constructor(parent: ILocatable) {
+        super(parent);
+        this.add_parent(parent);
+    }
+
+    add_parent(parent: ILocatable) {
+        this.parent = parent;
+        parent.children.push(this);
+    }
+
+    display(view: IView2D) {
+        this.render(view, null)
+    }
+
+    render(view: IView2D, clr: string) {
+        // NOTE: Font size multiplied by 100;
+        view.drawRect(this.co, 2.2, -0.5, 'white')
+        view.drawText(
+            {x: this.co.x + 0.1, y: this.co.y - 0.05, z: this.co.z}, 
+            "VICTORY!", 
+            0.5, 
+            'green'
+        );
     }
 }
 

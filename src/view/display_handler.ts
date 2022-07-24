@@ -4,10 +4,11 @@ import { ISelectable, Stack } from "../model/core";
 import { InputResponse } from "../model/input";
 import { IPhase } from "../model/phase";
 import { BoardState, IState } from "../model/state";
-import { AbstractDisplay, DisplayState } from "./display";
+import { AbstractDisplay, AbstractVisual, DisplayState, FixedLocatable } from "./display";
 import { DisplayMap, RenderObjectToDisplayMap } from "./broker";
 import { IInputView, IView, IView2D, makeLine, RenderObject } from "./rendering";
 import { ICoordinate } from "../model/space";
+import { VictoryBannerVisual } from "../examples/sliding_puzzle/sliding_puzzle_display";
 
 // TODO: Add other ActiveRegion types
 export interface ZMatch {z: number}
@@ -45,6 +46,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
     active_region: ActiveRegion;
     // TODO: Placeholder for handling sequential input displays
     pending_inputs: Array<ISelectable>;
+    visuals: Array<AbstractVisual>;
 
     constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
         this.view = view;
@@ -53,8 +55,16 @@ export class BaseDisplayHandler implements IDisplayHandler {
         this.pending_inputs = [];
         this.active_region = null;
         this.render_object_map = new Map<RenderObject, AbstractDisplay<ISelectable>>();
+        this.visuals = [];
     }
 
+    attach(selectable: ISelectable, display: AbstractDisplay<ISelectable>): void {
+        this.display_map.set(selectable, display);
+    }
+
+    attach_visual(visual: AbstractVisual): void {
+        this.visuals.push(visual);
+    }
 
     update_queued(pending_inputs: Array<ISelectable>) { 
         for(let pending_selectable of pending_inputs) {
@@ -76,6 +86,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
         this.view.clear();
         delete this.render_object_map;
         this.render_object_map = new Map<RenderObject, AbstractDisplay<ISelectable>>()
+        // Display Selectables
         for (let selectable of this.state.get_selectables()) {
             var display = this.display_map.get(selectable);
             if (display == undefined) {
@@ -85,6 +96,10 @@ export class BaseDisplayHandler implements IDisplayHandler {
             if (render_object != null) { // Can only select rendered elements. 
                 this.render_object_map.set(render_object, display);
             }
+        }
+        // Display Unattached visuals
+        for (let visual of this.visuals) {
+            visual.display(this.view);
         }
     }
 
@@ -131,6 +146,10 @@ export class BaseDisplayHandler implements IDisplayHandler {
     }
 
     on_game_end(){
+        console.log("building banner");
+        var banner_parent = new FixedLocatable({x: 0, y: 2, z: 0});
+        var banner = new VictoryBannerVisual(banner_parent);
+        this.attach_visual(banner);
         console.log("Game End");
         // Clear states
         // TODO: Clumsy Clear

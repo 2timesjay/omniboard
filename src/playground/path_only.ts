@@ -10,6 +10,7 @@ import { refreshDisplay } from "../view/display_handler";
 import { DisplayMap } from "../view/broker";
 
 export class PathOnlyPhase implements IPhase {
+    // @ts-ignore
     current_inputs: Array<InputSelection<ISelectable>>;
 
     // @ts-ignore wrong inputs

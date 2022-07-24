@@ -147,11 +147,8 @@ export class SlidingPuzzleController {
         var phase_runner = phase.run_phase(this.state);
         var input_options = await phase_runner.next();
 
-        
-        // sync_sleep(1000);
-        // console.log("Finished sync sleep")
         // TODO: Factor into "setup"
-        var sel_count = 20;
+        var sel_count = 1;
         while (sel_count > 0) {
             console.log("options", input_options)
             console.log("sel_count", sel_count)

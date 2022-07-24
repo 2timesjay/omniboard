@@ -34,7 +34,8 @@ interface LabeledSelection {
     selection: InputSelection<ISelectable>;
 }
 
-// TODO: Label input selections based on InputState
+// TODO: Update to use new Inputs
+// @ts-ignore
 export class PlaygroundInputs implements Inputs {
     input_state: PlaygroundInputState;
     // input_queue: Array<LabeledSelection>;
@@ -73,6 +74,7 @@ export class PlaygroundInputs implements Inputs {
  * Phase is simplified to allow exploration of input acquisition.
  */
 export class PlaygroundPhase implements IPhase {
+    // @ts-ignore
     current_inputs: PlaygroundInputs;
     _current_acquirer: IInputAcquirer<ISelectable>;
     display_handler: BaseDisplayHandler;
@@ -241,6 +243,7 @@ export class PlaygroundController {
     ) {
         display_handler.refresh();
         phase.set_display_handler(display_handler);
+        // @ts-ignore
         display_handler.on_selection(null, phase);
         // Note: No Victory Conditions. Go forever.
         display_handler.refresh();
@@ -252,6 +255,7 @@ export class PlaygroundController {
             while(input_options.value){
                 var input_selection = await input_request(input_options.value);
                 input_options = await phase_runner.next(input_selection);
+                // @ts-ignore
                 display_handler.on_selection(input_selection, phase);
             }
         }  

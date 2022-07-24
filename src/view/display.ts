@@ -60,8 +60,39 @@ export interface IMenuable {// Action<ISelectable>, Confirmation
 /**
  * Visuals
  */
+export class FixedLocatable implements ILocatable, ISelectable {
+    // NOTE: A simple virtual location class to parent fixed-loc visuals.
+    _xOffset: number;
+    _yOffset: number;
+    _zOffset: number;
+    _size: number;
+    children: AbstractVisual[];
+
+    constructor(co: GridCoordinate) {
+        this._xOffset = co.x;
+        this._yOffset = co.y;
+        this._zOffset = co.z;
+        this.children = [];
+    }
+
+    get xOffset(): number {
+        return this._xOffset;
+    }
+
+    get yOffset(): number {
+        return this._yOffset;
+    }
+
+    get zOffset(): number {
+        return this._zOffset;
+    }
+
+    get size(): number {
+        return 1;
+    }
+}
  
- export class AbstractVisual {
+export class AbstractVisual {
     constructor() {
     }
 
@@ -84,6 +115,14 @@ export class UnitaryVisual extends AbstractVisual{
 
     display(view: IView<ICoordinate>) {
         this.render(view, null)
+    }
+
+    // TODO: Add to AbstractVisual Interface
+    // TODO: Add `co` to ILocatable
+    get co() {
+        return {
+            x: this.parent.xOffset, y: this.parent.yOffset, z: this.parent.zOffset
+        }
     }
 
     render(view: IView<ICoordinate>, clr: string) {
@@ -248,7 +287,6 @@ export class AbstractDisplay<T extends ISelectable> {
             this.queueDisplay(view); // Don't use render_object.
         }
         for (var visual of this.children) {
-            // @ts-ignore
             visual.display(view);
         }
 

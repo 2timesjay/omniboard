@@ -31,6 +31,16 @@ var game_type = (
     GameType.SlidingPuzzle
 )
 
+function create_start_button(setup_fn: () => void) {
+    var start_button = document.createElement("button")
+    start_button.innerHTML = "Click to Start"
+    document.body.appendChild(start_button)
+    window.addEventListener("click", function() {
+        setup_fn()
+        start_button.remove()
+    }, {once : true});
+}
+
 // Dummy code to avoid type errors in switch check.
 if (Math.random() > 1) {
     game_type += 1;
@@ -120,8 +130,6 @@ if (game_type == GameType.Tactics) {
     car_setup();
 } else if (game_type == GameType.SlidingPuzzle) {
     // NOTE: Await first click to start.
-    window.addEventListener("click", function() {
-        sliding_puzzle_setup();
-    }, {once : true});
+    create_start_button(sliding_puzzle_setup);
 }
 
