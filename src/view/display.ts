@@ -555,7 +555,7 @@ export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> imple
 }
 
 // Share code with _UnitDisplay
-class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPathable {
+export class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPathable {
     selectable: Entity;
     _xOffset: number;
     _yOffset: number;

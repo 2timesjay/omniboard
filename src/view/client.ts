@@ -119,6 +119,9 @@ if (game_type == GameType.Tactics) {
 } else if (game_type == GameType.Cars3D) {
     car_setup();
 } else if (game_type == GameType.SlidingPuzzle) {
-    sliding_puzzle_setup();
+    // NOTE: Await first click to start.
+    window.addEventListener("click", function() {
+        sliding_puzzle_setup();
+    }, {once : true});
 }
 

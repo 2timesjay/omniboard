@@ -1,5 +1,6 @@
 import { GridCoordinate } from "../../model/space";
-import { EntityDisplay, ILocatable, IPathable } from "../../view/display";
+import { Animate, BaseAnimation, ChainableAnimate, ChainableSteadyAnimation } from "../../view/animation";
+import { _EntityDisplay, ILocatable, IPathable } from "../../view/display";
 import { HitRect2D, IView2D, makeRect, View2D } from "../../view/rendering";
 import { Piece } from "./sliding_puzzle_state";
 
@@ -32,7 +33,7 @@ function drawPuzzlePiece(
     return new HitRect2D(co, {x: size, y: size});
 }
 
-export class PuzzlePieceDisplay extends EntityDisplay implements ILocatable, IPathable {
+class _PuzzlePieceDisplay extends _EntityDisplay implements ILocatable, IPathable {
     // TODO: Store in Piece.
     original_co: GridCoordinate;
     ref_image: CanvasImageSource;
@@ -81,3 +82,6 @@ export class PuzzlePieceDisplay extends EntityDisplay implements ILocatable, IPa
         return this.render(view, clr);
     }
 }
+
+// export class PuzzlePieceDisplay extends Animate(_PuzzlePieceDisplay, BaseAnimation) {};
+export class PuzzlePieceDisplay extends ChainableAnimate(_PuzzlePieceDisplay, ChainableSteadyAnimation) {};

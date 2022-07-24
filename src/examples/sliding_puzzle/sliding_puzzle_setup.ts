@@ -31,9 +31,9 @@ function sliding_puzzle_state_setup(k: number): SlidingPuzzleState {
     return state
 }
 
-function sliding_puzzle_display_setup(
+async function sliding_puzzle_display_setup(
     state: SlidingPuzzleState, view: View2D,
-): DisplayMap<ISelectable> {
+): Promise<DisplayMap<ISelectable>> {
     // TODO: Derive all Displays from get_selectables. Reqs full info in each sel.
     var display_map = new Map<ISelectable, AbstractDisplay<ISelectable>>();
 
@@ -43,19 +43,27 @@ function sliding_puzzle_display_setup(
         loc_display.display(view);
     }
 
-    // TODO: Requires placeholders while waiting for image to load. 
-    for (let entity of state.entities) {
-        let entity_display = new EntityDisplay(entity);
-        display_map.set(entity, entity_display);
-        entity_display.display(view);
-    }
+    // // TODO: Requires placeholders while waiting for image to load. 
+    // for (let entity of state.entities) {
+    //     let entity_display = new EntityDisplay(entity);
+    //     display_map.set(entity, entity_display);
+    //     entity_display.display(view);
+    // }
 
     // TODO: Oddly requires 1-2 extra clicks.
     // TODO: Maybe better handled w/in PuzzlePiece?
     // TODO: Weird black border on lower-right piece. Out-of-order draw???
     // https://developer.mozilla.org/en-US/docs/Web/API/createImageBitmap#creating_sprites_from_a_sprite_sheets
-    var puzzle_image = new Image();
-    puzzle_image.onload = function() {
+    // https://stackoverflow.com/questions/2342132/waiting-for-image-to-load-in-javascript
+    const loadImage = (src: string) =>
+        new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+        })  
+    ;
+    await loadImage("/assets/images/square_bear_cub.png").then((puzzle_image: ImageBitmapSource) => {
         console.log("loaded image");
         createImageBitmap(
             puzzle_image
@@ -72,8 +80,7 @@ function sliding_puzzle_display_setup(
             }
             console.log("built pieces");    
         })
-    };
-    puzzle_image.src = "/assets/images/square_bear_cub.png"
+    })
 
     return display_map
 }
@@ -87,27 +94,28 @@ export function sliding_puzzle_setup() {
     const size = 100
     const view = new View2D(k, size)
     
+    // TODO: Avoid unwieldy super-"then"; maybe make setup async?
     // Create Displays
     // NOTE: Shared displays and DisplayMap between views.
-    var display_map = sliding_puzzle_display_setup(state, view);
-    
-    // Connect View (display) interactions with state through Broker
-    var display_handler = new DisplayHandler(view, display_map, state);
+    sliding_puzzle_display_setup(state, view).then((display_map: DisplayMap<ISelectable>) => {
+        // Connect View (display) interactions with state through Broker
+        var display_handler = new DisplayHandler(view, display_map, state);
 
-    var broker = new Canvas2DBroker(display_handler, view);
-    
-    // NOTE: Only one display
-    var input_request = broker.input_request;
-    // TODO: Add NullInputRequest to prevent error messages if I need a ReadOnlyBroker???
+        var broker = new Canvas2DBroker(display_handler, view);
+        
+        // NOTE: Only one display
+        var input_request = broker.input_request;
+        // TODO: Add NullInputRequest to prevent error messages if I need a ReadOnlyBroker???
 
-    // TODO: Change to `requestAnimationFrame` everywhere
-    setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
+        // TODO: Change to `requestAnimationFrame` everywhere
+        setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
 
-    // Create Controller
-    var phase = new SlidingPuzzlePhase(state);
-    var controller = new SlidingPuzzleController(state);
-    
-    // Start main game loop
-    // @ts-ignore
-    controller.run(phase, input_request, display_handler);
+        // Create Controller
+        var phase = new SlidingPuzzlePhase(state);
+        var controller = new SlidingPuzzleController(state);
+        
+        // Start main game loop
+        // @ts-ignore
+        controller.run(phase, input_request, display_handler);
+    })
 }

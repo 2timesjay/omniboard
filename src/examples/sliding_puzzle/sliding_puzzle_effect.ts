@@ -1,14 +1,16 @@
 import { EffectKernel, AbstractEffect } from "../../model/effect";
 import { GridLocation, Vector } from "../../model/space";
-import { IState } from "../../model/state";
-import { DURATION_FRAMES } from "../../model/unit";
-import { Move } from "../../view/animation";
+import { ChainableMove } from "../../view/animation";
 import { EntityDisplay } from "../../view/display";
 import { DisplayHandler } from "../../view/display_handler";
+import { PuzzlePieceDisplay } from "./sliding_puzzle_display";
 import { Piece, SlidingPuzzleState } from "./sliding_puzzle_state";
 
 
 const CLACK = new Audio('/assets/sound_effects/quick_clack.ogg');
+// TODO: Move into setup?
+const DURATION_MS = 300;
+
 class SlidingPuzzleMoveKernel implements EffectKernel {
     source: Piece;
     loc: GridLocation;
@@ -61,11 +63,16 @@ export class SlidingPuzzleMoveEffect extends AbstractEffect {
         var vector: Vector = state.space.getVector(source.loc, loc);
         console.log("Vector: ", vector)
         // TODO: Avoid coercion or do it differently?
-        var source_display = display_handler.display_map.get(source) as EntityDisplay;
-        var animation = new Move(vector, DURATION_FRAMES, source_display);
-        source_display.interrupt_animation(animation)
+        var source_display = display_handler.display_map.get(source) as PuzzlePieceDisplay;
+        var on_gen_finish = () => {
+            source_display.update_pos();
+            this.play_sound();
+        }
+        var animation = new ChainableMove(vector, DURATION_MS, on_gen_finish);
+        // TODO: UpdatePos
+        console.log("Interrupt")
+        source_display.interrupt_chainable_animation(animation)
         // TODO: Play on animation completion
-        this.play_sound();
     }
 
     play_sound() {

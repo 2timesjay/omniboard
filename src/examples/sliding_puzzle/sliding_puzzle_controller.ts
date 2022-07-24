@@ -4,6 +4,7 @@ import { IInputAcquirer, IInputStop, IInputStep, InputSelection, InputSignal, is
 import { AbstractBasePhase, BaseInputs, IPhase } from "../../model/phase";
 import { GridLocation } from "../../model/space";
 import { IState } from "../../model/state";
+import { sync_sleep } from "../../model/utilities";
 import { BaseDisplayHandler } from "../../view/display_handler";
 import { SlidingPuzzleMoveEffect } from "./sliding_puzzle_effect";
 import { SlidingPuzzleShuffler } from "./sliding_puzzle_shuffler";
@@ -142,12 +143,15 @@ export class SlidingPuzzleController {
          * TODO: delineate "turns"/"subphases" since there's no control handoff.
          * TODO: Image loads after first shuffle, so missing piece changes randomly (fix).
          */
-         var shuffler = new SlidingPuzzleShuffler(this.state);
-         var phase_runner = phase.run_phase(this.state);
-         var input_options = await phase_runner.next();
+        var shuffler = new SlidingPuzzleShuffler(this.state);
+        var phase_runner = phase.run_phase(this.state);
+        var input_options = await phase_runner.next();
 
+        
+        // sync_sleep(1000);
+        // console.log("Finished sync sleep")
         // TODO: Factor into "setup"
-        var sel_count = 2;
+        var sel_count = 20;
         while (sel_count > 0) {
             console.log("options", input_options)
             console.log("sel_count", sel_count)

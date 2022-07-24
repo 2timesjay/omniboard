@@ -1,6 +1,4 @@
-import { lerp } from "three/src/math/MathUtils";
 import { ISelectable } from "../model/core";
-import { AnyGenerator } from "../model/phase";
 import { Vector} from "../model/space";
 import { AbstractDisplay, ILocatable } from "./display";
 
@@ -12,12 +10,20 @@ import { AbstractDisplay, ILocatable } from "./display";
 // Following https://www.typescriptlang.org/docs/handbook/mixins.html
 type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 
-export class CachedGen<T, U, V> { // T, TReturn, TNext
+export interface ICachedGen<T, U, V> {
+    cur_value: T;
+    gen: (initial_input?: V) => Generator<T, U, V>;
+}
+
+// TODO: Implement Generator directly?
+export class CachedGen<T, U, V> implements ICachedGen<T, U, V> { // T, TReturn, TNext
     fn: (input?: V) => T;  
     _cur_value: T;
+    on_gen_finish: () => void;
     
-    constructor(fn: (input?: V) => T) {
+    constructor(fn: (input?: V) => T, on_gen_finish?: () => void) {
         this.fn = fn;
+        this.on_gen_finish = on_gen_finish == null ? () => {} : on_gen_finish;
     }
 
     get cur_value(): T {
@@ -34,11 +40,54 @@ export class CachedGen<T, U, V> { // T, TReturn, TNext
                 var input = yield this.cur_value;
             }
         }
+        this.on_gen_finish();
         return null;
     }
 }
 
-export class ChainedCachedGen<T, U, V> {
+export class InterruptableGen<T, U, V> extends CachedGen<T, U, V> {
+    // NOTE: supports 1 delegate at a time. No Nested Interrupts.
+    // TODO: Extend to a Stack?
+    _delegate?: ICachedGen<T, U, V>;
+
+    constructor(fn: (input?: V) => T) {
+        super(fn);
+        this._delegate = null;
+    }
+
+    interrupt(delegate: ICachedGen<T, U, V>) {
+        this._delegate = delegate;
+    }
+
+    resume() {
+        this._delegate = null;
+    }
+
+    get cur_value(): T {
+        return this._delegate != null ? this._delegate.cur_value : this._cur_value;
+    }
+    
+    * gen(initial_input?: V): Generator<T, U, V> {
+        var input = initial_input;
+        while(true) {
+            if (this._delegate == null) {
+                this._cur_value = this.fn(input);
+                if (this._cur_value == null) {
+                    break; 
+                } else {
+                    var input = yield this.cur_value;
+                }
+            } else {
+                yield *this._delegate.gen(input);
+                // unset delegate on completion
+                this.resume();
+            }
+        }
+        return null;
+    }
+}
+
+export class ChainedCachedGen<T, U, V> implements ICachedGen<T, U, V> {
     cached_gens: Array<CachedGen<T, U, V>>;
     cur_gen: CachedGen<T, U, V>;
     _on_gen_change: () => void;
@@ -77,10 +126,6 @@ interface IAnimation {
     delta_y(): DeltaGen;
     delta_s(): DeltaGen; // TODO: Implement on ILocatable
 }
-
-interface IChainableAnimation {
-    delta_vec(): DeltaGen;
-}
  
 function interruptable_generator(
     base_gen_builder: () => DeltaGen
@@ -100,6 +145,10 @@ function interruptable_generator(
     }
 }
 
+export interface IChainableAnimation {
+    gen: (initial_input?: number) => Generator<Vector, null, number>;
+}
+
 /**
  * Very primitive curves
  */
@@ -110,10 +159,14 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function lerp(
-    start: number, end: number, start_time: number, duration: number, current_time: number
+    start: number, end: number, start_time: number, duration: number, cur_time: number
 ): number {
-    var progress = clamp((current_time-start_time)/duration, 0, 1)
-    return start + (end-start) * progress;
+    var progress = clamp((cur_time-start_time)/duration, 0, 1)
+    if ((cur_time - start_time) < duration) {
+        return start + (end-start) * progress;
+    } else {
+        return null;
+    }
 }
 
 function build_lerp(
@@ -123,12 +176,17 @@ function build_lerp(
 }
 
 function vector_lerp(
-    start: Vector, end: Vector, start_time: number, duration: number, current_time: number
+    start: Vector, end: Vector, start_time: number, duration: number, cur_time: number
 ): Vector {
-    return {
-        x: lerp(start.x, end.x, start_time, duration, current_time),
-        y: start.y != null ? lerp(start.y, end.y, start_time, duration, current_time) : null,
-        z: start.z != null ? lerp(start.z, end.z, start_time, duration, current_time) : null,
+    if ((cur_time - start_time) < duration) {
+        // NOTE: Applies to "delta" vectors, default value is 0.
+        return {
+            x: (start.x != null && end.x != null) ? lerp(start.x, end.x, start_time, duration, cur_time) : 0,
+            y: (start.y != null && end.y != null) ? lerp(start.y, end.y, start_time, duration, cur_time) : 0,
+            z: (start.z != null && end.z != null) ? lerp(start.z, end.z, start_time, duration, cur_time) : 0,
+        }
+    } else {
+        return null;
     }
 }
 
@@ -142,16 +200,60 @@ function build_vector_lerp(
  * Curve + Chainable Gen-based Animations
  */
 
-export class ChainableMove extends CachedGen<Vector, null, number> implements IChainableAnimation { 
-    parent: AbstractDisplay<ISelectable> & ILocatable;
+type IAnimationGen = IChainableAnimation & ICachedGen<Vector, null, number>;
+type IBaseAnimationGen = IChainableAnimation & InterruptableGen<Vector, null, number>;
 
-    constructor(
-        delta: Vector, duration: number, parent: AbstractDisplay<ISelectable> & ILocatable
-    ) {
-        var curve = build_vector_lerp(start: {x: 0, y: 0, z: 0})
-        super(curve);
-        var {x: dx, y: dy, z: dz} = v
-        this.parent = parent;
+// NOTE: TS Mixins are some sicko stuff.
+export function ChainableAnimate<TBase extends Animatable>(
+    Base: TBase, Animation: new(parent: AbstractDisplay<ILocatable>) => IBaseAnimationGen
+){
+    return class ChainableAnimated extends Base {  
+        // @ts-ignore
+        base_animation: IBaseAnimationGen = new Animation(this);
+        delta_vec: Generator<Vector, null, number> = this.base_animation.gen();
+
+        interrupt_chainable_animation(animation: IAnimationGen) {
+            this.base_animation.interrupt(animation);
+        }
+
+        // TODO: Optimize. These include redundant computations
+        get xOffset(): number {
+            var delta = this.delta_vec.next(+ new Date()).value;
+            return super.xOffset + delta.x;
+        }
+
+        get yOffset(): number {
+            var delta = this.delta_vec.next(+ new Date()).value;
+            return super.yOffset + delta.y;
+        }
+
+        get zOffset(): number {
+            var delta = this.delta_vec.next(+ new Date()).value;
+            return super.zOffset + delta.z;
+        }
+
+        get size(): number {
+            // TODO: Add Size, other delta quantities.
+            return super.size * 1;
+        }
+    }
+}
+
+export class ChainableMove extends CachedGen<Vector, null, number> implements IChainableAnimation { 
+    constructor(delta: Vector, duration: number, on_gen_finish?: () => void) {
+        var start_time = + new Date();
+        var curve = build_vector_lerp(
+            {x: 0, y: 0, z: 0}, delta, start_time, duration
+        )
+        super(curve, on_gen_finish);
+    }
+}
+
+
+export class ChainableSteadyAnimation extends InterruptableGen<Vector, null, number> implements IChainableAnimation {
+    constructor(parent: AbstractDisplay<ILocatable>) {
+        var neutral_fn = () => { return {x: 0, y: 0, z: 0} };
+        super(neutral_fn);
     }
 }
 

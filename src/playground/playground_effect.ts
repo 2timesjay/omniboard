@@ -2,7 +2,7 @@ import { AbstractEffect, EffectKernel } from "../model/effect";
 import { ILocation } from "../model/space";
 import { IState } from "../model/state";
 import { DURATION_FRAMES } from "../model/unit";
-import { Move } from "../view/display";
+import { Move } from "../view/animation";
 import { DisplayHandler } from "../view/display_handler";
 import { Entity } from "../model/entity";
 
