@@ -148,7 +148,7 @@ export class SlidingPuzzleController {
         var input_options = await phase_runner.next();
 
         // TODO: Factor into "setup"
-        var sel_count = 1;
+        var sel_count = 5;
         while (sel_count > 0) {
             console.log("options", input_options)
             console.log("sel_count", sel_count)
