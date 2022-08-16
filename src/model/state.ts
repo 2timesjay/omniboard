@@ -106,6 +106,7 @@ export class BaseState implements IState {
 export class BoardState implements IState {
     grid: GridSpace;
     units: Array<Unit>;
+    _cur_team: number;
     confirmation: Confirmation; // NOTE: Single Confirmation for all cases.
 
     // Proces shouldn't live on state since it requires display_handler too.
@@ -155,6 +156,14 @@ export class BoardState implements IState {
         console.log("Observers: ", self.get_observers())
         return this;
     };
+
+    get cur_team(): number {
+        return this.cur_team;
+    }
+
+    set cur_team(t: number) {
+        this.cur_team = t
+    }
 
     // TODO: Add actions or handle generically
     get_selectables(): Array<ISelectable> {

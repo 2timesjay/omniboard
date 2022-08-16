@@ -24,11 +24,11 @@ enum GameType {
 }
 
 var game_type = (
-    // GameType.Tactics
+    GameType.Tactics
     // GameType.Playground2D
     // GameType.Playground3D
     // GameType.Cars3D
-    GameType.SlidingPuzzle
+    // GameType.SlidingPuzzle
 )
 
 function create_start_button(setup_fn: () => void) {
@@ -47,30 +47,8 @@ if (Math.random() > 1) {
 }
 
 if (game_type == GameType.Tactics) {
-    // State Setup
-    var k = 6;
-    var state = tactics_setup(k)
-
-    // Create Canvas
-    const size = 100;
-    const view =  new View2D(k, size)
-
-    // Create Displays
-    var display_map = display_setup(state, view);
-
-    // Connect View (display) interactions with state through Broker
-    var display_handler = new DisplayHandler(view, display_map, state);
-    var broker = new Canvas2DBroker(display_handler, view);
-    var input_request = broker.input_request;
-    var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
-
-    // Create Controller
-    var tp = new TacticsPhase();
-    var tc = new TacticsController(state);
-
-    // Start main game loop
-    tc.run(tp, input_request, display_handler);
-// @ts-ignore - just a switch
+    // NOTE: Await first click to start.
+    create_start_button(tactics_setup);
 } else if (game_type == GameType.Playground2D) {
     // State Setup
     var k = 4;
@@ -97,7 +75,6 @@ if (game_type == GameType.Tactics) {
 
     // Start main game loop
     pg_c.run(pg_p, input_request, display_handler);
-
 } else if (game_type == GameType.Playground3D) {
     // State Setup
     var k = 4;
