@@ -52,6 +52,7 @@ export function tactics_state_setup(k: number): BoardState {
     state.units = units;
 
     state.confirmation = GLOBAL_CONFIRMATION;
+    state.cur_team = 0;
     return state
 }
 
@@ -74,7 +75,7 @@ export function tactics_setup() {
     var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
 
     // Create Controller
-    var tp = new TacticsPhase();
+    var tp = new TacticsPhase(state);
     var tc = new TacticsController(state);
 
     // Start main game loop

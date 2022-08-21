@@ -103,66 +103,41 @@ export class BaseState implements IState {
     }
 };
 
-export class BoardState implements IState {
-    grid: GridSpace;
-    units: Array<Unit>;
+export class BoardState extends BaseState {
     _cur_team: number;
     confirmation: Confirmation; // NOTE: Single Confirmation for all cases.
 
-    // Proces shouldn't live on state since it requires display_handler too.
-    async process(
-        effects: Array<Effect>, display_handler: DisplayHandler
-    ): Promise<BoardState> {
-        var self = this;
-        // TODO: Handle effect-tree and observers
-        var execution_promise = sleep(0);
-        while (effects.length > 0) {
-            var effect = effects.shift();
-            // Observers inject pre and post _execute effects
-            var observers = this.get_observers();
-            observers.forEach(o => o.process(self, effect));
+    get grid(): GridSpace {
+        //@ts-ignore coerced
+        return this.space;
+    }
 
-            // Explore "effect tree".
-            var has_pre_execute = (
-                effect.pre_execute != null && effect.pre_execute.length > 0
-            );
-            var has_post_execute = (
-                effect.pre_execute != null && effect.pre_execute.length > 0
-            );
-            if (has_pre_execute) { // Add original effects, pre_effects and return to start of loop
-                effects.unshift(effect);
-                effects.unshift(...effect.pre_execute);
-                effect.pre_execute = [];
-                continue;
-            } else { // Add post_effects and finish loop. 
-                if (has_post_execute) {
-                    effects.unshift(...effect.post_execute);
-                    effect.post_execute = [];
-                }
-            }
-            console.log("Effect: ", effect);
-            if (effect.animate != null){
-                effect.animate(this, display_handler);
-                effect.execute(self);
-                // TODO: Consistent sleep milliseconds vs frames animation dur.
-                // NOTE: Sleep Duration MUST exceed frames duration (#frames * 10) by safe margin.
-                await sleep(DURATION_MS);
-            } else {
-                await sleep(DURATION_MS_NO_ANIM);
-                effect.execute(self);
-            }
-            effects.unshift(...effect.post_execute);
-        }
-        console.log("Observers: ", self.get_observers())
-        return this;
-    };
+    set grid(grid: GridSpace) {
+        this.space = grid;
+    }
+
+    get units(): Array<Unit> {
+        //@ts-ignore coerced
+        return this.entities
+    }
+
+    set units(units: Array<Unit>) {
+        this.entities = units;
+    }
 
     get cur_team(): number {
-        return this.cur_team;
+        return this._cur_team;
     }
 
     set cur_team(t: number) {
-        this.cur_team = t
+        this._cur_team = t
+    }
+    
+    async process(
+        effects: Array<Effect>, display_handler: DisplayHandler
+    ): Promise<BoardState> {
+        // @ts-ignore coerce
+        return super.process(effects, display_handler);
     }
 
     // TODO: Add actions or handle generically

@@ -160,8 +160,10 @@ export class AbstractBasePhase implements IPhase {
         // TODO: Does it make more sense to reset/initialize in `run_phase`?
         this.current_inputs = new BaseInputs(this.base_step_factory);
         this.current_inputs.reset(state);
+        console.log("CurInput: ", this.current_inputs)
         while (!this.current_inputs.is_stopped()) {
             // @ts-ignore InputSignal not handled
+            console.log("Cur Acq", this.current_acquirer)
             var selection = yield *this.current_acquirer.input_option_generator();
             if (selection != null) {
                 this.current_inputs.push_input(selection, state);
@@ -169,6 +171,7 @@ export class AbstractBasePhase implements IPhase {
                 // TODO: Pop leaves item in queued state
                 this.current_inputs.pop_input();
             }
+            console.log("CurInput: ", this.current_inputs)
         };
         return this.current_inputs;
     }

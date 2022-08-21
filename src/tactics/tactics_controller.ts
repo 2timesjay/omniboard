@@ -56,6 +56,11 @@ export class ActionInputStep implements IInputStep<BoardAction, ISelectable> {
     acquirer: IInputAcquirer<BoardAction>;
     
     constructor(state: BoardState, source: Unit) {
+        var action_options = source.actions
+            .filter((a) => a.enabled);
+        this.acquirer = new SimpleInputAcquirer<Action<ISelectable, BoardState>>(
+            () => action_options, false
+        );
     }
 
     get input(): BoardAction {
@@ -68,8 +73,14 @@ export class ActionInputStep implements IInputStep<BoardAction, ISelectable> {
             return input_response;
         }
     }
-    consume_children: (next_step: IInputNext<null>) => any;
-    get_next_step: (state?: IState) => IInputNext<null>;
+
+    consume_children(next_step: TargetInputStep): null {
+        return null;
+    }
+
+    get_next_step(state: BoardState): TargetInputStep {
+        return new TargetInputStep(this.input.acquirer);
+    }
 
 }
 
@@ -115,6 +126,7 @@ export class TargetInputStep implements IInputStep<ISelectable, null> {
 export class TacticsPhase extends AbstractBasePhase {
     constructor(state: BoardState) {
         super();
+        console.log("BoardState team: ", state.cur_team)
         // TODO: Do I need this? nullish until built in subphase, currently.
         this.current_inputs = new BaseInputs(this.base_step_factory);
         this.current_inputs.reset(state);
@@ -125,187 +137,6 @@ export class TacticsPhase extends AbstractBasePhase {
     }
 }
 
-// export enum InputState {
-//     NoneSelected = 0,
-//     UnitSelected = 1,
-//     ActionSelected = 2,
-//     ActionInputSelected = 3,
-// }
-
-// export interface TacticsInputs extends Inputs {
-//     unit?: Unit,
-//     action?: Action<ISelectable, BoardState>,
-//     action_input?: InputResponse<ISelectable>,
-// }
-
-// /**
-//  * Phase is same as typical board game sense.
-//  * Tactics phase proceeds as follows for a given team:
-//  *  1) Select a team member
-//  *  2) Select a action
-//  *  3) follow action's input requests
-//  *  4) execute action's effects
-//  *  5) repeat 1 until team member's actions are exhausted.
-//  */
-// export class TacticsPhase implements IPhase {
-//     current_inputs: TacticsInputs;
-//     input_state: InputState;
-//     display_handler: DisplayHandler;
-
-//     constructor() {
-//         // @ts-ignore TacticsPhase on obselete Inputs
-//         this.current_inputs = {}
-//         this.input_state = InputState.NoneSelected;
-//     }
-
-//     set_display_handler(display_handler: DisplayHandler) {
-//         this.display_handler = display_handler;
-//     }
-    
-//     get pending_inputs(): InputSelection<ISelectable> {
-//         var action = this.current_inputs.action;
-//         // Action_input is a special case because they're currently the 
-//         // only application of SequentialInputAcquirer.
-//         // TODO: Replace this with generic handling of SequentialInputAcquirer
-//         var acquirer = action != null ? action.acquirer : null;
-//         var acquirer_inputs = acquirer == null ? null : acquirer.current_input ;
-//         return acquirer_inputs;
-//     }    
-
-//     // TODO: Efficient way to represent "sequential state machine" without GOTO
-//     async * run_phase(state: BoardState, cur_team: number
-//     ): AsyncGenerator<InputOptions<ISelectable>, void, InputResponse<ISelectable>> {
-//         console.log("TacticsPhase.run_phase");
-//         var team_units = state.units
-//             .filter((u) => u.team == cur_team)
-//             .filter((u) => u.is_alive());
-//         // NOTE: Clear statuses on turn start.
-//         team_units.forEach((u) => u.update_statuses());
-//         // NOTE: Re-confirm u.is_alive since unit can die while un-exhausted.
-//         while(Array.from(team_units).filter((u) => !u.is_exhausted() && u.is_alive()).length) {
-//             // TODO: yield a special "subphase end" signal.
-//             var inputs: TacticsInputs = yield *this.run_subphase(state, cur_team);
-//             console.log("Inputs: ", inputs);
-
-//             var action: Action<ISelectable, BoardState> = inputs.action;
-//             var action_input = inputs.action_input;
-//             var effects = action.digest_fn(action_input);
-
-//             console.log("Effects: ", effects);
-
-//             // TODO: Side effect that queue display doesn't clear before effect execution
-//             await state.process(effects, this.display_handler).then(() => {});
-//             // TODO: Slightly messy to couple this with state.
-//             // @ts-ignore TacticsPhase on obselete Inputs
-//             this.current_inputs = {};
-//             console.log("BoardState: ", state);
-//             console.log("Units: ", team_units, " Team: ", cur_team);
-//         }
-//         team_units.forEach((u) => u.reset_actions());
-//     }
-
-//     // TODO: Explicit and well-typed, but some generic patterns could be abstracted. 
-//     * run_subphase(
-//         state: BoardState, cur_team: number
-//     ): Generator<InputOptions<ISelectable>, TacticsInputs, InputResponse<ISelectable>> {
-//         /**
-//          * Occupies one of three states:
-//          *  Acquiring Unit,
-//          *  Acquiring Actions,
-//          *  Acquiring ActionInputs,
-//          * 
-//          * Increment state on selection.
-//          * Decrement state on rejection.
-//          */        
-//         while (true) {
-//             // Note: Fine to hit these all in one loop
-//             if (this.input_state == InputState.NoneSelected){
-//                 // @ts-ignore
-//                 var unit = yield *this.unit_selection(state, cur_team);
-//                 if (unit != null) {
-//                     this.current_inputs.unit = unit;
-//                     this.increment_state();
-//                 } else {
-//                     delete this.current_inputs.unit;
-//                     this.decrement_state();
-//                 }
-//             }
-//             if (this.input_state == InputState.UnitSelected){
-//                 // @ts-ignore
-//                 var action = yield *this.action_selection(unit);
-//                 if (action != null) {
-//                     this.current_inputs.action = action;
-//                     this.increment_state();
-//                 } else {
-//                     delete this.current_inputs.action;
-//                     this.decrement_state();
-//                 }
-//             }
-//             if (this.input_state == InputState.ActionSelected){
-//                 var action_input = yield *this.action_input_selection(this.current_inputs, action);
-//                 if (action_input != null) {
-//                     this.current_inputs.action_input = action_input;
-//                     this.increment_state();
-//                 } else {
-//                     delete this.current_inputs.action_input;
-//                     this.decrement_state();
-//                 }
-//             }
-//             if (this.input_state == InputState.ActionInputSelected) {
-//                 break;
-//             }
-//         }
-//         this.reset_state();
-//         return this.current_inputs;
-//     }
-
-//     reset_state() {
-//         this.input_state = 0;
-//     }
-
-//     increment_state() {
-//         this.input_state += 1;
-//         this.input_state = Math.min(3, this.input_state);
-//     }
-
-//     decrement_state() {
-//         this.input_state -= 1;
-//         this.input_state = Math.max(0, this.input_state);
-//     }
-
-//     // TODO: Unify with SimpleInputAcquirer
-//     * unit_selection (
-//         state: BoardState, cur_team: number
-//     ): Generator<Array<Unit>, Unit, Unit> {
-//         var unit_options = state.units
-//             .filter((u) => u.team == cur_team)
-//             .filter((u) => u.is_alive())
-//             .filter((u) => !u.is_exhausted());
-//         var acquirer = new SimpleInputAcquirer<Unit>(() => unit_options, false);
-//         var unit_sel = yield *acquirer.input_option_generator();
-//         var unit = unit_sel;
-//         return unit;
-//     }
-
-//     * action_selection (
-//         unit: Unit
-//     ): Generator<Array<Action<ISelectable, BoardState>>, Action<ISelectable, BoardState>, Action<ISelectable, BoardState>> {
-//         var action_options = unit.actions
-//             .filter((a) => a.enabled);
-//         var acquirer = new SimpleInputAcquirer<Action<ISelectable, BoardState>>(() => action_options, false);
-//         var action_sel = yield *acquirer.input_option_generator();
-//         var action = action_sel;
-//         return action;
-//     }
-
-//     * action_input_selection (
-//         tactics_inputs: TacticsInputs,
-//         action: Action<ISelectable, BoardState>,
-//     ): Generator<InputOptions<ISelectable>, InputResponse<ISelectable>, InputResponse<ISelectable>> {
-//         var action_input = yield *action.get_action_input(action.get_root(tactics_inputs));
-//         return action_input;
-//     }
-// }
 
 /**
  * Repeatedly executes TacticsPhases. Key point where we await InputRequest.
@@ -317,6 +148,7 @@ export class TacticsController {
 
     constructor(state: BoardState) {
         this.state = state;
+        this.state.cur_team = 0;
         // Set up enemy team (team 1) AI
         this.ai = new AI(1, state);
     }
@@ -334,7 +166,9 @@ export class TacticsController {
         display_handler.on_selection(null, phase);
         var team = 0;
         while (true) {
-            var phase_runner = phase.run_phase(this.state, team);
+            // TODO: Handle more elegantly
+            this.state.cur_team = team;
+            var phase_runner = phase.run_phase(this.state);
             // TODO: lol what a mess
             var input_options = await phase_runner.next();
 

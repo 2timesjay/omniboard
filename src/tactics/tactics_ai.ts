@@ -36,21 +36,21 @@ export class AI {
     ): Promise<InputResponse<ISelectable>> {
         // TODO: Is it better to inject tactics_inputs another way?
         this.tactics_inputs = tactics_inputs;
-        // Note: Fine to hit these all in one loop
-        if (phase.input_state == InputState.NoneSelected){
-            // @ts-ignore
-            return this.unit_getter(input_options);
-        }
-        else if (phase.input_state == InputState.UnitSelected){
-            // @ts-ignore
-            return this.action_getter(input_options);
-        }
-        else if (phase.input_state == InputState.ActionSelected){
-            return this.action_input_getter(input_options);
-        }
-        else if (phase.input_state == InputState.ActionInputSelected) {
-            console.log("SHOULD NOT REACH");
-        }
+        // // Note: Fine to hit these all in one loop
+        // if (phase.input_state == InputState.NoneSelected){
+        //     // @ts-ignore
+        //     return this.unit_getter(input_options);
+        // }
+        // else if (phase.input_state == InputState.UnitSelected){
+        //     // @ts-ignore
+        //     return this.action_getter(input_options);
+        // }
+        // else if (phase.input_state == InputState.ActionSelected){
+        //     return this.action_input_getter(input_options);
+        // }
+        // else if (phase.input_state == InputState.ActionInputSelected) {
+        //     console.log("SHOULD NOT REACH");
+        // }
         return null;
     }
 
