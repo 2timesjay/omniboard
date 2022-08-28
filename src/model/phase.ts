@@ -165,7 +165,8 @@ export class AbstractBasePhase implements IPhase {
             console.log("Cur Acq", this.current_acquirer)
             // @ts-ignore InputSignal not handled
             // TODO: Missing sometimes-required "base"
-            var selection = yield *this.current_acquirer.input_option_generator();
+            var root = this.current_inputs.peek().get_root(this.current_inputs)
+            var selection = yield *this.current_acquirer.input_option_generator(root);
             if (selection != null) {
                 this.current_inputs.push_input(selection, state);
             } else {

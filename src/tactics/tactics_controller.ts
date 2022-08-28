@@ -1,6 +1,6 @@
 import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
-import { Confirmation, IInputAcquirer, IInputNext, IInputStep, InputOptions, InputRequest, InputResponse, InputSelection, InputStop, isInputSignal, SimpleInputAcquirer } from "../model/input";
+import { Confirmation, IInputAcquirer, IInputNext, IInputStep, InputOptions, InputRequest, InputResponse, InputSelection, InputStop, isInputSignal, SelectionGen, SimpleInputAcquirer } from "../model/input";
 import { AbstractBasePhase, BaseInputs, Inputs, IPhase } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState, IState } from "../model/state";
@@ -17,6 +17,12 @@ export type InputGenerator<T> = Generator<InputOptions<T>, InputResponse<T>, Inp
 
 // TODO: Replace everywhere
 export type BoardAction = Action<ISelectable, BoardState>;
+
+// export interface TacticsInputs extends Inputs {
+//     unit?: Unit,
+//     action?: Action<ISelectable, BoardState>,
+//     action_input?: InputResponse<ISelectable>,
+// }
 
 export class UnitInputStep implements IInputStep<Unit, BoardAction> { 
     acquirer: IInputAcquirer<Unit>;
@@ -39,6 +45,11 @@ export class UnitInputStep implements IInputStep<Unit, BoardAction> {
         } else {
             return input_response;
         }
+    }
+   
+    // @ts-ignore Confusing generator<any,any,any>
+    *input_option_generator(): SelectionGen<T> {
+        return this.acquirer.input_option_generator()
     }
 
     consume_children(next_step: ActionInputStep): Array<Effect> {
@@ -73,22 +84,29 @@ export class ActionInputStep implements IInputStep<BoardAction, ISelectable> {
             return input_response;
         }
     }
+   
+    // @ts-ignore Confusing generator<any,any,any>
+    *input_option_generator(): SelectionGen<T> {
+        return this.acquirer.input_option_generator()
+    }
 
     consume_children(next_step: TargetInputStep): null {
         return null;
     }
 
     get_next_step(state: BoardState): TargetInputStep {
-        return new TargetInputStep(this.input.acquirer);
+        return new TargetInputStep(this.input, this.);
     }
 
 }
 
 export class TargetInputStep implements IInputStep<ISelectable, null> {
     acquirer: IInputAcquirer<ISelectable>;
+    root: InputResponse<ISelectable>;
     
-    constructor(acquirer: IInputAcquirer<ISelectable>) {
-        this.acquirer = acquirer
+    constructor(action: Action<ISelectable, BoardState>, inputs: BaseInputs) {
+        this.acquirer = action.acquirer;
+        this.root = action.get_root(inputs);
     }
 
     get input(): ISelectable {
@@ -101,7 +119,11 @@ export class TargetInputStep implements IInputStep<ISelectable, null> {
             return input_response;
         }
     }
-    
+   
+    // @ts-ignore Confusing generator<any,any,any>
+    *input_option_generator(): SelectionGen<T> {
+        return this.acquirer.input_option_generator(this.root)
+    }
 
     consume_children(next_step: InputStop): ISelectable {
         if (InputStop == null) {
