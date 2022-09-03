@@ -1,4 +1,5 @@
 import { textChangeRangeIsUnchanged } from "typescript";
+import { isActionInputStep, isTargetInputStep, TacticsInputs } from "../tactics/tactics_controller";
 import { BaseDisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
 import { Effect } from "./effect";
@@ -13,6 +14,9 @@ export interface Inputs {
     peek: () => IInputNext<ISelectable>;
     reset: (state: IState) => void;
 };
+
+export interface ProcessedInputs {
+}
 
 // TODO: Bundle acquirers + InputState + Input Type info into a new class.
 // TODO: Label input selections based on InputState
@@ -164,9 +168,7 @@ export class AbstractBasePhase implements IPhase {
         while (!this.current_inputs.is_stopped()) {
             console.log("Cur Acq", this.current_acquirer)
             // @ts-ignore InputSignal not handled
-            // TODO: Missing sometimes-required "base"
-            var root = this.current_inputs.peek().get_root(this.current_inputs)
-            var selection = yield *this.current_acquirer.input_option_generator(root);
+            var selection = yield *this.current_acquirer.input_option_generator();
             if (selection != null) {
                 this.current_inputs.push_input(selection, state);
             } else {

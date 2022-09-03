@@ -2,7 +2,7 @@ import { TacticsInputs } from "../tactics/tactics_controller";
 import { ISelectable, OptionFn, Stack } from "./core";
 import { AlterStatusEffect, AlterTerrainEffect, AlterType, DamageEffect, Effect, ExhaustEffect, MoveEffect, ShoveEffect } from "./effect";
 import { IInputAcquirer, InputResponse, InputOptions, SimpleInputAcquirer, Confirmation, AutoInputAcquirer, SequentialInputAcquirer, ChainedInputAcquirer } from "./input";
-import { Inputs } from "./phase";
+import { Inputs, ProcessedInputs } from "./phase";
 import { GridLocation, Vector } from "./space";
 import { IState, BoardState} from "./state";
 import { CounterReadyStatus } from "./status";
@@ -54,7 +54,7 @@ export class Action<T extends ISelectable, U extends IState> implements ISelecta
         throw new Error('Method not implemented.');
     }
 
-    get_root(inputs: Inputs): InputResponse<T> {
+    get_root(inputs: ProcessedInputs): InputResponse<T> {
         throw new Error('Method not implemented.');
     }
 

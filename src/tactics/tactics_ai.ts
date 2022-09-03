@@ -4,7 +4,7 @@ import { InputOptions, InputRequest, InputResponse, synthetic_input_getter } fro
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
 import { Unit } from "../model/unit";
-import { BoardAction, InputState, TacticsInputs, TacticsPhase } from "./tactics_controller";
+import { BoardAction, isActionInputStep, isTargetInputStep, isUnitInputStep, TacticsInputs, TacticsPhase } from "./tactics_controller";
 
 
 function _min_distance(grid: GridSpace, base_loc: GridLocation, other_locs: Array<GridLocation>) {
@@ -36,21 +36,19 @@ export class AI {
     ): Promise<InputResponse<ISelectable>> {
         // TODO: Is it better to inject tactics_inputs another way?
         this.tactics_inputs = tactics_inputs;
-        // // Note: Fine to hit these all in one loop
-        // if (phase.input_state == InputState.NoneSelected){
-        //     // @ts-ignore
-        //     return this.unit_getter(input_options);
-        // }
-        // else if (phase.input_state == InputState.UnitSelected){
-        //     // @ts-ignore
-        //     return this.action_getter(input_options);
-        // }
-        // else if (phase.input_state == InputState.ActionSelected){
-        //     return this.action_input_getter(input_options);
-        // }
-        // else if (phase.input_state == InputState.ActionInputSelected) {
-        //     console.log("SHOULD NOT REACH");
-        // }
+        // Note: Fine to hit these all in one loop
+        var step = phase.current_inputs.peek();
+        if (isUnitInputStep(step)) {
+            // @ts-ignore
+            return this.unit_getter(input_options);
+        } else if (isActionInputStep(step)) {
+            // @ts-ignore
+            return this.action_getter(input_options);
+        } else if (isTargetInputStep(step)) {
+            return this.action_input_getter(input_options);
+        } else if (phase.current_inputs.is_stopped()) {
+            console.log("SHOULD NOT REACH");
+        }
         return null;
     }
 

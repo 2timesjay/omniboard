@@ -1,9 +1,9 @@
 import { Action } from "../model/action";
 import { ISelectable, Stack } from "../model/core";
 import { Confirmation, IInputAcquirer, IInputNext, IInputStep, InputOptions, InputRequest, InputResponse, InputSelection, InputStop, isInputSignal, SelectionGen, SimpleInputAcquirer } from "../model/input";
-import { AbstractBasePhase, BaseInputs, Inputs, IPhase } from "../model/phase";
+import { AbstractBasePhase, BaseInputs, Inputs, IPhase, ProcessedInputs } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
-import { BoardState, IState } from "../model/state";
+import { BaseState, BoardState, IState } from "../model/state";
 import { Unit } from "../model/unit";
 import { DisplayState } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
@@ -18,14 +18,9 @@ export type InputGenerator<T> = Generator<InputOptions<T>, InputResponse<T>, Inp
 // TODO: Replace everywhere
 export type BoardAction = Action<ISelectable, BoardState>;
 
-// export interface TacticsInputs extends Inputs {
-//     unit?: Unit,
-//     action?: Action<ISelectable, BoardState>,
-//     action_input?: InputResponse<ISelectable>,
-// }
-
 export class UnitInputStep implements IInputStep<Unit, BoardAction> { 
     acquirer: IInputAcquirer<Unit>;
+    indicator: string = "Unit";
 
     constructor(state: BoardState) {
         var cur_team = state.cur_team;
@@ -49,7 +44,7 @@ export class UnitInputStep implements IInputStep<Unit, BoardAction> {
    
     // @ts-ignore Confusing generator<any,any,any>
     *input_option_generator(): SelectionGen<T> {
-        return this.acquirer.input_option_generator()
+        return yield *this.acquirer.input_option_generator()
     }
 
     consume_children(next_step: ActionInputStep): Array<Effect> {
@@ -63,8 +58,13 @@ export class UnitInputStep implements IInputStep<Unit, BoardAction> {
     }
 }
 
+export function isUnitInputStep(step: IInputNext<any>): step is UnitInputStep {
+    return (step as UnitInputStep).indicator == "Unit";
+}
+
 export class ActionInputStep implements IInputStep<BoardAction, ISelectable> {
     acquirer: IInputAcquirer<BoardAction>;
+    indicator: string = "Action";
     
     constructor(state: BoardState, source: Unit) {
         var action_options = source.actions
@@ -87,7 +87,7 @@ export class ActionInputStep implements IInputStep<BoardAction, ISelectable> {
    
     // @ts-ignore Confusing generator<any,any,any>
     *input_option_generator(): SelectionGen<T> {
-        return this.acquirer.input_option_generator()
+        return yield *this.acquirer.input_option_generator()
     }
 
     consume_children(next_step: TargetInputStep): null {
@@ -95,18 +95,29 @@ export class ActionInputStep implements IInputStep<BoardAction, ISelectable> {
     }
 
     get_next_step(state: BoardState): TargetInputStep {
-        return new TargetInputStep(this.input, this.);
+        return new TargetInputStep(this.input);
     }
 
 }
 
+export function isActionInputStep(step: IInputNext<any>): step is ActionInputStep {
+    return (step as ActionInputStep).indicator == "Action";
+}
+
 export class TargetInputStep implements IInputStep<ISelectable, null> {
     acquirer: IInputAcquirer<ISelectable>;
-    root: InputResponse<ISelectable>;
+    indicator: string = "Target";
+    action: BoardAction;
+    root: InputSelection<ISelectable>; // Root is always InputSelection
     
-    constructor(action: Action<ISelectable, BoardState>, inputs: BaseInputs) {
+    constructor(action: Action<ISelectable, BoardState>) {
         this.acquirer = action.acquirer;
-        this.root = action.get_root(inputs);
+        this.action = action;
+    }
+
+    set_root(inputs: BaseInputs) {
+        this.root = this.action.get_root(new TacticsInputs(inputs));
+        console.log("Set root: ", this.root)
     }
 
     get input(): ISelectable {
@@ -122,7 +133,8 @@ export class TargetInputStep implements IInputStep<ISelectable, null> {
    
     // @ts-ignore Confusing generator<any,any,any>
     *input_option_generator(): SelectionGen<T> {
-        return this.acquirer.input_option_generator(this.root)
+        // @ts-ignore stack vs inputselection
+        return yield *this.acquirer.input_option_generator(this.root)
     }
 
     consume_children(next_step: InputStop): ISelectable {
@@ -144,6 +156,33 @@ export class TargetInputStep implements IInputStep<ISelectable, null> {
     }
 }
 
+export function isTargetInputStep(step: IInputNext<any>): step is TargetInputStep {
+    console.log(step, " is Target?")
+    return (step as TargetInputStep).indicator == "Target";
+}
+
+// NOTE: For more complicated inputs could I streamline this/reduce code duplication?
+export class TacticsInputs implements ProcessedInputs {
+    unit?: Unit
+    action?: Action<ISelectable, BoardState>
+    target?: InputSelection<ISelectable>
+
+    constructor(inputs: BaseInputs) {
+        console.log("INPUTS: ", inputs)
+        if (inputs.input_steps != undefined) {
+            console.log("INPUTS: ", inputs)
+            for(var step of inputs.input_steps) {
+                if (isUnitInputStep(step)) {
+                    this.unit = step.input;   
+                } else if (isActionInputStep(step)) {
+                    this.action = step.input;
+                } else if (isTargetInputStep(step)) {
+                    this.target = step.input;
+                }
+            }
+        }
+    }
+}
 
 export class TacticsPhase extends AbstractBasePhase {
     constructor(state: BoardState) {
@@ -156,6 +195,36 @@ export class TacticsPhase extends AbstractBasePhase {
 
     get base_step_factory(): (state: IState) => IInputNext<ISelectable> {
         return (state: BoardState) => new UnitInputStep(state);
+    }
+    
+    // TODO: Explicit and well-typed, but some generic patterns could be abstracted. 
+    * run_subphase(
+    state: BaseState
+    ): Generator<InputOptions<ISelectable>, BaseInputs, InputSelection<ISelectable>> {
+        // TODO: Does it make more sense to reset/initialize in `run_phase`?
+        this.current_inputs = new BaseInputs(this.base_step_factory);
+        this.current_inputs.reset(state);
+        console.log("CurInput: ", this.current_inputs)
+        while (!this.current_inputs.is_stopped()) {
+            // NOTE: Only these few lines modified from base class;
+            var current_step = this.current_inputs.peek()
+            console.log("current step: ", current_step)
+            if (isTargetInputStep(current_step)) {
+                console.log("Is target")
+                current_step.set_root(this.current_inputs)
+            } else { console.log ("Not target") }
+            // @ts-ignore InputSignal not handled
+            var selection = yield *current_step.input_option_generator();
+            console.log("subphase selection: ", selection)
+            if (selection != null) {
+                this.current_inputs.push_input(selection, state);
+            } else {
+                // TODO: Pop leaves item in queued state
+                this.current_inputs.pop_input();
+            }
+            console.log("CurInput: ", this.current_inputs)
+        };
+        return this.current_inputs;
     }
 }
 
@@ -205,7 +274,7 @@ export class TacticsController {
                     var input_selection = await this.ai.get_input(
                         phase, 
                         input_options.value, 
-                        phase.current_inputs,
+                        new TacticsInputs(phase.current_inputs),
                     );
                     input_options = await phase_runner.next(input_selection);
                     display_handler.on_selection(input_selection, phase);
