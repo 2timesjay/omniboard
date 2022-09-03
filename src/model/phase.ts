@@ -4,7 +4,7 @@ import { BaseDisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
 import { Effect } from "./effect";
 import { IInputAcquirer, IInputNext, IInputStep, InputOptions, InputSelection, isInputStep } from "./input";
-import { BaseState, IState } from "./state";
+import { BaseState, BoardState, IState } from "./state";
 
 export interface Inputs {
     input_steps: Stack<IInputNext<ISelectable>>;
@@ -85,7 +85,7 @@ export class AbstractBasePhase implements IPhase {
         this.display_handler = display_handler;
     }
 
-    phase_condition(): boolean {
+    phase_condition(state: BaseState): boolean {
         return true;
     }
 
@@ -111,18 +111,14 @@ export class AbstractBasePhase implements IPhase {
     async * run_phase(
         state: BaseState
     ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
-        while (this.phase_condition()) {
-            console.log("Running Subphase")
+        console.log("Running Phase")
+        while (this.phase_condition(state)) {
             var inputs: BaseInputs = yield *this.run_subphase(state); 
-            console.log("Digesting Inputs")
             var effects = this.digest_inputs();
-            console.log("Effects: ", effects);
-            this.current_inputs.reset(state); 
-            console.log("Resetting Inputs")          
+            this.current_inputs.reset(state);  
 
             // TODO: Side effect that queue display doesn't clear before effect execution
             await state.process(effects, this.display_handler).then(() => {});
-            break;
         }
     }
 
@@ -164,9 +160,7 @@ export class AbstractBasePhase implements IPhase {
         // TODO: Does it make more sense to reset/initialize in `run_phase`?
         this.current_inputs = new BaseInputs(this.base_step_factory);
         this.current_inputs.reset(state);
-        console.log("CurInput: ", this.current_inputs)
         while (!this.current_inputs.is_stopped()) {
-            console.log("Cur Acq", this.current_acquirer)
             // @ts-ignore InputSignal not handled
             var selection = yield *this.current_acquirer.input_option_generator();
             if (selection != null) {
@@ -175,7 +169,6 @@ export class AbstractBasePhase implements IPhase {
                 // TODO: Pop leaves item in queued state
                 this.current_inputs.pop_input();
             }
-            console.log("CurInput: ", this.current_inputs)
         };
         return this.current_inputs;
     }

@@ -117,7 +117,6 @@ export class TargetInputStep implements IInputStep<ISelectable, null> {
 
     set_root(inputs: BaseInputs) {
         this.root = this.action.get_root(new TacticsInputs(inputs));
-        console.log("Set root: ", this.root)
     }
 
     get input(): ISelectable {
@@ -157,7 +156,6 @@ export class TargetInputStep implements IInputStep<ISelectable, null> {
 }
 
 export function isTargetInputStep(step: IInputNext<any>): step is TargetInputStep {
-    console.log(step, " is Target?")
     return (step as TargetInputStep).indicator == "Target";
 }
 
@@ -168,9 +166,7 @@ export class TacticsInputs implements ProcessedInputs {
     target?: InputSelection<ISelectable>
 
     constructor(inputs: BaseInputs) {
-        console.log("INPUTS: ", inputs)
         if (inputs.input_steps != undefined) {
-            console.log("INPUTS: ", inputs)
             for(var step of inputs.input_steps) {
                 if (isUnitInputStep(step)) {
                     this.unit = step.input;   
@@ -196,33 +192,58 @@ export class TacticsPhase extends AbstractBasePhase {
     get base_step_factory(): (state: IState) => IInputNext<ISelectable> {
         return (state: BoardState) => new UnitInputStep(state);
     }
+
+    phase_condition(state: BoardState): boolean {  
+        var team_units = state.units
+            .filter((u) => u.team == state.cur_team)
+            .filter((u) => u.is_alive());
+        console.log("Phase condition check: ", team_units, Array
+            .from(team_units)
+            .filter((u) => !u.is_exhausted() && u.is_alive())
+            .length)
+        // NOTE: Re-confirm u.is_alive since unit can die while un-exhausted.
+        return Array
+            .from(team_units)
+            .filter((u) => !u.is_exhausted() && u.is_alive())
+            .length > 0;
+    }
+
+    // TODO: Restore run_phase turn logic
+    async * run_phase(
+        state: BoardState
+    ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
+        // Pre Phase
+        var team_units = state.units
+            .filter((u) => u.team == state.cur_team)
+            .filter((u) => u.is_alive());
+        team_units.forEach((u) => u.update_statuses());
+        yield * super.run_phase(state);
+        // Post Phase
+        team_units.forEach((u) => u.reset_actions());
+    }
     
     // TODO: Explicit and well-typed, but some generic patterns could be abstracted. 
     * run_subphase(
     state: BaseState
     ): Generator<InputOptions<ISelectable>, BaseInputs, InputSelection<ISelectable>> {
         // TODO: Does it make more sense to reset/initialize in `run_phase`?
+        console.log("Running Subphase")
         this.current_inputs = new BaseInputs(this.base_step_factory);
         this.current_inputs.reset(state);
-        console.log("CurInput: ", this.current_inputs)
         while (!this.current_inputs.is_stopped()) {
             // NOTE: Only these few lines modified from base class;
             var current_step = this.current_inputs.peek()
-            console.log("current step: ", current_step)
             if (isTargetInputStep(current_step)) {
-                console.log("Is target")
                 current_step.set_root(this.current_inputs)
-            } else { console.log ("Not target") }
+            } 
             // @ts-ignore InputSignal not handled
             var selection = yield *current_step.input_option_generator();
-            console.log("subphase selection: ", selection)
             if (selection != null) {
                 this.current_inputs.push_input(selection, state);
             } else {
                 // TODO: Pop leaves item in queued state
                 this.current_inputs.pop_input();
             }
-            console.log("CurInput: ", this.current_inputs)
         };
         return this.current_inputs;
     }
