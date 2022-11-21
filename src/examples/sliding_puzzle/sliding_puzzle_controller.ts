@@ -109,6 +109,19 @@ export class SlidingPuzzlePhase extends AbstractBasePhase {
     get base_step_factory(): (state: IState) => IInputNext<ISelectable> {
         return (state: SlidingPuzzleState) => new PieceInputStep(state);
     }
+    
+    async * run_phase(
+        state: SlidingPuzzleState
+    ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
+        console.log("Running SlidingPuzzlePhase")
+        // Make a single "move"
+        var inputs: BaseInputs = yield *this.run_subphase(state); 
+        var effects = this.digest_inputs();
+        this.current_inputs.reset(state);  
+
+        // TODO: Side effect that queue display doesn't clear before effect execution
+        await state.process(effects, this.display_handler).then(() => {});
+    }
 }
 
 /**
