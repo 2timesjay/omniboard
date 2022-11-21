@@ -148,10 +148,10 @@ export class SlidingPuzzleController {
         var input_options = await phase_runner.next();
 
         // TODO: Factor into "setup"
-        var sel_count = 5;
-        while (sel_count > 0) {
+        var shuffle_count = 5;
+        while (shuffle_count > 0) {
             console.log("options", input_options)
-            console.log("sel_count", sel_count)
+            console.log("shuffle_count", shuffle_count)
             while (input_options.value) {      
                 var input_selection = await shuffler.get_input(
                     phase, 
@@ -159,15 +159,15 @@ export class SlidingPuzzleController {
                     phase.current_inputs,
                 );
                 input_options = await phase_runner.next(input_selection);
+                console.log("InputOptions:", input_options); // Always pieces.
                 display_handler.on_selection(input_selection, phase);
             }
-            sel_count--;
+            shuffle_count--;
             phase_runner = phase.run_phase(this.state);
             input_options = await phase_runner.next();
             display_handler.refresh();
         }
 
-        // Note: No Victory Conditions. Go forever.
         display_handler.refresh();
         while (true) {
             display_handler.refresh();
