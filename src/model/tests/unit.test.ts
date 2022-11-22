@@ -1,6 +1,6 @@
 import * as test from "tape";
 import { BoardState } from "../state";
-import {Unit, CONSTRUCT_BASIC_ACTIONS} from "../../tactics/unit";
+import {Unit, CONSTRUCT_BASIC_ACTIONS} from "../../examples/tactics/unit";
 
 test("Unit test", (t) => {
     var unit = new Unit(0);

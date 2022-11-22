@@ -1,6 +1,6 @@
-import { Action } from "../tactics/action";
+import { Action } from "../examples/tactics/action";
 import { ISelectable, Stack } from "../model/core";
-import { Effect } from "../tactics/effect";
+import { Effect } from "../examples/tactics/effect";
 import { InputOptions, InputRequest, InputSelection } from "../model/input";
 import { IPhase } from "../model/phase";
 import { GridSpace } from "../model/space";

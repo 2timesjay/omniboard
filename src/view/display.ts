@@ -4,7 +4,7 @@ import { IView, RenderObject } from "./rendering";
 import { getMouseCo, InputCoordinate, OnInputEvent } from "./broker";
 import { Awaited } from "../model/utilities";
 import { GridCoordinate, GridLocation, ICoordinate, Vector } from "../model/space";
-import { Unit } from "../tactics/unit";
+import { Unit } from "../examples/tactics/unit";
 import { createWatchCompilerHost } from "typescript";
 import { Entity } from "../model/entity";
 import { IView3D, View3D } from "./rendering_three";

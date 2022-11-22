@@ -1,5 +1,5 @@
 import { ISelectable } from "../model/core";
-import { Effect } from "../tactics/effect";
+import { Effect } from "../examples/tactics/effect";
 import { Observer } from "../model/observer";
 import { ISpace } from "../model/space";
 import { DURATION_MS, DURATION_MS_NO_ANIM, IState } from "../model/state";

@@ -1,6 +1,6 @@
 import { ISelectable } from "./core";
 import { CounterAttackObserver, Observer } from "./observer";
-import { Unit } from "../tactics/unit";
+import { Unit } from "../examples/tactics/unit";
 
 export interface StatusContainer {
     statuses: Set<Status>;

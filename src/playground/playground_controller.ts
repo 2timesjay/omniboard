@@ -1,5 +1,5 @@
 import { ISelectable, Stack } from "../model/core";
-import { Effect } from "../tactics/effect";
+import { Effect } from "../examples/tactics/effect";
 import { AutoInputAcquirer, IInputAcquirer, InputOptions, InputRequest, InputSelection, SequentialInputAcquirer, SimpleInputAcquirer } from "../model/input";
 import { Inputs, IPhase } from "../model/phase";
 import { GridLocation, ILocation } from "../model/space";
@@ -9,7 +9,7 @@ import { PlaygroundMoveEffect } from "./playground_effect";
 import { Entity } from "../model/entity";
 import { LineSpace } from "./playground_space";
 import { PlaygroundState } from "./playground_state";
-import { Action } from "../tactics/action";
+import { Action } from "../examples/tactics/action";
 import { EntityMoveAction } from "./playground_action";
 
 type SelectionLabel = ContinuousSelectionLabel | DiscreteSelectionLabel;

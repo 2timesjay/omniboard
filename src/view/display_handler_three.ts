@@ -5,7 +5,7 @@ import { DisplayMap, DisplayMap3D, RenderObjectToDisplayMap } from "./broker";
 import { InputResponse } from '../model/input';
 import { IPhase } from '../model/phase';
 import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
-import { Action } from "../tactics/action";
+import { Action } from "../examples/tactics/action";
 import { ActiveRegion, BaseDisplayHandler, IDisplayHandler } from "./display_handler";
 import { RenderObject } from "./rendering";
 

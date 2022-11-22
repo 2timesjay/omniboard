@@ -9,7 +9,7 @@ import {
     bfs,
     OptionFn
 } from "./core";
-import { Effect } from "../tactics/effect";
+import { Effect } from "../examples/tactics/effect";
 import { Entity } from "./entity";
 
 import {
@@ -21,7 +21,7 @@ import {
 import { Observer } from "./observer";
 import { GridSpace, ISpace } from "./space";
 import { instanceOfStatusContainer } from "./status";
-import { Unit } from "../tactics/unit";
+import { Unit } from "../examples/tactics/unit";
 
 import {Awaited, sleep} from "./utilities";
 

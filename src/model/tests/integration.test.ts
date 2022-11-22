@@ -1,8 +1,8 @@
 import * as test from "tape";
 import { NumberState, SelectableNumber } from "../../tests/utilities";
-import { Action } from "../../tactics/action";
+import { Action } from "../../examples/tactics/action";
 import {bfs, ISelectable, Stack, Tree} from "../core";
-import { Effect } from "../../tactics/effect";
+import { Effect } from "../../examples/tactics/effect";
 import {InputSelection, SelectionFn, SequentialInputAcquirer, synthetic_input_getter} from "../input";
 
 function select_last<T>(arr: Array<T>): T {

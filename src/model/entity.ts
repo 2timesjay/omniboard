@@ -1,4 +1,4 @@
-import { Action } from "../tactics/action";
+import { Action } from "../examples/tactics/action";
 import { ISelectable } from "./core";
 import { ILocation } from "./space";
 import { IState } from "./state";

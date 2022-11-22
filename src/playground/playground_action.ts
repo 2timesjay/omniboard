@@ -1,6 +1,6 @@
-import { Action, MOVE } from "../tactics/action";
+import { Action, MOVE } from "../examples/tactics/action";
 import { Stack } from "../model/core";
-import { Effect, MoveEffect, ExhaustEffect } from "../tactics/effect";
+import { Effect, MoveEffect, ExhaustEffect } from "../examples/tactics/effect";
 import { Entity } from "../model/entity";
 import { SequentialInputAcquirer } from "../model/input";
 import { Inputs } from "../model/phase";

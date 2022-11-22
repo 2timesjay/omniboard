@@ -1,8 +1,8 @@
 /* Imports */
 import { makeCanvas, View2D, View2DPseudoZ } from "./rendering";
-import { TacticsController, TacticsPhase } from "../tactics/tactics_controller";
-import { tactics_setup } from "../tactics/tactics_setup";
-import { display_setup } from "../tactics/tactics_display_setup";
+import { TacticsController, TacticsPhase } from "../examples/tactics/tactics_controller";
+import { tactics_setup } from "../examples/tactics/tactics_setup";
+import { display_setup } from "../examples/tactics/tactics_display_setup";
 import { DisplayHandler } from "./display_handler";
 import { playground_model_setup } from "../playground/control_test/playground_model_setup";
 import { playground_display_setup, playground_display_setup_3D } from "../playground/control_test/playground_display_setup";
