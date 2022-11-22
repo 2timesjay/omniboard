@@ -1,6 +1,6 @@
 import { GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
-import { CONSTRUCT_BASIC_ACTIONS, GLOBAL_CONFIRMATION, Unit } from "../model/unit";
+import { CONSTRUCT_BASIC_ACTIONS, GLOBAL_CONFIRMATION, Unit } from "./unit";
 
 /**
  * Create a KxK grid for Tactics game

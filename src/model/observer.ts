@@ -1,9 +1,9 @@
-import { DigestFn } from "./action";
+import { DigestFn } from "../tactics/action";
 import { ISelectable } from "./core";
-import { DamageEffect, Effect } from "./effect";
+import { DamageEffect, Effect } from "../tactics/effect";
 import { BoardState, IState } from "./state";
 import { Status, StatusType } from "./status";
-import { Unit } from "./unit";
+import { Unit } from "../tactics/unit";
 
 type TriggerCond = (state: IState, effect: Effect) => boolean;
 

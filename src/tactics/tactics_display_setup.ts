@@ -1,6 +1,6 @@
 import { ISelectable } from "../model/core";
 import { BoardState } from "../model/state";
-import { GLOBAL_CONFIRMATION } from "../model/unit";
+import { GLOBAL_CONFIRMATION } from "./unit";
 import { GridLocationDisplay, UnitDisplay, MenuElementDisplay, AbstractDisplay, HealthVisual } from "../view/display";
 import { IView2D } from "../view/rendering";
 

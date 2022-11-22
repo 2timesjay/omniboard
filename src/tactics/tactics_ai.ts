@@ -1,9 +1,9 @@
-import { Action, ATTACK, END, MOVE } from "../model/action";
+import { Action, ATTACK, END, MOVE } from "./action";
 import { ISelectable, Stack } from "../model/core";
 import { InputOptions, InputRequest, InputResponse, synthetic_input_getter } from "../model/input";
 import { GridLocation, GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
-import { Unit } from "../model/unit";
+import { Unit } from "./unit";
 import { BoardAction, isActionInputStep, isTargetInputStep, isUnitInputStep, TacticsInputs, TacticsPhase } from "./tactics_controller";
 
 

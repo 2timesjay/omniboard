@@ -1,11 +1,11 @@
-import { MOVE, ATTACK, CHAIN, END, CHANNELED_ATTACK, COUNTER, TERRAIN, SHOVE } from "../model/action";
+import { MOVE, ATTACK, CHAIN, END, CHANNELED_ATTACK, COUNTER, TERRAIN, SHOVE } from "./action";
 import { GridSpace } from "../model/space";
 import { BoardState } from "../model/state";
 import { 
     construct_actions, 
     GLOBAL_CONFIRMATION, 
     Unit, 
-} from "../model/unit";
+} from "./unit";
 import { Canvas2DBroker } from "../view/broker";
 import { TICK_DURATION_MS } from "../view/client";
 import { DisplayHandler } from "../view/display_handler";

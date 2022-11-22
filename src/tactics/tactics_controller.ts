@@ -1,15 +1,15 @@
-import { Action } from "../model/action";
+import { Action } from "./action";
 import { ISelectable, Stack } from "../model/core";
 import { Confirmation, IInputAcquirer, IInputNext, IInputStep, InputOptions, InputRequest, InputResponse, InputSelection, InputStop, isInputSignal, SelectionGen, SimpleInputAcquirer } from "../model/input";
 import { AbstractBasePhase, BaseInputs, Inputs, IPhase, ProcessedInputs } from "../model/phase";
 import { GridLocation, GridSpace } from "../model/space";
 import { BaseState, BoardState, IState } from "../model/state";
-import { Unit } from "../model/unit";
+import { Unit } from "./unit";
 import { DisplayState } from "../view/display";
 import { DisplayHandler } from "../view/display_handler";
 import { DisplayMap } from "../view/broker";
 import { AI } from "./tactics_ai";
-import { Effect } from "../model/effect";
+import { Effect } from "./effect";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 

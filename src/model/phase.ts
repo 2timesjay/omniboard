@@ -2,7 +2,7 @@ import { textChangeRangeIsUnchanged } from "typescript";
 import { isActionInputStep, isTargetInputStep, TacticsInputs } from "../tactics/tactics_controller";
 import { BaseDisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
-import { Effect } from "./effect";
+import { Effect } from "../tactics/effect";
 import { IInputAcquirer, IInputNext, IInputStep, InputOptions, InputSelection, isInputStep } from "./input";
 import { BaseState, BoardState, IState } from "./state";
 

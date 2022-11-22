@@ -24,11 +24,11 @@ enum GameType {
 }
 
 var game_type = (
-    // GameType.Tactics
+    GameType.Tactics
     // GameType.Playground2D
     // GameType.Playground3D
     // GameType.Cars3D
-    GameType.SlidingPuzzle
+    // GameType.SlidingPuzzle
 )
 
 function create_start_button(setup_fn: () => void) {

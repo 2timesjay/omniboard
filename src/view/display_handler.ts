@@ -1,5 +1,5 @@
 import { TacticsPhase } from "../tactics/tactics_controller";
-import { Action } from "../model/action";
+import { Action } from "../tactics/action";
 import { ISelectable, Stack } from "../model/core";
 import { InputResponse } from "../model/input";
 import { IPhase } from "../model/phase";

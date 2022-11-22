@@ -1,5 +1,5 @@
 import { ISelectable, Stack } from "../../model/core";
-import { Effect } from "../../model/effect";
+import { Effect } from "../../tactics/effect";
 import { IInputAcquirer, IInputStop, IInputStep, InputSelection, InputSignal, isInputSignal, SimpleInputAcquirer, InputStop, InputOptions, InputRequest, IInputNext } from "../../model/input";
 import { AbstractBasePhase, BaseInputs, IPhase } from "../../model/phase";
 import { GridLocation } from "../../model/space";
