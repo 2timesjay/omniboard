@@ -677,22 +677,24 @@ export class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILoca
     _size: number;
     width: number;
     height: number;
+    additional_offsets: Vector;
 
-    constructor(entity: Entity) {
-        super(entity);        
+    constructor(entity: Entity, additional_offsets?: Vector) {
+        super(entity);
+        this.additional_offsets = additional_offsets ? additional_offsets: {x: 0, y: 0, z: 0};
         this.update_pos();
     }
 
     get xOffset(): number {
-        return this._xOffset;
+        return this._xOffset + this.additional_offsets.x;
     }
 
     get yOffset(): number {
-        return this._yOffset;
+        return this._yOffset + this.additional_offsets.y;
     }
 
     get zOffset(): number {
-        return this._zOffset;
+        return this._zOffset + this.additional_offsets.z;
     }
 
     get co(): GridCoordinate {
