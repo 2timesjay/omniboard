@@ -21,7 +21,7 @@ export class GridLocationInputStep implements IInputStep<GridLocation, null> {
         this.player = player;
         var occupied = new Set(state.entities.map(e => e.loc));
         var open_neighbor_locs = state.space
-            .getGridNeighborhood(this.player.loc)
+            .getNaturalNeighborhood(this.player.loc)
             .filter(loc => !occupied.has(loc));
         // TODO: Is this the right place for auto_select?
         this.acquirer = new SimpleInputAcquirer(

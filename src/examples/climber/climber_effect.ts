@@ -6,7 +6,7 @@ import { PlayerDisplay } from "./climber_display";
 import { Player, ClimberState } from "./climber_state";
 
 
-const STEP = new Audio('/assets/sound_effects/footstep.ogg');
+const STEP = new Audio('/assets/sound_effects/footstep.wav');
 // TODO: Move into setup?
 const DURATION_MS = 300;
 

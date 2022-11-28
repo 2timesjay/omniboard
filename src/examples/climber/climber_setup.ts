@@ -2,10 +2,11 @@ import { ISelectable } from "../../model/core";
 import { Entity } from "../../model/entity";
 import { InputRequest } from "../../model/input";
 import { GridSpace, ICoordinate } from "../../model/space";
+import { VolumeSpace } from "../../playground/playground_space";
 import { Canvas2DBroker, DisplayMap, ThreeBroker } from "../../view/broker";
 import { TICK_DURATION_MS } from "../../view/client";
 import { AbstractDisplay, AbstractDisplay3D, EntityDisplay, EntityDisplay3D, GridLocationDisplay3D, MenuElementDisplay3D } from "../../view/display";
-import { DisplayHandler } from "../../view/display_handler";
+import { BaseDisplayHandler, DisplayHandler } from "../../view/display_handler";
 import { DisplayHandler3D } from "../../view/display_handler_three";
 import { View2D } from "../../view/rendering";
 import { IView3D, View3D } from "../../view/rendering_three";
@@ -18,22 +19,22 @@ function climber_state_setup(k: number): ClimberState {
     var state = new ClimberState();
 
     // Space Setup
-    const grid_space = new GridSpace(k, k);
+    const grid_space = new VolumeSpace(k, k, 1);
     var entities: Array<Entity> = [];
     var box_cos = [
-        [1, 1],
-        [2, 1],
+        [1, 1, 0],
+        [2, 1, 0],
     ]
-    var player_co = [0, 0];
+    var player_co = [0, 0, 0];
     // Ensure player is always first entity.
     for (var loc of grid_space.to_array()) {
-        if (loc.co.x == player_co[0] && loc.co.y == player_co[1]) { 
+        if (loc.co.x == player_co[0] && loc.co.y == player_co[1] && loc.co.z == player_co[2]) { 
             entities.push(new Player(loc));
         }
     }
     for (var loc of grid_space.to_array()) {
         for(var box of box_cos) {
-            if (loc.co.x == box[0] && loc.co.y == box[1]) {
+            if (loc.co.x == box[0] && loc.co.y == box[1] && loc.co.z == box[2]) {
                 entities.push(new Box(loc));
             }
         }
@@ -53,7 +54,7 @@ function climber_state_setup(k: number): ClimberState {
  */
  export function climber_display_setup_3D(
     state: ClimberState, view: View3D,
-): InputRequest<ISelectable> {
+): [DisplayHandler, InputRequest<ISelectable>] {
 
     // TODO: Derive all Displays from get_selectables. Reqs full info in each sel.
     var display_map = new Map<ISelectable, AbstractDisplay3D<ISelectable>>();
@@ -98,7 +99,7 @@ function climber_state_setup(k: number): ClimberState {
 
     // TODO: Change to `requestAnimationFrame` everywhere
     setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
-    return input_request;
+    return [display_handler, input_request];
 }
 
 export function climber_setup() {
@@ -113,7 +114,7 @@ export function climber_setup() {
     // TODO: Avoid unwieldy super-"then"; maybe make setup async?
     // Create Displays
     // NOTE: Shared displays and DisplayMap between views.
-    var input_request = climber_display_setup_3D(state, view);
+    var [display_handler, input_request] = climber_display_setup_3D(state, view);
     // Create Controller
     var phase = new ClimberPhase(state);
     var controller = new ClimberController(state);
