@@ -442,7 +442,7 @@ export interface IInputStep<T extends ISelectable, U extends ISelectable> {
     acquirer: IInputAcquirer<T>;
     indicator?: string;
     // TODO: Implement for Sliding Puzzle?
-    input_option_generator(): SelectionGen<T>;
+    // input_option_generator(): SelectionGen<T>;
     consume_children: (next_step: IInputNext<U>) => any;
     get_next_step: (state?: IState) => IInputNext<U>;
 }

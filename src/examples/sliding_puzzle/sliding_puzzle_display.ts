@@ -83,6 +83,9 @@ class _PuzzlePieceDisplay extends _EntityDisplay implements ILocatable, IPathabl
     }
 }
 
+// export class PuzzlePieceDisplay extends Animate(_PuzzlePieceDisplay, BaseAnimation) {};
+export class PuzzlePieceDisplay extends ChainableAnimate(_PuzzlePieceDisplay, ChainableSteadyAnimation) {};
+
 export class VictoryBannerVisual extends UnitaryVisual {
     constructor(parent: ILocatable) {
         super(parent);
@@ -109,6 +112,3 @@ export class VictoryBannerVisual extends UnitaryVisual {
         );
     }
 }
-
-// export class PuzzlePieceDisplay extends Animate(_PuzzlePieceDisplay, BaseAnimation) {};
-export class PuzzlePieceDisplay extends ChainableAnimate(_PuzzlePieceDisplay, ChainableSteadyAnimation) {};

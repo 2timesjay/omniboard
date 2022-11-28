@@ -9,6 +9,8 @@ import { DisplayHandler } from "../../view/display_handler";
 import { DisplayHandler3D } from "../../view/display_handler_three";
 import { View2D } from "../../view/rendering";
 import { IView3D, View3D } from "../../view/rendering_three";
+import { ClimberController, ClimberPhase } from "./climber_controller";
+import { BoxDisplay, PlayerDisplay } from "./climber_display";
 import { Box, ClimberState, Player } from "./climber_state";
 
 
@@ -23,10 +25,13 @@ function climber_state_setup(k: number): ClimberState {
         [2, 1],
     ]
     var player_co = [0, 0];
+    // Ensure player is always first entity.
     for (var loc of grid_space.to_array()) {
         if (loc.co.x == player_co[0] && loc.co.y == player_co[1]) { 
             entities.push(new Player(loc));
         }
+    }
+    for (var loc of grid_space.to_array()) {
         for(var box of box_cos) {
             if (loc.co.x == box[0] && loc.co.y == box[1]) {
                 entities.push(new Box(loc));
@@ -62,12 +67,25 @@ function climber_state_setup(k: number): ClimberState {
         loc_display.display(view);
     }
 
-    for (let entity of state.entities) {
-        let entity_display = new EntityDisplay3D(entity, {x: 0, y: 0, z: 0.6});
-        // @ts-ignore fix Display3D inheritance
-        display_map.set(entity, entity_display);
-        // @ts-ignore
-        entity_display.display(view);
+    for (let [index, entity] of state.entities.entries()) {
+        if (index == 0) {
+            console.log("Adding Player")
+            // @ts-ignore
+            let player_display = new PlayerDisplay(entity);
+            // @ts-ignore
+            display_map.set(entity, player_display);
+            // @ts-ignore
+            player_display.display(view);
+        }
+        else {
+            console.log("Adding Box")
+            // @ts-ignore
+            let box_display = new BoxDisplay(entity);
+            // @ts-ignore
+            display_map.set(entity, box_display);
+            // @ts-ignore
+            box_display.display(view);
+        }
     }
 
     var display_handler = new DisplayHandler3D(view, display_map, state);
@@ -96,11 +114,11 @@ export function climber_setup() {
     // Create Displays
     // NOTE: Shared displays and DisplayMap between views.
     var input_request = climber_display_setup_3D(state, view);
-    // // Create Controller
-    // var phase = new ClimberPhase(state);
-    // var controller = new ClimberController(state);
+    // Create Controller
+    var phase = new ClimberPhase(state);
+    var controller = new ClimberController(state);
     
-    // // Start main game loop
-    // // @ts-ignore
-    // controller.run(phase, input_request, display_handler);
+    // Start main game loop
+    // @ts-ignore
+    controller.run(phase, input_request, display_handler);
 }

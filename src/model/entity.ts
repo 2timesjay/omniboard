@@ -6,6 +6,7 @@ import { IState } from "./state";
 export class Entity implements ISelectable {
     loc: ILocation;
     actions: Array<Action<ISelectable, IState>>;
+    indicator: string = "ENTITY";
 
     constructor(loc?: ILocation){
         this.loc = loc;
