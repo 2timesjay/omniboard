@@ -1,9 +1,10 @@
 import { EffectKernel, AbstractEffect } from "../../model/effect";
+import { Entity } from "../../model/entity";
 import { GridLocation, Vector } from "../../model/space";
 import { ChainableMove } from "../../view/animation";
 import { DisplayHandler } from "../../view/display_handler";
 import { PlayerDisplay } from "./climber_display";
-import { Player, ClimberState } from "./climber_state";
+import { Player, ClimberState, Box } from "./climber_state";
 
 
 const STEP = new Audio('/assets/sound_effects/footstep.wav');
@@ -79,5 +80,70 @@ export class ClimberMoveEffect extends AbstractEffect {
         console.log("PLAYING SOUND");
         STEP.load();
         STEP.play();
+    }
+}
+
+class BoxShoveKernel implements EffectKernel {
+    source: Player;
+    target: Box;
+
+    _prev_loc: GridLocation;
+
+    constructor(source: Player, target: Box) {
+        this.source = source;
+        this.target = target;
+    }
+
+    execute(state: ClimberState): ClimberState {
+        var source = this.source;
+        var target = this.target;
+        this._prev_loc = target.loc;
+        var vector: Vector = state.space.getVector(source.loc, target.loc);
+        // TODO: Not implemented for space.
+        var destination = state.space.getSimpleRelativeGridCoordinate(target.loc, vector);
+        // TODO: Also check if occupied. Can overlap units now.
+        if (destination != null && destination.traversable) {
+            target.setLoc(destination);
+            // TODO: Change traversability above the box
+        }
+        // TODO: Else, damage somehow.
+        return state;
+    };
+
+    reverse(state: ClimberState): ClimberState {
+        this.target.setLoc(this._prev_loc);
+        return state;
+    }
+}
+
+// TODO: Factor this and other Moves into BaseMoveEffect
+export class BoxShoveEffect extends AbstractEffect {
+    source: Player;
+    target: Box;
+
+    kernel: BoxShoveKernel;
+    description: string;
+
+    constructor(source: Player, target: Box) {
+        super();
+        this.source = source;
+        this.target = target
+        this.kernel = new BoxShoveKernel(source, target);
+        this.description = "Shove Box to new location";
+    }
+
+    execute(state: ClimberState): ClimberState {
+        return this.kernel.execute(state);
+    }
+
+    animate(state: ClimberState, display_handler: DisplayHandler) {   
+        var source = this.source;
+        var target = this.target;
+        var vector: Vector = state.space.getVector(source.loc, target.loc);
+        // var target_display = display_handler.display_map.get(target);
+        // // @ts-ignore Doesn't know unit_display is a UnitDisplay
+        // var animation = new Move(vector, DURATION_FRAMES, target_display);
+        // // @ts-ignore Can't even use UnitDisplay as a normal type.
+        // target_display.interrupt_animation(animation);
     }
 }

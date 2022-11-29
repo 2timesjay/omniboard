@@ -6,23 +6,26 @@ import { AbstractBasePhase, BaseInputs } from "../../model/phase";
 import { GridLocation } from "../../model/space";
 import { IState } from "../../model/state";
 import { BaseDisplayHandler } from "../../view/display_handler";
-import { ClimberMoveEffect } from "./climber_effect";
-import { ClimberState, Player } from "./climber_state";
+import { BoxShoveEffect, ClimberMoveEffect } from "./climber_effect";
+import { Box, ClimberState, Player } from "./climber_state";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
 export class GridLocationInputStep implements IInputStep<GridLocation, null> {
     acquirer: IInputAcquirer<GridLocation>;
     player: Player;
+    occupied: Set<GridLocation>;
+    entities: Array<Entity>;
 
     constructor(state: ClimberState, auto_select: boolean = false) {
         // Restrict to unoccupied neighbors of source entity.
         var player = state.entities[0]; // TODO: Ensure this is correct.
         this.player = player;
-        var occupied = new Set(state.entities.map(e => e.loc));
+        this.occupied = new Set(state.entities.map(e => e.loc));
+        this.entities = state.entities;
         var open_neighbor_locs = state.space
-            .getNaturalNeighborhood(this.player.loc)
-            .filter(loc => !occupied.has(loc));
+            .getNaturalNeighborhood(this.player.loc) // Not getGrid since using VolumeSpace.
+            .filter(loc => loc.traversable);
         // TODO: Is this the right place for auto_select?
         this.acquirer = new SimpleInputAcquirer(
             () => open_neighbor_locs, false, auto_select,
@@ -41,7 +44,13 @@ export class GridLocationInputStep implements IInputStep<GridLocation, null> {
     }
 
     consume_children(next_step: InputStop): Array<Effect> {
-        return [new ClimberMoveEffect(this.player, this.input)];
+        if (this.occupied.has(this.input)) {
+            var box = this.entities.map(e => e as Box).find(e => e.loc == this.input);
+            return [new BoxShoveEffect(this.player, box)];
+        }
+        else {
+            return [new ClimberMoveEffect(this.player, this.input)];
+        }
     }
     
     get_next_step(state: ClimberState): InputStop {

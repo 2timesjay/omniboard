@@ -19,7 +19,10 @@ function climber_state_setup(k: number): ClimberState {
     var state = new ClimberState();
 
     // Space Setup
-    const grid_space = new VolumeSpace(k, k, 1);
+    const grid_space = new VolumeSpace(k, k, 2);
+    for (var loc of grid_space.to_array()) {
+        if (loc.co.z > 0) { loc.traversable = false}
+    }
     var entities: Array<Entity> = [];
     var box_cos = [
         [1, 1, 0],
@@ -36,6 +39,7 @@ function climber_state_setup(k: number): ClimberState {
         for(var box of box_cos) {
             if (loc.co.x == box[0] && loc.co.y == box[1] && loc.co.z == box[2]) {
                 entities.push(new Box(loc));
+                grid_space.get({x: loc.co.x, y: loc.co.y, z: loc.co.z + 1}).traversable = true;
             }
         }
     }
