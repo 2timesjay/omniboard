@@ -3,7 +3,7 @@ import { Entity } from "../../model/entity";
 import { GridLocation, Vector } from "../../model/space";
 import { ChainableMove } from "../../view/animation";
 import { DisplayHandler } from "../../view/display_handler";
-import { PlayerDisplay } from "./climber_display";
+import { BoxDisplay, PlayerDisplay } from "./climber_display";
 import { Player, ClimberState, Box } from "./climber_state";
 
 
@@ -104,6 +104,7 @@ class BoxShoveKernel implements EffectKernel {
         // TODO: Also check if occupied. Can overlap units now.
         if (destination != null && destination.traversable) {
             target.setLoc(destination);
+            console.log(this._prev_loc, destination);
             // TODO: Change traversability above the box
         }
         // TODO: Else, damage somehow.
@@ -138,12 +139,32 @@ export class BoxShoveEffect extends AbstractEffect {
 
     animate(state: ClimberState, display_handler: DisplayHandler) {   
         var source = this.source;
+        var source_display = display_handler.display_map.get(source) as PlayerDisplay;
         var target = this.target;
+        var target_display = display_handler.display_map.get(target) as BoxDisplay;
         var vector: Vector = state.space.getVector(source.loc, target.loc);
+        var on_gen_finish = () => {
+            target_display.update_pos();
+            this.play_sound();
+        }
+        var animation = new ChainableMove(vector, DURATION_MS, on_gen_finish);
+        // TODO: UpdatePos
+        console.log("Interrupt")
+        source_display.interrupt_chainable_animation(animation)
+        // TODO: Play on animation completion
+        // source_display.update_pos();
+        // var target_display = display_handler.display_map.get(source) as BoxDisplay;
+        // target_display.update_pos();
         // var target_display = display_handler.display_map.get(target);
         // // @ts-ignore Doesn't know unit_display is a UnitDisplay
         // var animation = new Move(vector, DURATION_FRAMES, target_display);
         // // @ts-ignore Can't even use UnitDisplay as a normal type.
         // target_display.interrupt_animation(animation);
+    }
+
+    play_sound() {
+        console.log("PLAYING SOUND");
+        STEP.load();
+        STEP.play();
     }
 }

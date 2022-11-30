@@ -157,4 +157,37 @@ export class VolumeSpace extends AbstractSpace<GridLocation> {
     to_array(): Array<GridLocation> {
         return this.locs.flat(3); // Default depth=1 sufficient.
     }
+
+    getRelativeCoordinate(loc: GridLocation, rel_co: RelativeGridCoordinate): Array<GridLocation> {
+        var nh = new Array<GridLocation>();
+        if (rel_co.type == RelativeCoordinateOperator.BASE) {
+            var ne = this.get(rel_co.add_to(loc.co));
+            if (ne) {
+                nh.push(ne);
+            }
+        } else if (rel_co.type == RelativeCoordinateOperator.OR) {
+            var ne_list = rel_co.children.flatMap(
+                (child) => this.getRelativeCoordinate(loc, child)
+            );
+            if (ne_list) {
+                nh.push(...ne_list);
+            }
+        }
+        return nh;
+    }
+    
+    // TODO: Optional return
+    // TODO: Less dumb name
+    getSimpleRelativeGridCoordinate(loc: GridLocation, vector: Vector): GridLocation {
+        var rel_co = new RelativeGridCoordinate(
+            vector,
+            RelativeCoordinateOperator.BASE,
+        );
+        var nh = this.getRelativeCoordinate(loc, rel_co);
+        if (nh.length == 1) { 
+            return nh[0];
+        } else {
+            return null;
+        }
+    }
 }
