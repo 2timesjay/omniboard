@@ -105,14 +105,13 @@ class BoxShoveKernel implements EffectKernel {
         var destination = state.space.getSimpleRelativeGridCoordinate(target.loc, vector);
         // TODO: Also check if occupied. Can overlap units now.
         if (destination != null && destination.traversable) {
-            target.setLoc(destination);
-            console.log(this._prev_loc, destination);
             // TODO: Change traversability above the box
-            var above_target = state.space.getSimpleRelativeGridCoordinate(destination, UP);
-            var above_destination = state.space.getSimpleRelativeGridCoordinate(above_target, UP);
+            var above_target = state.space.getSimpleRelativeGridCoordinate(target.loc, UP);
+            var above_destination = state.space.getSimpleRelativeGridCoordinate(destination, UP);
             state.space.get(above_target).traversable = false;
             state.space.get(above_destination).traversable = true;
-            destination.traversable = true;
+            target.setLoc(destination);
+            console.log(this._prev_loc, destination);
         }
         // TODO: Else, damage somehow.
         return state;
