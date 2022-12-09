@@ -8,6 +8,7 @@ import { Player, ClimberState, Box } from "./climber_state";
 
 
 const STEP = new Audio('/assets/sound_effects/footstep.wav');
+const SCRAPE = new Audio('/assets/sound_effects/wood_scrape.mp3');
 // TODO: Move into setup?
 const DURATION_MS = 300;
 
@@ -95,6 +96,7 @@ class BoxShoveKernel implements EffectKernel {
     }
 
     execute(state: ClimberState): ClimberState {
+        var UP = {x: 0, y: 0, z: 1}
         var source = this.source;
         var target = this.target;
         this._prev_loc = target.loc;
@@ -106,6 +108,11 @@ class BoxShoveKernel implements EffectKernel {
             target.setLoc(destination);
             console.log(this._prev_loc, destination);
             // TODO: Change traversability above the box
+            var above_target = state.space.getSimpleRelativeGridCoordinate(destination, UP);
+            var above_destination = state.space.getSimpleRelativeGridCoordinate(above_target, UP);
+            state.space.get(above_target).traversable = false;
+            state.space.get(above_destination).traversable = true;
+            destination.traversable = true;
         }
         // TODO: Else, damage somehow.
         return state;
@@ -150,7 +157,7 @@ export class BoxShoveEffect extends AbstractEffect {
         var animation = new ChainableMove(vector, DURATION_MS, on_gen_finish);
         // TODO: UpdatePos
         console.log("Interrupt")
-        source_display.interrupt_chainable_animation(animation)
+        target_display.interrupt_chainable_animation(animation)
         // TODO: Play on animation completion
         // source_display.update_pos();
         // var target_display = display_handler.display_map.get(source) as BoxDisplay;
@@ -164,7 +171,7 @@ export class BoxShoveEffect extends AbstractEffect {
 
     play_sound() {
         console.log("PLAYING SOUND");
-        STEP.load();
-        STEP.play();
+        SCRAPE.load();
+        SCRAPE.play();
     }
 }
