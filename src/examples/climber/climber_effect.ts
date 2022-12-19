@@ -12,6 +12,30 @@ const SCRAPE = new Audio('/assets/sound_effects/wood_scrape.mp3');
 // TODO: Move into setup?
 const DURATION_MS = 300;
 
+
+
+// TODO: No Kernel
+export class ToggleLocationEffect extends AbstractEffect {
+    loc: GridLocation;
+    description: string;
+
+    constructor(loc: GridLocation) {
+        super();
+        this.loc = loc;
+        this.description = "Toggle terrain at a location.";
+    }
+
+    execute(state: ClimberState): ClimberState {
+        this.space.toggle(this.loc);
+    }
+
+    animate(state: ClimberState, display_handler: DisplayHandler) {   
+    }
+
+    play_sound() {
+    }
+}
+
 // TODO: Refactor into a base MoveKernel - Excessively similar to SlidingPuzzleMoveKernel
 class ClimberMoveKernel implements EffectKernel {
     source: Player;

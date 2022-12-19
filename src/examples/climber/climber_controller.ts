@@ -11,6 +11,68 @@ import { Box, ClimberState, Player } from "./climber_state";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
+/**
+ * Building Phase - pre-game creation of a level.
+ */
+export class ToggleLocationStep implements IInputStep<GridLocation, null> {
+    acquirer: IInputAcquirer<GridLocation>;
+    player: Player;
+    occupied: Set<GridLocation>;
+    entities: Array<Entity>;
+
+    constructor(state: ClimberState, auto_select: boolean = true) {
+        // Restrict to unoccupied neighbors of source entity.
+        this.acquirer = new SimpleInputAcquirer(
+            () => state.space.to_array(), false, auto_select,
+        ); 
+    }
+
+    get input(): GridLocation {
+        var input_response = this.acquirer.current_input;
+        if (isInputSignal(input_response)) {
+            return null;
+        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
+            return input_response.value;
+        } else {
+            return input_response;
+        }
+    }
+
+    consume_children(next_step: InputStop): Array<Effect> {
+        return [new ToggleLocationEffect(this.input)];
+    }
+    
+    get_next_step(state: ClimberState): InputStop {
+        return new InputStop();
+    }
+}
+ export class BuilderPhase extends AbstractBasePhase {
+    constructor(state: ClimberState) {
+        super();
+        // TODO: Do I need this? nullish until built in subphase, currently.
+        this.current_inputs = new BaseInputs(this.base_step_factory);
+        this.current_inputs.reset(state);
+    }
+
+    get base_step_factory(): (state: IState) => IInputNext<ISelectable> {
+        return (state: ClimberState) => new GridLocationInputStep(state);
+    }
+    
+    async * run_phase(
+        state: ClimberState
+    ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
+        console.log("Running BuilderPhase")
+        // Make a single "move"
+        var inputs: BaseInputs = yield *this.run_subphase(state); 
+        var effects = this.digest_inputs();
+        this.current_inputs.reset(state);  
+
+        // TODO: Side effect that queue display doesn't clear before effect execution
+        await state.process(effects, this.display_handler).then(() => {});
+    }
+}
+
+// Climber Phase
 export class GridLocationInputStep implements IInputStep<GridLocation, null> {
     acquirer: IInputAcquirer<GridLocation>;
     player: Player;
@@ -59,7 +121,7 @@ export class GridLocationInputStep implements IInputStep<GridLocation, null> {
 }
 
 /**
- * Phase is simplified to allow exploration of input acquisition.
+ * Climber pushes blocks and moves.
  */
  export class ClimberPhase extends AbstractBasePhase {
     constructor(state: ClimberState) {
