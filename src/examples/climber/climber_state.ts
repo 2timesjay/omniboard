@@ -1,6 +1,7 @@
 import { Entity } from "../../model/entity";
 import { GridCoordinate, GridLocation, GridSpace } from "../../model/space";
 import { BaseState } from "../../model/state";
+import { VolumeSpace } from "../../playground/playground_space";
 
 export class Box extends Entity {
     indicator: string = "BOX";
@@ -22,5 +23,5 @@ export class Player extends Entity {
 
 export class ClimberState extends BaseState {
     entities: Array<Entity>;
-    space: GridSpace;
+    space: VolumeSpace;
 }

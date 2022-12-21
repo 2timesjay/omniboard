@@ -6,7 +6,7 @@ import { AbstractBasePhase, BaseInputs } from "../../model/phase";
 import { GridLocation } from "../../model/space";
 import { IState } from "../../model/state";
 import { BaseDisplayHandler } from "../../view/display_handler";
-import { BoxShoveEffect, ClimberMoveEffect } from "./climber_effect";
+import { BoxShoveEffect, ClimberMoveEffect, ToggleLocationEffect } from "./climber_effect";
 import { Box, ClimberState, Player } from "./climber_state";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
@@ -55,7 +55,7 @@ export class ToggleLocationStep implements IInputStep<GridLocation, null> {
     }
 
     get base_step_factory(): (state: IState) => IInputNext<ISelectable> {
-        return (state: ClimberState) => new GridLocationInputStep(state);
+        return (state: ClimberState) => new ToggleLocationStep(state);
     }
     
     async * run_phase(
@@ -165,7 +165,7 @@ export class GridLocationInputStep implements IInputStep<GridLocation, null> {
      * then feeds input to display_handler.
      */
     async run(
-        phase: ClimberPhase, 
+        phase: BuilderPhase | ClimberPhase, 
         input_request: InputRequest<ISelectable>,
         display_handler: BaseDisplayHandler,
     ) {

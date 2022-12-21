@@ -190,4 +190,9 @@ export class VolumeSpace extends AbstractSpace<GridLocation> {
             return null;
         }
     }
+
+    // Toggle Whether a grid location is traversable or not.
+    toggle(loc: GridLocation) {
+        loc.traversable = !loc.traversable;
+    }
 }

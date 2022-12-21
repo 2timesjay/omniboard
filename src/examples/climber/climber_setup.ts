@@ -10,7 +10,7 @@ import { BaseDisplayHandler, DisplayHandler } from "../../view/display_handler";
 import { DisplayHandler3D } from "../../view/display_handler_three";
 import { View2D } from "../../view/rendering";
 import { IView3D, View3D } from "../../view/rendering_three";
-import { ClimberController, ClimberPhase } from "./climber_controller";
+import { BuilderPhase, ClimberController, ClimberPhase } from "./climber_controller";
 import { BoxDisplay, PlayerDisplay } from "./climber_display";
 import { Box, ClimberState, Player } from "./climber_state";
 
@@ -120,10 +120,11 @@ export function climber_setup() {
     // NOTE: Shared displays and DisplayMap between views.
     var [display_handler, input_request] = climber_display_setup_3D(state, view);
     // Create Controller
-    var phase = new ClimberPhase(state);
+    var climber_phase = new ClimberPhase(state);
+    var builder_phase = new BuilderPhase(state);
     var controller = new ClimberController(state);
     
     // Start main game loop
     // @ts-ignore
-    controller.run(phase, input_request, display_handler);
+    controller.run(builder_phase, input_request, display_handler);
 }

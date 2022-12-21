@@ -26,7 +26,8 @@ export class ToggleLocationEffect extends AbstractEffect {
     }
 
     execute(state: ClimberState): ClimberState {
-        this.space.toggle(this.loc);
+        state.space.toggle(this.loc);
+        return state;
     }
 
     animate(state: ClimberState, display_handler: DisplayHandler) {   
