@@ -13,6 +13,7 @@ import { Canvas2DBroker, ThreeBroker } from "./broker";
 import { car_setup } from "../playground/cars/car_setup";
 import { sliding_puzzle_setup } from "../examples/sliding_puzzle/sliding_puzzle_setup";
 import { climber_setup } from "../examples/climber/climber_setup";
+import { editor_setup } from "../examples/editor/editor_setup";
 
 export const TICK_DURATION_MS = 20
 
@@ -23,6 +24,7 @@ enum GameType {
     Cars3D = 3,
     SlidingPuzzle = 4,
     Climber = 5,
+    Editor = 6,
 }
 
 var game_type = (
@@ -31,7 +33,8 @@ var game_type = (
     // GameType.Playground3D
     // GameType.Cars3D
     // GameType.SlidingPuzzle
-    GameType.Climber
+    // GameType.Climber
+    GameType.Editor
 )
 
 function create_start_button(setup_fn: () => void) {
@@ -114,5 +117,9 @@ if (game_type == GameType.Tactics) {
 } else if (game_type == GameType.Climber) {
     // NOTE: Await first click to start.
     create_start_button(climber_setup);
+} else if (game_type == GameType.Editor) {
+    // NOTE: Await first click to start.
+    create_start_button(editor_setup);
 }
+
 

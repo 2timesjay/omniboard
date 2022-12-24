@@ -10,13 +10,12 @@ import { BaseDisplayHandler, DisplayHandler } from "../../view/display_handler";
 import { DisplayHandler3D } from "../../view/display_handler_three";
 import { View2D } from "../../view/rendering";
 import { IView3D, View3D } from "../../view/rendering_three";
-import { BuilderPhase, ClimberController, ClimberPhase } from "./climber_controller";
-import { BoxDisplay, PlayerDisplay } from "./climber_display";
-import { Box, ClimberState, Player } from "./climber_state";
+import { EditorController, EditorPhase } from "./editor_controller";
+import { EditorState } from "./editor_state";
 
 
-function climber_state_setup(k: number): ClimberState {
-    var state = new ClimberState();
+function editor_state_setup(k: number): EditorState {
+    var state = new EditorState();
 
     // Space Setup
     const grid_space = new VolumeSpace(k, k, 2);
@@ -24,25 +23,6 @@ function climber_state_setup(k: number): ClimberState {
         if (loc.co.z > 0) { loc.traversable = false}
     }
     var entities: Array<Entity> = [];
-    var box_cos = [
-        [1, 1, 0],
-        [2, 1, 0],
-    ]
-    var player_co = [0, 0, 0];
-    // Ensure player is always first entity.
-    for (var loc of grid_space.to_array()) {
-        if (loc.co.x == player_co[0] && loc.co.y == player_co[1] && loc.co.z == player_co[2]) { 
-            entities.push(new Player(loc));
-        }
-    }
-    for (var loc of grid_space.to_array()) {
-        for(var box of box_cos) {
-            if (loc.co.x == box[0] && loc.co.y == box[1] && loc.co.z == box[2]) {
-                entities.push(new Box(loc));
-                grid_space.get({x: loc.co.x, y: loc.co.y, z: loc.co.z + 1}).traversable = true;
-            }
-        }
-    }
 
     // State Setup
     // TODO: Construct state with space and entities instead of later assignment.
@@ -56,8 +36,8 @@ function climber_state_setup(k: number): ClimberState {
 /**
  * Create Display elements for every selectable in state, create view and broker.
  */
- export function climber_display_setup_3D(
-    state: ClimberState, view: View3D,
+ export function editor_display_setup_3D(
+    state: EditorState, view: View3D,
 ): [DisplayHandler, InputRequest<ISelectable>] {
 
     // TODO: Derive all Displays from get_selectables. Reqs full info in each sel.
@@ -106,10 +86,10 @@ function climber_state_setup(k: number): ClimberState {
     return [display_handler, input_request];
 }
 
-export function climber_setup() {
+export function editor_setup() {
     // State Setup
     var k = 4;
-    var state = climber_state_setup(k)
+    var state = editor_state_setup(k)
     
     // Create Canvas
     const size = 100
@@ -118,13 +98,12 @@ export function climber_setup() {
     // TODO: Avoid unwieldy super-"then"; maybe make setup async?
     // Create Displays
     // NOTE: Shared displays and DisplayMap between views.
-    var [display_handler, input_request] = climber_display_setup_3D(state, view);
+    var [display_handler, input_request] = editor_display_setup_3D(state, view);
     // Create Controller
-    var climber_phase = new ClimberPhase(state);
-    var builder_phase = new BuilderPhase(state);
-    var controller = new ClimberController(state);
+    var editor_phase = new EditorPhase(state);
+    var controller = new EditorController(state);
     
     // Start main game loop
     // @ts-ignore
-    controller.run(climber_phase, input_request, display_handler);
+    controller.run(editor_phase, input_request, display_handler);
 }
