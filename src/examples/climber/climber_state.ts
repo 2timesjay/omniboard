@@ -1,4 +1,4 @@
-import { Entity } from "../../model/entity";
+import { Entity } from "../../common/entity";
 import { GridCoordinate, GridLocation, GridSpace } from "../../model/space";
 import { BaseState } from "../../model/state";
 import { VolumeSpace } from "../../playground/playground_space";

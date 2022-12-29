@@ -1,4 +1,4 @@
-import { Entity } from "../../model/entity";
+import { Entity } from "../../common/entity";
 import { EntityMoveAction } from "../playground_action";
 import { LineSpace, VolumeSpace } from "../playground_space";
 import { PlaygroundState } from "../playground_state";

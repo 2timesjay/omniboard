@@ -1,6 +1,6 @@
 import { Stack, ISelectable } from "../../model/core";
 import { Effect } from "../../model/effect";
-import { Entity } from "../../model/entity";
+import { Entity } from "../../common/entity";
 import { IInputStep, IInputAcquirer, SimpleInputAcquirer, isInputSignal, InputStop, IInputNext, InputOptions, InputSelection, InputRequest } from "../../model/input";
 import { AbstractBasePhase, BaseInputs } from "../../model/phase";
 import { GridLocation } from "../../model/space";
@@ -16,7 +16,6 @@ const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
  */
 export class ToggleLocationStep implements IInputStep<GridLocation, null> {
     acquirer: IInputAcquirer<GridLocation>;
-    player: Player;
     occupied: Set<GridLocation>;
     entities: Array<Entity>;
 

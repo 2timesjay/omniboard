@@ -1,6 +1,6 @@
 import { Action, AlterTerrainAction, ATTACK, AttackAction, CHAIN, ChainLightningAction, ChanneledAttackAction, CHANNELED_ATTACK, COUNTER, CounterReadyAction, END, EndTurnAction, MOVE, MoveAction, SHOVE, ShoveAction, TERRAIN } from "./action";
 import { ISelectable, Stack } from "../../model/core";
-import { Entity } from "../../model/entity";
+import { Entity } from "../../common/entity";
 import { AutoInputAcquirer, Confirmation, SequentialInputAcquirer, SimpleInputAcquirer } from "../../model/input";
 import { GridLocation, GridSpace, Vector } from "../../model/space";
 import { BoardState, IState } from "../../model/state";

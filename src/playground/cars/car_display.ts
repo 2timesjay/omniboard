@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { MeshBasicMaterial } from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-import { Entity } from '../../model/entity';
+import { Entity } from '../../common/entity';
 import { GridCoordinate } from '../../model/space';
 import { EntityDisplay3D, ILocatable, IPathable, _EntityDisplay3D } from "../../view/display";
 import { ActiveRegion } from "../../view/display_handler";

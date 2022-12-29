@@ -6,7 +6,7 @@ import { GridLocation, ILocation } from "../model/space";
 import { IState } from "../model/state";
 import { BaseDisplayHandler, DisplayHandler } from "../view/display_handler";
 import { PlaygroundMoveEffect } from "./playground_effect";
-import { Entity } from "../model/entity";
+import { Entity } from "../common/entity";
 import { LineSpace } from "./playground_space";
 import { PlaygroundState } from "./playground_state";
 import { Action } from "../examples/tactics/action";

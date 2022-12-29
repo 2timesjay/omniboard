@@ -1,5 +1,5 @@
 import { ISelectable } from "../../model/core";
-import { Entity } from "../../model/entity";
+import { Entity } from "../../common/entity";
 import { InputRequest } from "../../model/input";
 import { GridSpace, ICoordinate } from "../../model/space";
 import { VolumeSpace } from "../../playground/playground_space";

@@ -1,5 +1,5 @@
 import { ISelectable } from "../../model/core";
-import { Entity } from "../../model/entity";
+import { Entity } from "../../common/entity";
 import { InputRequest } from "../../model/input";
 import { GridSpace, ICoordinate } from "../../model/space";
 import { VolumeSpace } from "../../playground/playground_space";
@@ -18,7 +18,7 @@ function editor_state_setup(k: number): EditorState {
     var state = new EditorState();
 
     // Space Setup
-    const grid_space = new VolumeSpace(k, k, 2);
+    const grid_space = new VolumeSpace(k, k, 3);
     for (var loc of grid_space.to_array()) {
         if (loc.co.z > 0) { loc.traversable = false}
     }
@@ -29,20 +29,35 @@ function editor_state_setup(k: number): EditorState {
     state.space = grid_space;
     state.entities = entities;
 
-    return state
+    return state;
 }
 
 // TODO: Turn into generic "display setup"
 /**
  * Create Display elements for every selectable in state, create view and broker.
  */
- export function editor_display_setup_3D(
+ export function editor_display_setup(
     state: EditorState, view: View3D,
 ): [DisplayHandler, InputRequest<ISelectable>] {
 
     // TODO: Derive all Displays from get_selectables. Reqs full info in each sel.
-    var display_map = new Map<ISelectable, AbstractDisplay3D<ISelectable>>();
+    var display_map = setup_display_map(state, view);
 
+    var display_handler = new DisplayHandler3D(view, display_map, state);
+    var broker = new ThreeBroker(display_handler, view);
+    // Connect View (display) interactions with state through Broker
+    
+    // NOTE: Only one display
+    var input_request = broker.input_request;
+    // TODO: Add NullInputRequest to prevent error messages if I need a ReadOnlyBroker???
+
+    // TODO: Change to `requestAnimationFrame` everywhere
+    setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
+    return [display_handler, input_request];
+}
+
+function setup_display_map(state: EditorState, view: View3D): DisplayMap<ISelectable> {
+    var display_map = new Map<ISelectable, AbstractDisplay3D<ISelectable>>();
     for (let loc of state.space.to_array()) {
         // @ts-ignore Actually a GridLocation in this case.
         let loc_display = new GridLocationDisplay3D(loc);
@@ -72,18 +87,7 @@ function editor_state_setup(k: number): EditorState {
             box_display.display(view);
         }
     }
-
-    var display_handler = new DisplayHandler3D(view, display_map, state);
-    var broker = new ThreeBroker(display_handler, view);
-    // Connect View (display) interactions with state through Broker
-    
-    // NOTE: Only one display
-    var input_request = broker.input_request;
-    // TODO: Add NullInputRequest to prevent error messages if I need a ReadOnlyBroker???
-
-    // TODO: Change to `requestAnimationFrame` everywhere
-    setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
-    return [display_handler, input_request];
+    return display_map;
 }
 
 export function editor_setup() {
@@ -98,7 +102,7 @@ export function editor_setup() {
     // TODO: Avoid unwieldy super-"then"; maybe make setup async?
     // Create Displays
     // NOTE: Shared displays and DisplayMap between views.
-    var [display_handler, input_request] = editor_display_setup_3D(state, view);
+    var [display_handler, input_request] = editor_display_setup(state, view);
     // Create Controller
     var editor_phase = new EditorPhase(state);
     var controller = new EditorController(state);

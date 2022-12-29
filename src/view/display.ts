@@ -6,7 +6,7 @@ import { Awaited } from "../model/utilities";
 import { GridCoordinate, GridLocation, ICoordinate, Vector } from "../model/space";
 import { Unit } from "../examples/tactics/unit";
 import { createWatchCompilerHost } from "typescript";
-import { Entity } from "../model/entity";
+import { Entity } from "../common/entity";
 import { IView3D, View3D } from "./rendering_three";
 import { Event, Mesh, Object3D } from "three";
 import { ActiveRegion } from "./display_handler";

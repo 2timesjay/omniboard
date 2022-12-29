@@ -10,7 +10,7 @@ import {
     OptionFn
 } from "./core";
 import { Effect } from "../examples/tactics/effect";
-import { Entity } from "./entity";
+import { Entity } from "../common/entity";
 
 import {
     Confirmation,

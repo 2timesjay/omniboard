@@ -1,5 +1,5 @@
 import { ISelectable } from "../../model/core";
-import { Entity } from "../../model/entity";
+import { Entity } from "../../common/entity";
 import { GridSpace, ICoordinate } from "../../model/space";
 import { Canvas2DBroker, DisplayMap } from "../../view/broker";
 import { TICK_DURATION_MS } from "../../view/client";

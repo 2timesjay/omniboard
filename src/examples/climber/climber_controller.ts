@@ -1,6 +1,6 @@
 import { Stack, ISelectable } from "../../model/core";
 import { Effect } from "../../model/effect";
-import { Entity } from "../../model/entity";
+import { Entity } from "../../common/entity";
 import { IInputStep, IInputAcquirer, SimpleInputAcquirer, isInputSignal, InputStop, IInputNext, InputOptions, InputSelection, InputRequest } from "../../model/input";
 import { AbstractBasePhase, BaseInputs } from "../../model/phase";
 import { GridLocation } from "../../model/space";
@@ -82,7 +82,9 @@ export class GridLocationInputStep implements IInputStep<GridLocation, null> {
     constructor(state: ClimberState, auto_select: boolean = false) {
         // Restrict to unoccupied neighbors of source entity.
         var player = state.entities[0]; // TODO: Ensure this is correct.
+        // @ts-ignore Cannot cast
         this.player = player;
+        // @ts-ignore cannot cast
         this.occupied = new Set(state.entities.map(e => e.loc));
         this.entities = state.entities;
         var open_neighbor_locs = state.space

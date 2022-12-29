@@ -5,7 +5,7 @@ import { ISpace } from "../model/space";
 import { DURATION_MS, DURATION_MS_NO_ANIM, IState } from "../model/state";
 import { sleep } from "../model/utilities";
 import { BaseDisplayHandler, DisplayHandler } from "../view/display_handler";
-import { Entity } from "../model/entity";
+import { Entity } from "../common/entity";
 
 export class PlaygroundState implements IState {
     space: ISpace;

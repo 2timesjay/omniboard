@@ -1,7 +1,7 @@
 import { Action, MOVE } from "../examples/tactics/action";
 import { Stack } from "../model/core";
 import { Effect, MoveEffect, ExhaustEffect } from "../examples/tactics/effect";
-import { Entity } from "../model/entity";
+import { Entity } from "../common/entity";
 import { SequentialInputAcquirer } from "../model/input";
 import { Inputs } from "../model/phase";
 import { GridLocation, ILocation } from "../model/space";

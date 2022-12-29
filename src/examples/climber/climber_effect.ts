@@ -1,5 +1,5 @@
 import { EffectKernel, AbstractEffect } from "../../model/effect";
-import { Entity } from "../../model/entity";
+import { Entity } from "../../common/entity";
 import { GridLocation, Vector } from "../../model/space";
 import { ChainableMove } from "../../view/animation";
 import { DisplayHandler } from "../../view/display_handler";

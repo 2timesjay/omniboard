@@ -51,6 +51,7 @@ export interface IView3D extends IInputView<GridCoordinate> {
         clr?: string | null,
         lfa?: number | null
     ) => THREE.Object3D;
+    update(): void;
 }
 
 function makeRect3D(
@@ -503,5 +504,9 @@ export class View3D implements IView3D {
 
     clear(){
         clearThree(this.scene);
+    }
+
+    update(){
+        this.camera_update();
     }
 }

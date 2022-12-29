@@ -183,3 +183,55 @@ export class BaseDisplayHandler implements IDisplayHandler {
         this.render_pending_inputs();
     }
 }
+
+/**
+ * SmartDisplayHandler handles refreshes and updates to the display list.
+ * It accepts a DisplayMapManager, which handles changes in the list of Displays.
+ * It also accepts a RefreshManager, which handles specifics of View and Refresh.
+ */
+export class SmartDisplayHandler extends BaseDisplayHandler {
+    view: IView<ICoordinate>;
+    display_map_manager: DisplayMapManager<ISelectable>;
+
+    constructor(
+        view: IView<ICoordinate>, 
+        state: IState
+    ){
+        var display_map_manager = new DisplayMapManager<ISelectable>(state);
+        super(view, display_map_manager.display_map, state);
+        this.display_map_manager = display_map_manager;
+        this.active_region = {z: 0};
+        this.pending_inputs = [];
+    }
+
+    on_tick() {
+        // TODO: Clean up since this is handled by requestAnimationFrame in View3D.
+        this.refresh();
+    }
+
+    refresh(){
+        this._refresh();
+        this.render_pending_inputs();
+        this.view.update();
+    }
+
+    on_phase_end(phase: IPhase){
+        console.log("Phase End");
+        // Clear states
+        this.clear_queued();
+    }
+}
+
+export class DisplayMapManager<T extends ISelectable> {
+    display_map: DisplayMap<T>;
+    state: IState;
+
+    constructor(state: IState) {
+        this.state = state;
+        this.display_map = new Map<T, AbstractDisplay<T>>();
+        for (var element of state.get_selectables()) {
+            // @ts-ignore subtyping problem
+            this.display_map.set(element, new AbstractDisplay<T>(element));
+        }
+    }
+}

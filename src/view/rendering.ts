@@ -182,6 +182,7 @@ export interface IView<C extends ICoordinate> {
         clr?: string | null,
         lfa?: number | null,
     ) => RenderObject;
+    update(): void; 
 }
 
 // View with input methods
@@ -265,6 +266,9 @@ export class View2D implements IView2D {
             SIZE * y,
         );
         return null;
+    }
+
+    update() {
     }
 }
 
