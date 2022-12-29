@@ -240,7 +240,7 @@ export class DisplayMapManager {
         }
         for (var element of state.get_selectables()) {
             // @ts-ignore subtyping problem; Glement not of type T
-            this.display_map.set(element, new AbstractDisplay<ISelectable>(element));
+            this.display_map.set(element, display_builder(element));
         }
     }
 }
