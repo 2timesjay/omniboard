@@ -197,9 +197,13 @@ export class SmartDisplayHandler extends BaseDisplayHandler {
     ){
         var display_map_manager = new DisplayMapManager(state, display_builder);
         super(view, display_map_manager.display_map, state);
+        this.init_active_region();
         this.display_map_manager = display_map_manager;
-        this.active_region = {z: 0};
         this.pending_inputs = [];
+    }
+
+    init_active_region() {
+        this.active_region = {z: 0};
     }
 
     on_tick() {

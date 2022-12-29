@@ -7,7 +7,6 @@ import { DisplayMap, ThreeBroker } from "../../view/broker";
 import { TICK_DURATION_MS } from "../../view/client";
 import { AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D } from "../../view/display";
 import { DisplayHandler, SmartDisplayHandler } from "../../view/display_handler";
-import { DisplayHandler3D } from "../../view/display_handler_three";
 import { View3D } from "../../view/rendering_three";
 import { EditorController, EditorPhase } from "./editor_controller";
 import { EditorState } from "./editor_state";
