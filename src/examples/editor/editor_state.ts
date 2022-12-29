@@ -1,22 +1,22 @@
-import { Element, Entity } from "../../common/entity";
+import { Glement, Entity } from "../../common/entity";
 import { BaseState } from "../../model/state";
 import { VolumeSpace } from "../../common/space";
 import { GridLocation } from "../../model/space";
 
 export class EditorState extends BaseState {
-    elements: Array<Element>;
+    glements: Array<Glement>;
     space: VolumeSpace;
 
     constructor() {
         super();
     }
 
-    add(element: Element, loc: GridLocation) {
-        element.setLoc(loc);
-        this.elements.push(element);
+    add(glement: Glement, loc: GridLocation) {
+        glement.setLoc(loc);
+        this.glements.push(glement);
     }
 
-    remove(element: Element) {
-        this.elements = this.elements.filter(e => e != element);
+    remove(glement: Glement) {
+        this.glements = this.glements.filter(e => e != glement);
     }
 }

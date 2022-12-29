@@ -1,10 +1,9 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
-import { IView, RenderObject } from "./rendering";
+import { IView, IView2D, RenderObject } from "./rendering";
 import { getMouseCo, InputCoordinate, OnInputEvent } from "./broker";
 import { Awaited } from "../model/utilities";
 import { GridCoordinate, GridLocation, ICoordinate, Vector } from "../model/space";
-import { Unit } from "../examples/tactics/unit";
 import { createWatchCompilerHost } from "typescript";
 import { Entity } from "../common/entity";
 import { IView3D, View3D } from "./rendering_three";
@@ -130,53 +129,6 @@ export class UnitaryVisual extends AbstractVisual{
     }
 }
 
-export class HealthVisual extends UnitaryVisual {
-    parent: _UnitDisplay;
-    index: number;
-    color: string;
-
-    constructor(parent: _UnitDisplay, index: number) {
-        super(parent);
-        this.index = index;
-    }
-
-    display(view: IView<ICoordinate>) {
-        this.render(view, this.color)
-    }
-
-    get num_health_bars(): number {
-        return this.parent.selectable.all_max_hp.length;
-    }
-
-    // See https://www.rapidtables.com/web/color/html-color-codes.html
-    get_health_color(): string {
-        switch (this.num_health_bars - this.index - 1) {
-            case 0: return 'teal';
-            case 1: return 'lightseagreen';
-            case 2: return 'mediumturquoise';
-            case 3: return 'turquoise';
-            default: return 'cyan';
-        }
-    }
-
-    render(view: IView<ICoordinate>, clr: string) {
-        const RADIUS_INCR = 0.05;
-        var radius_delta: number = (this.num_health_bars - this.index) * RADIUS_INCR;
-
-        var parent = this.parent;
-        var x = parent.xOffset - radius_delta;
-        var y = parent.yOffset - radius_delta;
-        var size = parent.size + 2 * radius_delta;
-        var max = this.parent.selectable.all_max_hp[this.index];
-        var cur = this.parent.selectable.all_hp[this.index];
-        var frac_filled = cur/max
-        var co = {x: x, y: y};
-        view.drawArc(
-            co, size, frac_filled, this.get_health_color(),
-        );
-    }
-}
-
 export class LinearVisual extends AbstractVisual {
     from: ILocatable;
     to: ILocatable;
@@ -236,6 +188,32 @@ export class LinearVisual3D extends AbstractVisual {
     }
 }
 
+export class VictoryBannerVisual extends UnitaryVisual {
+    constructor(parent: ILocatable) {
+        super(parent);
+        this.add_parent(parent);
+    }
+
+    add_parent(parent: ILocatable) {
+        this.parent = parent;
+        parent.children.push(this);
+    }
+
+    display(view: IView2D) {
+        this.render(view, null)
+    }
+
+    render(view: IView2D, clr: string) {
+        // NOTE: Font size multiplied by 100;
+        view.drawRect(this.co, 2.2, -0.5, 'white')
+        view.drawText(
+            {x: this.co.x + 0.1, y: this.co.y - 0.05, z: this.co.z}, 
+            "VICTORY!", 
+            0.5, 
+            'green'
+        );
+    }
+}
 
 /**
  * Displays
@@ -334,59 +312,6 @@ export class AbstractDisplay<T extends ISelectable> {
             if (type != "click") {
                 return null;
             }
-            // TODO: Clean up this vs. isHit to allow full inheritance. See inputs.ts
-            if (self.selectable == hit_selectable) {
-                // self.state = DisplayState.Select;
-                return self.selectable;
-            } else {
-                self.state = DisplayState.Neutral;
-                return null;
-            }
-        }
-        return trigger;
-    }
-
-    createOnmousemove(canvas: HTMLCanvasElement) {
-        // Preview if not selected.
-        let self = this;
-        let trigger = function (hit_selectable: T | null, type: string): T | null {
-            if (type != "mousemove") {
-                return null;
-            }
-            if (self.state != DisplayState.Select) {
-                if (self.selectable == hit_selectable) {
-                    self.state = DisplayState.Preview;
-                    return self.selectable;
-                } else {
-                    self.state = DisplayState.Option;
-                    return null;
-                }
-            }
-        }
-        return trigger;
-    }
-
-}
-
-export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T> {
-    selectable: T;
-    // TODO: Clean up this crazy state/selection_state
-    state: DisplayState;
-    selection_state: DisplayState
-    children: Array<AbstractVisual>;
-
-    constructor(selectable: T) {
-        super(selectable);
-    }
-
-    createOnclick(canvas: HTMLCanvasElement): OnInputEvent<T> {
-        // Select by click - clicks off this element de-select.
-        let self = this;
-        let trigger = function (hit_selectable: T | null, type: string): T | null {
-            // TODO: Clean up this and `SelectionBroker` fanout
-            if (type != "click") {
-                return null;
-            }
             if (self.isHit(hit_selectable)) {
                 // self.state = DisplayState.Select;
                 return self.selectable;
@@ -419,6 +344,7 @@ export class AbstractDisplay3D<T extends ISelectable> extends AbstractDisplay<T>
     }
 
 }
+
 
 export class GridLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatable, IPathable {
     selectable: GridLocation;
@@ -479,7 +405,7 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 }
 
-export class GridLocationDisplay3D extends AbstractDisplay3D<GridLocation> implements ILocatable, IPathable {
+export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> implements ILocatable, IPathable {
     selectable: GridLocation;
     _xOffset: number;
     _yOffset: number;
@@ -669,7 +595,7 @@ export class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatabl
 export class EntityDisplay extends Animate(_EntityDisplay, BaseAnimation) {};
 
 
-export class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILocatable, IPathable {
+export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocatable, IPathable {
     selectable: Entity;
     _xOffset: number;
     _yOffset: number;
@@ -769,81 +695,6 @@ export class _EntityDisplay3D extends AbstractDisplay3D<Entity> implements ILoca
 
 export class EntityDisplay3D extends Animate(_EntityDisplay3D, BaseAnimation) {}
 
-
-class _UnitDisplay extends AbstractDisplay<Unit> implements ILocatable, IPathable {
-    selectable: Unit;
-    _xOffset: number;
-    _yOffset: number;
-    _zOffset: number;
-    _size: number;
-    width: number;
-    height: number;
-
-    constructor(unit: Unit) {
-        super(unit);
-        this.update_pos();
-    }
-
-    get xOffset(): number {
-        return this._xOffset;
-    }
-
-    get yOffset(): number {
-        return this._yOffset;
-    }
-
-    get zOffset(): number {
-        return this._zOffset;
-    }
-
-    get co(): GridCoordinate {
-        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
-    }
-
-    get size(): number {
-        return this._size;
-    }
-
-    update_pos() {
-        console.log("MOVING UNIT: ", this.selectable)
-        console.log("UPDATED LOC: ", this.selectable.loc.co.x, this.selectable.loc.y, this.selectable.loc.z);
-        this._zOffset = this.selectable.loc.z != null ? this.selectable.loc.z : 0;
-        this._xOffset = this.selectable.loc.x + 0.2;
-        this._yOffset = this.selectable.loc.y + 0.2;
-        this._size = 0.6;
-        this.width = 0.6;
-        this.height = 0.6;
-    }
-
-    render(view: IView<ICoordinate>, clr: string): RenderObject {
-        var unit: Unit = this.selectable;
-        var unit_alpha = (
-            unit.all_max_hp.length == 1 ? 
-            0.2 + 0.8 * unit.hp / unit.max_hp :
-            1
-        );
-        return view.drawRect(this.co, this.size,  this.size, clr, unit_alpha);
-    }
-
-    alt_render(view: IView<ICoordinate>, clr: string): RenderObject {
-        var offset = 0.2 * this.size;
-        var co = {x: this.co.x + offset, y: this.co.y + offset, z: this.co.z};
-        return view.drawRect(co, this.size*.6, this.size*.6, clr);
-    }
-
-    neutralDisplay(view: IView<ICoordinate>): RenderObject {
-        return this.render(view, this.selectable.team == 0 ? 'orange' : 'blue');
-    }
-
-    pathDisplay(view: IView<ICoordinate>, to: IPathable) {
-        var from = this;
-        var line = new LinearVisual(from, to);
-        line.display(view);
-    }
-}
-
-export class UnitDisplay extends Animate(_UnitDisplay, CircleInPlace) {};
-
 export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     selectable: IMenuable;
     parent: ILocatable;
@@ -895,7 +746,7 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
 }
 
 // TODO: Merge with 2D version
-export class MenuElementDisplay3D extends AbstractDisplay3D<IMenuable> {
+export class MenuElementDisplay3D extends AbstractDisplay<IMenuable> {
     selectable: IMenuable;
     parent: ILocatable;
     size: number;

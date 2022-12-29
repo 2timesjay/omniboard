@@ -1,15 +1,14 @@
 import { ISelectable } from "../../model/core";
-import { Entity } from "../../common/entity";
+import { Entity, Glement } from "../../common/entity";
 import { InputRequest } from "../../model/input";
-import { GridSpace, ICoordinate } from "../../model/space";
-import { VolumeSpace } from "../../playground/playground_space";
-import { Canvas2DBroker, DisplayMap, ThreeBroker } from "../../view/broker";
+import { GridLocation, ILocation } from "../../model/space";
+import { VolumeSpace } from "../../common/space";
+import { DisplayMap, ThreeBroker } from "../../view/broker";
 import { TICK_DURATION_MS } from "../../view/client";
-import { AbstractDisplay, AbstractDisplay3D, EntityDisplay, EntityDisplay3D, GridLocationDisplay3D, MenuElementDisplay3D } from "../../view/display";
-import { BaseDisplayHandler, DisplayHandler } from "../../view/display_handler";
+import { AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D } from "../../view/display";
+import { DisplayHandler, SmartDisplayHandler } from "../../view/display_handler";
 import { DisplayHandler3D } from "../../view/display_handler_three";
-import { View2D } from "../../view/rendering";
-import { IView3D, View3D } from "../../view/rendering_three";
+import { View3D } from "../../view/rendering_three";
 import { EditorController, EditorPhase } from "./editor_controller";
 import { EditorState } from "./editor_state";
 
@@ -27,23 +26,24 @@ function editor_state_setup(k: number): EditorState {
     // State Setup
     // TODO: Construct state with space and entities instead of later assignment.
     state.space = grid_space;
-    state.entities = entities;
+    state.glements = entities;
 
     return state;
 }
 
 // TODO: Turn into generic "display setup"
 /**
- * Create Display elements for every selectable in state, create view and broker.
+ * Create Display glements for every selectable in state, create view and broker.
  */
  export function editor_display_setup(
     state: EditorState, view: View3D,
 ): [DisplayHandler, InputRequest<ISelectable>] {
 
-    // TODO: Derive all Displays from get_selectables. Reqs full info in each sel.
-    var display_map = setup_display_map(state, view);
+    // // TODO: Derive all Displays from get_selectables. Reqs full info in each sel.
+    // var display_map = setup_display_map(state, view);
 
-    var display_handler = new DisplayHandler3D(view, display_map, state);
+    // var display_handler = new DisplayHandler3D(view, display_map, state);
+    var display_handler = new SmartDisplayHandler(view, state, display_builder);
     var broker = new ThreeBroker(display_handler, view);
     // Connect View (display) interactions with state through Broker
     
@@ -56,38 +56,29 @@ function editor_state_setup(k: number): EditorState {
     return [display_handler, input_request];
 }
 
-function setup_display_map(state: EditorState, view: View3D): DisplayMap<ISelectable> {
-    var display_map = new Map<ISelectable, AbstractDisplay3D<ISelectable>>();
-    for (let loc of state.space.to_array()) {
-        // @ts-ignore Actually a GridLocation in this case.
-        let loc_display = new GridLocationDisplay3D(loc);
-        // @ts-ignore fix Display3D inheritance
-        display_map.set(loc, loc_display);
-        // @ts-ignore
-        loc_display.display(view);
-    }
+function space_builder(loc: GridLocation): AbstractDisplay<GridLocation> {
+    return new GridLocationDisplay3D(loc);
+}
 
-    for (let [index, entity] of state.entities.entries()) {
-        if (index == 0) {
-            console.log("Adding Player")
-            // @ts-ignore
-            let player_display = new PlayerDisplay(entity);
-            // @ts-ignore
-            display_map.set(entity, player_display);
-            // @ts-ignore
-            player_display.display(view);
-        }
-        else {
-            console.log("Adding Box")
-            // @ts-ignore
-            let box_display = new BoxDisplay(entity);
-            // @ts-ignore
-            display_map.set(entity, box_display);
-            // @ts-ignore
-            box_display.display(view);
-        }
+function glement_builder(glement: Glement): AbstractDisplay<ISelectable> {
+    switch (glement.indicator) { // TODO: Should I use type guard pattern?
+        case "Entity":
+            return new EntityDisplay3D(glement as Entity);
+        default:
+            throw new Error("Invalid glement type");
     }
-    return display_map;
+}
+
+function display_builder(glement: ISelectable): AbstractDisplay<ISelectable> {
+    if (glement instanceof GridLocation) {
+        return new GridLocationDisplay3D(glement);
+    }
+    else if (glement instanceof Glement) {
+        return new EntityDisplay3D(glement);
+    }
+    else {
+        throw new Error("Invalid selectable type");
+    }
 }
 
 export function editor_setup() {

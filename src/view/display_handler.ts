@@ -1,14 +1,12 @@
-import { TacticsPhase } from "../examples/tactics/tactics_controller";
-import { Action } from "../examples/tactics/action";
 import { ISelectable, Stack } from "../model/core";
 import { InputResponse } from "../model/input";
 import { IPhase } from "../model/phase";
-import { BoardState, IState } from "../model/state";
-import { AbstractDisplay, AbstractVisual, DisplayState, FixedLocatable } from "./display";
+import { IState } from "../model/state";
+import { AbstractDisplay, AbstractVisual, DisplayState, FixedLocatable, VictoryBannerVisual } from "./display";
 import { DisplayMap, RenderObjectToDisplayMap } from "./broker";
-import { IInputView, IView, IView2D, makeLine, RenderObject } from "./rendering";
+import { IView, IView2D, RenderObject } from "./rendering";
 import { ICoordinate } from "../model/space";
-import { VictoryBannerVisual } from "../examples/sliding_puzzle/sliding_puzzle_display";
+import { Glement } from "../common/entity";
 
 // TODO: Add other ActiveRegion types
 export interface ZMatch {z: number}
@@ -19,7 +17,7 @@ export type ActiveRegion = ZMatch
  */
 export function refreshDisplay(
     view: IView2D, 
-    display_map: DisplayMap<ISelectable>,
+    display_map: DisplayMap,
     state: IState,
 ) {
     var context = view.context;
@@ -40,15 +38,15 @@ export interface IDisplayHandler {}
  */
 export class BaseDisplayHandler implements IDisplayHandler {
     view: IView<ICoordinate>;
-    display_map: DisplayMap<ISelectable>;
+    display_map: DisplayMap;
     state: IState;
-    render_object_map: RenderObjectToDisplayMap<ISelectable>;
+    render_object_map: RenderObjectToDisplayMap;
     active_region: ActiveRegion;
     // TODO: Placeholder for handling sequential input displays
     pending_inputs: Array<ISelectable>;
     visuals: Array<AbstractVisual>;
 
-    constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState){
+    constructor(view: IView<ICoordinate>, display_map: DisplayMap, state: IState){
         this.view = view;
         this.display_map = display_map;
         this.state = state;
@@ -68,10 +66,9 @@ export class BaseDisplayHandler implements IDisplayHandler {
 
     update_queued(pending_inputs: Array<ISelectable>) { 
         for(let pending_selectable of pending_inputs) {
-            if (!(pending_selectable instanceof Action)) {
-                var display = this.display_map.get(pending_selectable);
-                display.selection_state = DisplayState.Queue;
-            }
+            // TODO: Whether to display as queued or not is context dependent
+            var display = this.display_map.get(pending_selectable);
+            display.selection_state = DisplayState.Queue;
         }
     }
 
@@ -173,7 +170,7 @@ export class BaseDisplayHandler implements IDisplayHandler {
  export class DisplayHandler extends BaseDisplayHandler {
     view: IView<ICoordinate>;
 
-    constructor(view: IView<ICoordinate>, display_map: DisplayMap<ISelectable>, state: IState) {
+    constructor(view: IView<ICoordinate>, display_map: DisplayMap, state: IState) {
         super(view, display_map, state);
         this.pending_inputs = [];
     }
@@ -191,13 +188,14 @@ export class BaseDisplayHandler implements IDisplayHandler {
  */
 export class SmartDisplayHandler extends BaseDisplayHandler {
     view: IView<ICoordinate>;
-    display_map_manager: DisplayMapManager<ISelectable>;
+    display_map_manager: DisplayMapManager;
 
     constructor(
         view: IView<ICoordinate>, 
-        state: IState
+        state: IState,
+        display_builder: DisplayBuilder,
     ){
-        var display_map_manager = new DisplayMapManager<ISelectable>(state);
+        var display_map_manager = new DisplayMapManager(state, display_builder);
         super(view, display_map_manager.display_map, state);
         this.display_map_manager = display_map_manager;
         this.active_region = {z: 0};
@@ -222,16 +220,23 @@ export class SmartDisplayHandler extends BaseDisplayHandler {
     }
 }
 
-export class DisplayMapManager<T extends ISelectable> {
-    display_map: DisplayMap<T>;
+
+type DisplayBuilder = (sel: ISelectable) => AbstractDisplay<ISelectable>;
+
+export class DisplayMapManager {
+    display_map: DisplayMap;
     state: IState;
 
-    constructor(state: IState) {
+    constructor(state: IState, display_builder: DisplayBuilder) {
         this.state = state;
-        this.display_map = new Map<T, AbstractDisplay<T>>();
+        this.display_map = new Map<ISelectable, AbstractDisplay<ISelectable>>();
+        for (var loc of state.get_locations()) {
+            // @ts-ignore ILocation not of type T
+            this.display_map.set(loc, display_builder(loc));
+        }
         for (var element of state.get_selectables()) {
-            // @ts-ignore subtyping problem
-            this.display_map.set(element, new AbstractDisplay<T>(element));
+            // @ts-ignore subtyping problem; Glement not of type T
+            this.display_map.set(element, new AbstractDisplay<ISelectable>(element));
         }
     }
 }

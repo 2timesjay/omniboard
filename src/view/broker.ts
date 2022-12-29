@@ -3,15 +3,14 @@ import { ISelectable, Tree } from "../model/core";
 import { async_input_getter, CallbackSelectionFn, InputRequest, InputSignal, PreviewMap } from "../model/input";
 import { ICoordinate } from "../model/space";
 import { Awaited, Rejection } from "../model/utilities";
-import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
+import { AbstractDisplay, DisplayState } from "./display";
 import { BaseDisplayHandler, DisplayHandler } from "./display_handler";
 import { DisplayHandler3D } from "./display_handler_three";
 import { HitRect2D, IView, IView2D, RenderObject } from "./rendering";
 import { IView3D } from "./rendering_three";
 
-export type DisplayMap<T> = Map<T, AbstractDisplay<T>>;
-export type DisplayMap3D<T> = Map<T, AbstractDisplay3D<T>>;
-export type RenderObjectToDisplayMap<T> = Map<RenderObject, AbstractDisplay<T>>
+export type DisplayMap = Map<ISelectable, AbstractDisplay<ISelectable>>;
+export type RenderObjectToDisplayMap = Map<RenderObject, AbstractDisplay<ISelectable>>
 
 // TODO: Consistent Style
 export interface InputCoordinate {
@@ -202,7 +201,7 @@ export class SelectionBroker {
 
 // CallbackSelectionFn
 export function build_broker_callback<T extends ISelectable>(
-    selection_broker: SelectionBroker, display_map: DisplayMap<T>, canvas: HTMLCanvasElement
+    selection_broker: SelectionBroker, display_map: DisplayMap, canvas: HTMLCanvasElement
 ): CallbackSelectionFn<T> {
     // Sets selection_broker's fanout to on_input_events of instances of T in Options.
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {

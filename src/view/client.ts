@@ -1,18 +1,9 @@
 /* Imports */
 import { makeCanvas, View2D, View2DPseudoZ } from "./rendering";
-import { TacticsController, TacticsPhase } from "../examples/tactics/tactics_controller";
-import { tactics_setup } from "../examples/tactics/tactics_setup";
-import { display_setup } from "../examples/tactics/tactics_display_setup";
 import { DisplayHandler } from "./display_handler";
-import { playground_model_setup } from "../playground/control_test/playground_model_setup";
-import { playground_display_setup, playground_display_setup_3D } from "../playground/control_test/playground_display_setup";
-import { PlaygroundController, PlaygroundPhase } from "../playground/playground_controller";
 import { View3D } from "./rendering_three";
 import { DisplayHandler3D } from "./display_handler_three";
 import { Canvas2DBroker, ThreeBroker } from "./broker";
-import { car_setup } from "../playground/cars/car_setup";
-import { sliding_puzzle_setup } from "../examples/sliding_puzzle/sliding_puzzle_setup";
-import { climber_setup } from "../examples/climber/climber_setup";
 import { editor_setup } from "../examples/editor/editor_setup";
 
 export const TICK_DURATION_MS = 20
@@ -52,72 +43,7 @@ if (Math.random() > 1) {
     game_type += 1;
 }
 
-if (game_type == GameType.Tactics) {
-    // NOTE: Await first click to start.
-    create_start_button(tactics_setup);
-} else if (game_type == GameType.Playground2D) {
-    // State Setup
-    var k = 4;
-    var d = 3;
-    var pg_state = playground_model_setup(k, d)
-
-    // Create Canvas
-    const size = 100;
-    // const context = canvas.getContext("2d");
-    const view = new View2DPseudoZ(k, size, {depth: 3})
-
-    // Create Displays
-    var display_map = playground_display_setup(pg_state, view);
-
-    // Connect View (display) interactions with state through Broker
-    var display_handler = new DisplayHandler(view, display_map, pg_state);
-    var broker = new Canvas2DBroker(display_handler, view);
-    var input_request = broker.input_request;
-    var tick = setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
-
-    // Create Controller
-    var pg_p = new PlaygroundPhase();
-    var pg_c = new PlaygroundController(pg_state);
-
-    // Start main game loop
-    pg_c.run(pg_p, input_request, display_handler);
-} else if (game_type == GameType.Playground3D) {
-    // State Setup
-    var k = 4;
-    var d = 3;
-    var pg_state = playground_model_setup(k, d)
-
-    // Create Canvas
-    const size = 100
-    // TODO: Discrepancy in view size inputs between 3d and 2d; blocks vs pixels.
-    const view = new View3D(k* size, k* size)
-
-    // Create Displays
-    var three_display_map = playground_display_setup_3D(pg_state, view);
-
-    // Connect View (display) interactions with state through Broker
-    var three_display_handler = new DisplayHandler3D(view, three_display_map, pg_state);
-    var three_broker = new ThreeBroker(three_display_handler, view);
-    var input_request = three_broker.input_request;
-    // TODO: Change to `requestAnimationFrame` everywhere
-    setInterval(three_display_handler.on_tick.bind(three_display_handler), TICK_DURATION_MS);
-
-    // Create Controller
-    var pg_p = new PlaygroundPhase();
-    var pg_c = new PlaygroundController(pg_state);
-
-    // Start main game loop
-    // @ts-ignore
-    pg_c.run(pg_p, input_request, three_display_handler);
-} else if (game_type == GameType.Cars3D) {
-    car_setup();
-} else if (game_type == GameType.SlidingPuzzle) {
-    // NOTE: Await first click to start.
-    create_start_button(sliding_puzzle_setup);
-} else if (game_type == GameType.Climber) {
-    // NOTE: Await first click to start.
-    create_start_button(climber_setup);
-} else if (game_type == GameType.Editor) {
+if (game_type == GameType.Editor) {
     // NOTE: Await first click to start.
     create_start_button(editor_setup);
 }

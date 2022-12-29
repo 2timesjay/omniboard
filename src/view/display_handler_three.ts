@@ -1,19 +1,16 @@
 import { View3D } from "./rendering_three";
-import { ISelectable, Stack } from "../model/core";
+import { ISelectable } from "../model/core";
 import { IState } from "../model/state";
-import { DisplayMap, DisplayMap3D, RenderObjectToDisplayMap } from "./broker";
-import { InputResponse } from '../model/input';
+import { DisplayMap } from "./broker";
 import { IPhase } from '../model/phase';
-import { AbstractDisplay, AbstractDisplay3D, DisplayState } from "./display";
-import { Action } from "../examples/tactics/action";
-import { ActiveRegion, BaseDisplayHandler, IDisplayHandler } from "./display_handler";
-import { RenderObject } from "./rendering";
+import { AbstractDisplay } from "./display";
+import { BaseDisplayHandler } from "./display_handler";
 
-// TODO: Extend BaseDisplayHandler
+// TODO: Remove this. All 3D elements can live in view; active_region is slightly tricky though it applies to PseudoZ
  export class DisplayHandler3D extends BaseDisplayHandler {
     view: View3D;
 
-    constructor(view: View3D, display_map: DisplayMap3D<ISelectable>, state: IState){
+    constructor(view: View3D, display_map: DisplayMap, state: IState){
         super(view, display_map, state);
         this.active_region = {z: 0};
         this.pending_inputs = [];

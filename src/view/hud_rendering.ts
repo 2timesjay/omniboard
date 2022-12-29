@@ -71,4 +71,7 @@ export class View2DHudReadOnly implements IView<GridCoordinate> {
         );
         return null;
     }
+
+    update() {
+    }
 }

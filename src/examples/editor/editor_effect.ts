@@ -1,6 +1,6 @@
 import { ISelectable } from "../../model/core";
 import { EffectKernel, AbstractEffect } from "../../model/effect";
-import { Element } from "../../common/entity";
+import { Glement } from "../../common/entity";
 import { GridLocation, Vector } from "../../model/space";
 import { ChainableMove } from "../../view/animation";
 import { ILocatable } from "../../view/display";
@@ -29,20 +29,20 @@ export class ToggleLocationEffect extends AbstractEffect {
     }
 }
 
-export class ElementPlaceEffect extends AbstractEffect {
-    element: Element
+export class GlementPlaceEffect extends AbstractEffect {
+    glement: Glement
     loc: GridLocation;
     description: string;
 
-    constructor(element: Element, loc: GridLocation) {
+    constructor(glement: Glement, loc: GridLocation) {
         super();
         this.loc = loc;
-        this.element = element;
+        this.glement = glement;
         this.description = "Move Player to new Location";
     }
 
     execute(state: EditorState): EditorState {
-        state.add(this.element, this.loc);
+        state.add(this.glement, this.loc);
         return state;
     }
 
@@ -54,19 +54,19 @@ export class ElementPlaceEffect extends AbstractEffect {
 }
 
 
-export class ElementDeleteEffect extends AbstractEffect {
-    element: Element;
+export class GlementDeleteEffect extends AbstractEffect {
+    glement: Glement;
     description: string;
 
-    constructor(element: Element) {
+    constructor(glement: Glement) {
         super();
-        this.element = element;
+        this.glement = glement;
         this.description = "Move Player to new Location";
     }
 
     execute(state: EditorState): EditorState {
-        // Move the element
-        state.remove(this.element);
+        // Move the glement
+        state.remove(this.glement);
         return state;
     }
 
@@ -77,21 +77,21 @@ export class ElementDeleteEffect extends AbstractEffect {
     }
 }
 
-export class ElementMoveEffect extends AbstractEffect {
-    element: Element
+export class GlementMoveEffect extends AbstractEffect {
+    glement: Glement
     loc: GridLocation;
     description: string;
 
-    constructor(element: Element, loc: GridLocation) {
+    constructor(glement: Glement, loc: GridLocation) {
         super();
         this.loc = loc;
-        this.element = element;
+        this.glement = glement;
         this.description = "Move Player to new Location";
     }
 
     execute(state: EditorState): EditorState {
-        // Move the element
-        this.element.setLoc(this.loc);
+        // Move the glement
+        this.glement.setLoc(this.loc);
         return state;
     }
 
