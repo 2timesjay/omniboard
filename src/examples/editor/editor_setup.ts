@@ -10,6 +10,7 @@ import { DisplayHandler, SmartDisplayHandler } from "../../view/display_handler"
 import { View3D } from "../../view/rendering_three";
 import { EditorController, EditorPhase } from "./editor_controller";
 import { EditorState } from "./editor_state";
+import { display_builder, EditorDisplayHandler } from "./editor_display";
 
 
 function editor_state_setup(k: number): EditorState {
@@ -37,7 +38,7 @@ function editor_state_setup(k: number): EditorState {
  export function editor_display_setup(
     state: EditorState, view: View3D,
 ): [DisplayHandler, InputRequest<ISelectable>] {
-    var display_handler = new SmartDisplayHandler(view, state, display_builder);
+    var display_handler = new EditorDisplayHandler(view, state, display_builder);
     // @ts-ignore we know View is View3D
     var broker = new ThreeBroker(display_handler, view);
     // Connect View (display) interactions with state through Broker
@@ -49,31 +50,6 @@ function editor_state_setup(k: number): EditorState {
     // TODO: Change to `requestAnimationFrame` everywhere
     setInterval(display_handler.on_tick.bind(display_handler), TICK_DURATION_MS);
     return [display_handler, input_request];
-}
-
-function space_builder(loc: GridLocation): AbstractDisplay<GridLocation> {
-    return new GridLocationDisplay3D(loc);
-}
-
-function glement_builder(glement: Glement): AbstractDisplay<ISelectable> {
-    switch (glement.indicator) { // TODO: Should I use type guard pattern?
-        case "Entity":
-            return new EntityDisplay3D(glement as Entity);
-        default:
-            throw new Error("Invalid glement type");
-    }
-}
-
-function display_builder(glement: ISelectable): AbstractDisplay<ISelectable> {
-    if (glement instanceof GridLocation) {
-        return new GridLocationDisplay3D(glement);
-    }
-    else if (glement instanceof Glement) {
-        return new EntityDisplay3D(glement);
-    }
-    else {
-        throw new Error("Invalid selectable type");
-    }
 }
 
 export function editor_setup() {

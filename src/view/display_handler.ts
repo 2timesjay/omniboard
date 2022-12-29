@@ -203,7 +203,6 @@ export class SmartDisplayHandler extends BaseDisplayHandler {
     }
 
     init_active_region() {
-        this.active_region = {z: 0};
     }
 
     on_tick() {
@@ -212,6 +211,7 @@ export class SmartDisplayHandler extends BaseDisplayHandler {
     }
 
     refresh(){
+        this.display_map_manager.update();
         this._refresh();
         this.render_pending_inputs();
         this.view.update();
@@ -242,5 +242,29 @@ export class DisplayMapManager {
             // @ts-ignore subtyping problem; Glement not of type T
             this.display_map.set(element, display_builder(element));
         }
+    }
+
+    update() {
+        for (var added in this.get_added()) {
+            // @ts-ignore subtyping problem; Glement not of type T
+            this.display_map.set(added, display_builder(added));
+        }
+        for (var removed in this.get_removed()) {
+            this.display_map.delete(removed);
+        }
+    }
+
+    get_added(): Set<ISelectable> {
+        var state_elements = new Set<ISelectable>(this.state.get_selectables());
+        var display_elements = new Set<ISelectable>(this.display_map.keys());
+        var added = new Set<ISelectable>([...state_elements].filter(x => !display_elements.has(x)));
+        return added;
+    }
+
+    get_removed(): Set<ISelectable> {
+        var state_elements = new Set<ISelectable>(this.state.get_selectables());
+        var display_elements = new Set<ISelectable>(this.display_map.keys());
+        var removed = new Set<ISelectable>([...display_elements].filter(x => !state_elements.has(x)));
+        return removed;
     }
 }
