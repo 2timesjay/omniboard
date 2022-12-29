@@ -38,12 +38,8 @@ function editor_state_setup(k: number): EditorState {
  export function editor_display_setup(
     state: EditorState, view: View3D,
 ): [DisplayHandler, InputRequest<ISelectable>] {
-
-    // // TODO: Derive all Displays from get_selectables. Reqs full info in each sel.
-    // var display_map = setup_display_map(state, view);
-
-    // var display_handler = new DisplayHandler3D(view, display_map, state);
     var display_handler = new SmartDisplayHandler(view, state, display_builder);
+    // @ts-ignore we know View is View3D
     var broker = new ThreeBroker(display_handler, view);
     // Connect View (display) interactions with state through Broker
     
