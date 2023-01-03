@@ -1,6 +1,108 @@
 import { ISelectable } from "../model/core";
+import { GraphicsVector } from "./core";
 import { Vector} from "../model/space";
 import { AbstractDisplay, ILocatable } from "./display";
+
+
+type AnimationFn = (f: number) => GraphicsVector;
+
+/**
+ * Animation
+ * 
+ * A simplified animation definition, a function that takes a time and returns a value.
+ */
+export class Animation {
+    fn: AnimationFn
+    start_time: number;
+    end_time: number;
+    perpetual: boolean;
+    constructor(fn: AnimationFn, duration: number, perpetual?: boolean) {
+        this.end_time = this.start_time + duration;
+        this.fn = fn;
+        this.perpetual = perpetual != null ? perpetual : false;
+    }
+
+    set_start_time(t?: number) {
+        if (t == null) {
+            t = + new Date();
+        } else {
+            this.start_time = t;
+        }
+    }
+
+    get offset(): GraphicsVector {
+        var now = + new Date();
+        var t = (now - this.start_time) / (this.end_time - this.start_time);
+        return this.fn(t);
+    }
+
+    is_finished(): boolean {
+        return (+ new Date() > this.end_time) && !this.perpetual;
+    }
+    
+    is_started(): boolean {
+        return + new Date() > this.start_time;
+    }
+
+    is_running(): boolean {
+        return this.is_started() && !this.is_finished();
+    }
+}
+
+// A Curve maps a number from 0 to 1 to a number from 0 to 1; used for animation easings.
+type CurveFn = (t: number) => number;
+
+// A Cycle fn maps any number to a number from 0 to 1; used for animation cycles.
+type CycleFn = (t: number) => number;
+
+/**
+ * Animation Mixer
+ * 
+ * A class that takes a list of animations and mixes them together, according to ordering and overlaps.
+ */
+export class Mixer {
+    animations: Array<Animation>;
+    constructor(animations: Array<Animation>) {
+        this.animations = animations;
+    }
+
+    add_animation(animation: Animation) {
+        this.animations.push(animation);
+    }
+
+    enqueue_animation(animation: Animation) {
+        // Queue animation; set start to the end time of the previous animation.
+        if (this.animations.length >= 0) {
+            var last_animation = this.animations[this.animations.length - 1];
+            animation.set_start_time(last_animation.end_time);
+        }
+        else {
+            animation.set_start_time(null);
+        }
+        this.animations.push(animation);
+    }
+
+    clear_finished() {
+        this.animations = this.animations.filter((animation) => !animation.is_finished());
+    }
+
+    clear() {
+        this.animations = [];
+    }
+    
+    get offset(): GraphicsVector {
+        var now = + new Date();
+        // TODO: Fix implicit assumption of 3D graphics here.
+        var base_offset = new GraphicsVector(0, 0, 0);
+        for (let animation of this.animations) {
+            if (animation.is_running()) {
+                base_offset = base_offset.add(animation.offset);
+            }
+        }
+        return base_offset;
+    }
+
+}
 
 
 /**

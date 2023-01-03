@@ -29,7 +29,7 @@ export function display_builder(glement: ISelectable): AbstractDisplay<ISelectab
     if (glement instanceof GridLocation) {
         return new EditableLocationDisplay3D(glement);
     }
-    else if (glement instanceof Glement) {
+    else if (glement instanceof Entity) {
         return new EntityDisplay3D(glement);
     }
     else {
