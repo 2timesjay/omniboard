@@ -5,6 +5,12 @@ import { AbstractDisplay, ILocatable } from "./display";
 import { BaseAutomation } from "../model/automation";
 
 
+
+// Following https://www.typescriptlang.org/docs/handbook/mixins.html
+type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
+// NOTE: TS Mixins are some sicko stuff.
+type Animatable = ConstrainedMixinable<ILocatable>;
+
 type AnimationFn = (f: number) => GraphicsVector;
 
 // A Curve maps a number from 0 to 1 to a number from 0 to 1; used for animation easings.
@@ -24,20 +30,22 @@ export class Animation {
     start_time: number;
     duration: number;
     cycle: boolean;
-    perpetual: boolean;
     suspended: boolean;
-    constructor(fn: AnimationFn, duration: number, cycle?: boolean, perpetual?: boolean) {
+    constructor(fn: AnimationFn, duration: number, cycle?: boolean) {
         this.duration = duration;
         this.fn = fn;
         this.curve = IDENTITY_CURVE;
-        this.perpetual = perpetual != null ? perpetual : false;
         this.cycle = cycle != null ? cycle : false;
         this.suspended = false;
     }
 
+    start() {
+        this.set_start_time();
+    }
+
     set_start_time(t?: number) {
         if (t == null) {
-            t = + new Date();
+            this.start_time = + new Date();
         } else {
             this.start_time = t;
         }
@@ -54,11 +62,19 @@ export class Animation {
     }
 
     is_finished(): boolean {
-        return (+ new Date() > this.end_time) && !this.perpetual;
+        if (this.cycle) {
+            return false;
+        } else {
+            return (+ new Date() > this.start_time);
+        }
     }
     
     is_started(): boolean {
-        return + new Date() > this.start_time;
+        if (this.cycle) {
+            return !this.suspended;
+        } else {
+            return !this.suspended && (+ new Date() > this.start_time);
+        }
     }
 
     is_running(): boolean {
@@ -141,14 +157,14 @@ export class Mixer {
 
 // NOTE: TS Mixins are some sicko stuff.
 export function Animate<TBase extends Animatable>(
-    Base: TBase
+    Base: TBase, mixer: Mixer
 ){
     return class Animated extends Base {  
         // @ts-ignore
-        mixer: Mixer;
+        _mixer: Mixer = mixer;
         
         get animation_offset(): GraphicsVector {
-            return this.mixer.offset;
+            return this._mixer.offset;
         }
 
         // TODO: Optimize. Make display use single GraphicsVector for offset.
@@ -171,16 +187,27 @@ export function Animate<TBase extends Animatable>(
     }
 }
 
+function build_base_animation(
+    fn: AnimationFn,
+    duration: number,
+): Animation {
+    var animation = new Animation(fn, duration, true);
+    animation.start();
+    return animation;
+}
 
-/**
- * Older Animations
- */
+export function build_base_mixer(
+    fn: AnimationFn,
+    duration: number,
+): Mixer {
+    return new Mixer([build_base_animation(fn, duration)]);
+}
 
-const BaseAnimationFn = (t: number) => new GraphicsVector(0, 0, 0);
+export const BaseAnimationFn = (t: number) => new GraphicsVector(0, 0, 0);
 
-const CircleInPlaceAnimationFn = (t: number) => new GraphicsVector(0.01*Math.cos(t), 0.01*Math.sin(t), 0);
+export const CircleInPlaceAnimationFn = (t: number) => new GraphicsVector(0.1*Math.cos(t/500), 0.1*Math.sin(t/500), 0);
 
-const JumpInPlaceAnimationFn = (t: number) => new GraphicsVector(0, -0.05*Math.abs(Math.sin(t)), 0);
+export const JumpInPlaceAnimationFn = (t: number) => new GraphicsVector(0, -0.05*Math.abs(Math.sin(t)), 0);
 
 function shuffle(arr: Array<number>) {
     let currentIndex = arr.length,  randomIndex;
@@ -201,7 +228,7 @@ function shuffle(arr: Array<number>) {
 }
 
 // TODO: Not quite correct. Want a brownian bridge.
-function buildWalk(steps: number, start: number, end: number, extra: number): Array<number> {
+function buildWalk(steps: number, start: number, end: number, extra?: number): Array<number> {
     var walk = new Array(steps);
     for (let i = 0; i < steps; i++) {
         walk[i] = start + (end - start) * i / steps;
@@ -216,7 +243,7 @@ function buildVectorWalk(steps: number, start: GraphicsVector, end: GraphicsVect
     var z_walk = buildWalk(steps, start.z, end.z);
     function walk_map(t: number){ 
         var walk_index = Math.round(t*steps) - 1;
-        new GraphicsVector(x_walk[walk_index], y_walk[walk_index], z_walk[walk_index]);
+        return new GraphicsVector(x_walk[walk_index], y_walk[walk_index], z_walk[walk_index]);
     }
     return walk_map;
 }

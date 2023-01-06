@@ -10,7 +10,7 @@ import { IView3D, View3D } from "./rendering_three";
 import { Event, Mesh, Object3D } from "three";
 import { ActiveRegion } from "./display_handler";
 import { View2DHudReadOnly } from "./hud_rendering";
-import { Animate, BaseAnimation, CircleInPlace } from "./animation";
+import { Animate, build_base_mixer, BaseAnimationFn, CircleInPlaceAnimationFn, JumpInPlaceAnimationFn } from "./animation";
 
 export enum DisplayState {
     Neutral,
@@ -591,8 +591,10 @@ export class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatabl
 }
 
 // TODO: WORKED: Miscellaneous problems. See https://www.typescriptlang.org/docs/handbook/mixins.html. Extend class?
-// export const EntityDisplay = Animate(_EntityDisplay, JumpInPlace);
-export class EntityDisplay extends Animate(_EntityDisplay, BaseAnimation) {};
+export class EntityDisplay extends Animate(
+    _EntityDisplay, 
+    build_base_mixer(BaseAnimationFn, 1),
+) {};
 
 
 export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocatable, IPathable {
@@ -692,8 +694,10 @@ export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocata
     }
 }
 
-
-export class EntityDisplay3D extends Animate(_EntityDisplay3D, BaseAnimation) {}
+export class EntityDisplay3D extends Animate(
+    _EntityDisplay3D, 
+    build_base_mixer(BaseAnimationFn, 1),
+) {};
 
 export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     selectable: IMenuable;

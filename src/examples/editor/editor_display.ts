@@ -1,6 +1,7 @@
 import { Glement, Entity } from "../../common/entity";
 import { ISelectable } from "../../model/core";
 import { GridCoordinate, GridLocation } from "../../model/space";
+import { Animate, BaseAnimationFn, build_base_mixer, CircleInPlaceAnimationFn } from "../../view/animation";
 import { _EntityDisplay, _EntityDisplay3D, AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D, ILocatable, IPathable, LinearVisual3D } from "../../view/display";
 import { ActiveRegion, SmartDisplayHandler } from "../../view/display_handler";
 import { IView3D, View3D } from "../../view/rendering_three";
@@ -27,7 +28,7 @@ function glement_builder(glement: Glement): AbstractDisplay<ISelectable> {
 
 export function display_builder(glement: ISelectable): AbstractDisplay<ISelectable> {
     if (glement instanceof GridLocation) {
-        return new EditableLocationDisplay3D(glement);
+        return new EditableLocationDisplay(glement);
     }
     else if (glement instanceof Entity) {
         return new EntityDisplay3D(glement);
@@ -37,7 +38,7 @@ export function display_builder(glement: ISelectable): AbstractDisplay<ISelectab
     }
 }
 
-export class EditableLocationDisplay3D extends AbstractDisplay<GridLocation> implements ILocatable, IPathable {
+class _EditableLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatable, IPathable {
     selectable: GridLocation;
     _xOffset: number;
     _yOffset: number;
@@ -162,3 +163,8 @@ export class EditableLocationDisplay3D extends AbstractDisplay<GridLocation> imp
         line.display(view);
     }
 }
+
+export class EditableLocationDisplay extends Animate(
+    _EditableLocationDisplay, 
+    build_base_mixer(BaseAnimationFn, 1),
+) {};
