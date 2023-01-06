@@ -229,25 +229,43 @@ function shuffle(arr: Array<number>) {
 
 // TODO: Not quite correct. Want a brownian bridge.
 function buildWalk(steps: number, start: number, end: number, extra?: number): Array<number> {
-    var walk = new Array(steps);
-    for (let i = 0; i < steps; i++) {
-        walk[i] = start + (end - start) * i / steps;
+    if (extra === undefined) {
+        extra = steps;
     }
-    shuffle(walk);
-    return walk;
+    var incr = (end-start)/steps;
+    var walk = new Array(steps).fill(incr);
+    var walk_pos = new Array(extra).fill(incr);
+    var walk_neg = new Array(extra).fill(-incr);
+    var randomized_walk = walk.concat(walk_pos, walk_neg);
+    shuffle(randomized_walk);
+    var cumulative_walk = [];
+    let cumulative = 0;
+    for(let i = 0; i < randomized_walk.length; i++) {
+        cumulative += randomized_walk[i];
+        cumulative_walk.push(cumulative);
+    }
+    return cumulative_walk;
 }
 
-function buildVectorWalk(steps: number, start: GraphicsVector, end: GraphicsVector): AnimationFn {
-    var x_walk = buildWalk(steps, start.x, end.x);
-    var y_walk = buildWalk(steps, start.y, end.y);
-    var z_walk = buildWalk(steps, start.z, end.z);
-    function walk_map(t: number){ 
-        var walk_index = Math.round(t*steps) - 1;
+function buildVectorWalk(
+    steps: number, 
+    start: GraphicsVector, 
+    end: GraphicsVector, 
+    extra?: number
+): AnimationFn {
+    var x_walk = buildWalk(steps, start.x, end.x, extra);
+    var y_walk = buildWalk(steps, start.y, end.y, extra);
+    var z_walk = buildWalk(steps, start.z, end.z, extra);
+    var l = x_walk.length;
+    function walk_map(f: number){ 
+        var walk_index = Math.round(f*(l-1));
         return new GraphicsVector(x_walk[walk_index], y_walk[walk_index], z_walk[walk_index]);
     }
     return walk_map;
 }
 
-// const FlinchFn
+const FlinchFn = buildVectorWalk(100, new GraphicsVector(0, 0, 0), new GraphicsVector(0, 0, 0), 100);
+
+// Both actually need a vector input.
 // const BumpFn
 // const MoveFn

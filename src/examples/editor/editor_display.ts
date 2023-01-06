@@ -1,13 +1,27 @@
 import { Glement, Entity } from "../../common/entity";
 import { ISelectable } from "../../model/core";
-import { GridCoordinate, GridLocation } from "../../model/space";
+import { GridCoordinate, GridLocation, ICoordinate } from "../../model/space";
+import { IState } from "../../model/state";
 import { Animate, BaseAnimationFn, build_base_mixer, CircleInPlaceAnimationFn } from "../../view/animation";
+import { GraphicsVector } from "../../view/core";
 import { _EntityDisplay, _EntityDisplay3D, AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D, ILocatable, IPathable, LinearVisual3D } from "../../view/display";
-import { ActiveRegion, SmartDisplayHandler } from "../../view/display_handler";
+import { ActiveRegion, DisplayBuilder, SmartDisplayHandler } from "../../view/display_handler";
+import { IView } from "../../view/rendering";
 import { IView3D, View3D } from "../../view/rendering_three";
 
 export class EditorDisplayHandler extends SmartDisplayHandler {
     view: View3D;
+    explode: GraphicsVector;
+
+    constructor(
+        view: IView<ICoordinate>, 
+        state: IState,
+        display_builder: DisplayBuilder,
+    ){
+        super(view, state, display_builder);
+        this.explode = new GraphicsVector(0, 0, 0);
+    }
+
     init_active_region(): void {
         this.active_region = {z: 0};
     }

@@ -225,7 +225,7 @@ export class SmartDisplayHandler extends BaseDisplayHandler {
 }
 
 
-type DisplayBuilder = (sel: ISelectable) => AbstractDisplay<ISelectable>;
+export type DisplayBuilder = (sel: ISelectable) => AbstractDisplay<ISelectable>;
 
 export class DisplayMapManager {
     display_map: DisplayMap;
