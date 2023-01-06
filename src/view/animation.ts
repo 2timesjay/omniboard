@@ -3,6 +3,7 @@ import { GraphicsVector } from "./core";
 import { Vector} from "../model/space";
 import { AbstractDisplay, ILocatable } from "./display";
 import { BaseAutomation } from "../model/automation";
+import { clamp } from "three/src/math/MathUtils";
 
 
 
@@ -11,7 +12,7 @@ type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 // NOTE: TS Mixins are some sicko stuff.
 type Animatable = ConstrainedMixinable<ILocatable>;
 
-type AnimationFn = (f: number) => GraphicsVector;
+export type AnimationFn = (f: number) => GraphicsVector;
 
 // A Curve maps a number from 0 to 1 to a number from 0 to 1; used for animation easings.
 type CurveFn = (t: number) => number;
@@ -269,3 +270,7 @@ const FlinchFn = buildVectorWalk(100, new GraphicsVector(0, 0, 0), new GraphicsV
 // Both actually need a vector input.
 // const BumpFn
 // const MoveFn
+
+export function clamp(x: number, min: number, max: number): number {
+    return Math.min(Math.max(x, min), max);
+}

@@ -2,7 +2,7 @@ import { Glement, Entity } from "../../common/entity";
 import { ISelectable } from "../../model/core";
 import { GridCoordinate, GridLocation, ICoordinate } from "../../model/space";
 import { IState } from "../../model/state";
-import { Animate, BaseAnimationFn, build_base_mixer, CircleInPlaceAnimationFn } from "../../view/animation";
+import { Animate, AnimationFn, BaseAnimationFn, build_base_mixer, CircleInPlaceAnimationFn } from "../../view/animation";
 import { GraphicsVector } from "../../view/core";
 import { _EntityDisplay, _EntityDisplay3D, AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D, ILocatable, IPathable, LinearVisual3D } from "../../view/display";
 import { ActiveRegion, DisplayBuilder, SmartDisplayHandler } from "../../view/display_handler";
@@ -182,3 +182,10 @@ export class EditableLocationDisplay extends Animate(
     _EditableLocationDisplay, 
     build_base_mixer(BaseAnimationFn, 1),
 ) {};
+
+function build_explode_animation(display_handler: EditorDisplayHandler): AnimationFn {
+    var explode = display_handler.explode;
+    return function (t: number) {
+        return t;
+    }
+}
