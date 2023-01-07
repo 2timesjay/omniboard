@@ -11,13 +11,14 @@ import { View3D } from "../../view/rendering_three";
 import { EditorController, EditorPhase } from "./editor_controller";
 import { EditorState } from "./editor_state";
 import { display_builder, EditorDisplayHandler } from "./editor_display";
+import { EditorSelectionBroker } from "./editor_broker";
 
 
 function editor_state_setup(k: number): EditorState {
     var state = new EditorState();
 
     // Space Setup
-    const grid_space = new VolumeSpace(k, k, 3);
+    const grid_space = new VolumeSpace(k, k, 4);
     for (var loc of grid_space.to_array()) {
         if (loc.co.z > 0) { loc.traversable = false}
     }
@@ -40,7 +41,7 @@ function editor_state_setup(k: number): EditorState {
 ): [DisplayHandler, InputRequest<ISelectable>] {
     var display_handler = new EditorDisplayHandler(view, state, display_builder);
     // @ts-ignore we know View is View3D
-    var broker = new ThreeBroker(display_handler, view);
+    var broker = new ThreeBroker(display_handler, view, EditorSelectionBroker);
     // Connect View (display) interactions with state through Broker
     
     // NOTE: Only one display
@@ -54,7 +55,7 @@ function editor_state_setup(k: number): EditorState {
 
 export function editor_setup() {
     // State Setup
-    var k = 4;
+    var k = 8;
     var state = editor_state_setup(k)
     
     // Create Canvas

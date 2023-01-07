@@ -77,7 +77,6 @@ export function async_input_getter<T extends ISelectable>(
     return async function get_input( 
         input_options: InputOptions<T>
     ): Promise<Stack<T>> {
-        console.log("Building InputRequest: ", input_options);
         // TS analog to type guarding kind of.
         if (input_options instanceof Array) {
             var arr: Array<T> = input_options

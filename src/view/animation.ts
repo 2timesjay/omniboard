@@ -3,14 +3,13 @@ import { GraphicsVector } from "./core";
 import { Vector} from "../model/space";
 import { AbstractDisplay, ILocatable } from "./display";
 import { BaseAutomation } from "../model/automation";
-import { clamp } from "three/src/math/MathUtils";
 
 
 
 // Following https://www.typescriptlang.org/docs/handbook/mixins.html
 type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 // NOTE: TS Mixins are some sicko stuff.
-type Animatable = ConstrainedMixinable<ILocatable>;
+export type Animatable = ConstrainedMixinable<ILocatable>;
 
 export type AnimationFn = (f: number) => GraphicsVector;
 
@@ -158,11 +157,11 @@ export class Mixer {
 
 // NOTE: TS Mixins are some sicko stuff.
 export function Animate<TBase extends Animatable>(
-    Base: TBase, mixer: Mixer
+    Base: TBase, base_animation_fn: AnimationFn
 ){
     return class Animated extends Base {  
         // @ts-ignore
-        _mixer: Mixer = mixer;
+        _mixer: Mixer = build_base_mixer(base_animation_fn, 1000);
         
         get animation_offset(): GraphicsVector {
             return this._mixer.offset;

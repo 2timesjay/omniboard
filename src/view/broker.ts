@@ -5,7 +5,6 @@ import { ICoordinate } from "../model/space";
 import { Awaited, Rejection } from "../model/utilities";
 import { AbstractDisplay, DisplayState } from "./display";
 import { BaseDisplayHandler, DisplayHandler } from "./display_handler";
-import { DisplayHandler3D } from "./display_handler_three";
 import { HitRect2D, IView, IView2D, RenderObject } from "./rendering";
 import { IView3D } from "./rendering_three";
 
@@ -62,10 +61,11 @@ export function inputEventToSelectable2D(
 }
 
 export function inputEventToSelectable3D(
-    e: MouseEvent, display_handler: DisplayHandler3D
+    e: MouseEvent, display_handler: DisplayHandler
 ): ISelectable | null {
     // Raycast to check for hits.
     var canvas = display_handler.view.context.canvas;
+    // @ts-ignore Requires DisplayHandler have View3D 
     var hit_objects = display_handler.view.getHitObjects(getMouseCo3D(canvas, e));
     for (var hit_object of hit_objects) {
         if (display_handler.render_object_map.has(hit_object)) {
@@ -205,9 +205,9 @@ export function build_broker_callback<T extends ISelectable>(
 ): CallbackSelectionFn<T> {
     // Sets selection_broker's fanout to on_input_events of instances of T in Options.
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
-        console.log("Setup Selection Callbacks on Canvas: ", options);
+        // console.log("Setup Selection Callbacks on Canvas: ", options);
         var displays = options.map((o) => display_map.get(o));
-        console.log("Display callback targets: ", displays);
+        // console.log("Display callback targets: ", displays);
         var onclicks = displays.map(
             (d) => d.createOnclick(canvas)
         );
@@ -301,11 +301,15 @@ export class Canvas2DBroker implements IBroker {
     input_request: InputRequest<ISelectable>;
 
     constructor(
-        display_handler: DisplayHandler3D, 
+        display_handler: DisplayHandler, 
         view: IView3D,
+        broker_class?: typeof SelectionBroker,
     ) {
-        // @ts-ignore Incompatible RenderingContexts
-        var selection_broker = new SelectionBroker(display_handler, null, inputEventToSelectable3D);
+        if (broker_class === undefined) {
+            broker_class = SelectionBroker
+        }
+        // @ts-ignore Incompatible RenderingCon
+        var selection_broker = new broker_class(display_handler, null, inputEventToSelectable3D);
         var display_map = display_handler.display_map;
         // TODO: Error with unset handlers - dummies for now.
         selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});

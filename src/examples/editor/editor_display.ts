@@ -1,8 +1,9 @@
+import { clamp } from "three/src/math/MathUtils";
 import { Glement, Entity } from "../../common/entity";
 import { ISelectable } from "../../model/core";
 import { GridCoordinate, GridLocation, ICoordinate } from "../../model/space";
 import { IState } from "../../model/state";
-import { Animate, AnimationFn, BaseAnimationFn, build_base_mixer, CircleInPlaceAnimationFn } from "../../view/animation";
+import { Animatable, Animate, Animation, AnimationFn, BaseAnimationFn, build_base_mixer, CircleInPlaceAnimationFn } from "../../view/animation";
 import { GraphicsVector } from "../../view/core";
 import { _EntityDisplay, _EntityDisplay3D, AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D, ILocatable, IPathable, LinearVisual3D } from "../../view/display";
 import { ActiveRegion, DisplayBuilder, SmartDisplayHandler } from "../../view/display_handler";
@@ -20,12 +21,22 @@ export class EditorDisplayHandler extends SmartDisplayHandler {
     ){
         super(view, state, display_builder);
         this.explode = new GraphicsVector(0, 0, 0);
+        for (let display of this.display_map_manager.display_map.values()) {
+            if (display instanceof EditableLocationDisplay) {
+                // @ts-ignore Mixin breaks ILocatable
+                var animation = new Animation(build_explode_animation(this, display), 1000, true);
+                animation.start();
+                display._mixer.add_animation(
+                    animation
+                )
+            }
+        }
     }
 
     init_active_region(): void {
         this.active_region = {z: 0};
     }
-}
+} 
 
 function space_builder(loc: GridLocation): AbstractDisplay<GridLocation> {
     return new GridLocationDisplay3D(loc);
@@ -180,12 +191,19 @@ class _EditableLocationDisplay extends AbstractDisplay<GridLocation> implements 
 
 export class EditableLocationDisplay extends Animate(
     _EditableLocationDisplay, 
-    build_base_mixer(BaseAnimationFn, 1),
+    BaseAnimationFn,
 ) {};
 
-function build_explode_animation(display_handler: EditorDisplayHandler): AnimationFn {
+function build_explode_animation(display_handler: EditorDisplayHandler, display: Animatable): AnimationFn {
     var explode = display_handler.explode;
-    return function (t: number) {
-        return t;
+    return function (f: number): GraphicsVector {
+        // @ts-ignore
+        var display_loc = new GraphicsVector(display._xOffset, display._yOffset, display._zOffset);
+        // TODO: Apply as curve. Enable the transition.
+        var f = 1; 
+        var x = explode.x > display_loc.x ? -1 * f : 0;
+        var y = explode.y > display_loc.y ? -1 * f : 0;
+        var z = explode.z > display_loc.z ? -1 * f : 0;
+        return new GraphicsVector(x, y, z);
     }
 }
