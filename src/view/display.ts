@@ -593,7 +593,7 @@ export class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatabl
 // TODO: WORKED: Miscellaneous problems. See https://www.typescriptlang.org/docs/handbook/mixins.html. Extend class?
 export class EntityDisplay extends Animate(
     _EntityDisplay, 
-    build_base_mixer(BaseAnimationFn, 1),
+    BaseAnimationFn,
 ) {};
 
 
@@ -696,7 +696,7 @@ export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocata
 
 export class EntityDisplay3D extends Animate(
     _EntityDisplay3D, 
-    build_base_mixer(BaseAnimationFn, 1),
+    BaseAnimationFn,
 ) {};
 
 export class MenuElementDisplay extends AbstractDisplay<IMenuable> {

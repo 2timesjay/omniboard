@@ -5,7 +5,7 @@ import { View3D } from "./rendering_three";
 import { Canvas2DBroker, ThreeBroker } from "./broker";
 import { editor_setup } from "../examples/editor/editor_setup";
 
-export const TICK_DURATION_MS = 20
+export const TICK_DURATION_MS = 33
 
 enum GameType {
     Tactics = 0,

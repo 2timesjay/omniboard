@@ -235,12 +235,27 @@ export class DisplayMapManager {
         this.state = state;
         this.display_map = new Map<ISelectable, AbstractDisplay<ISelectable>>();
         for (var loc of state.get_locations()) {
-            // @ts-ignore ILocation not of type T
-            this.display_map.set(loc, display_builder(loc));
+            try {
+               this.display_map.set(loc, display_builder(loc));
+            } catch (error) {
+                console.log(error);
+            }
         }
         for (var element of state.get_selectables()) {
-            // @ts-ignore subtyping problem; Glement not of type T
-            this.display_map.set(element, display_builder(element));
+            try {
+               this.display_map.set(element, display_builder(element));
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        for (var element of state.get_extras()) {
+            try {
+               var display = display_builder(element)
+               this.display_map.set(element, display);
+               console.log(this.display_map);
+            } catch (error) {
+                console.log(error);
+            }
         }
     }
 

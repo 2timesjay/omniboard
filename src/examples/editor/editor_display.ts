@@ -1,5 +1,5 @@
 import { clamp } from "three/src/math/MathUtils";
-import { Glement, Entity } from "../../common/entity";
+import { Glement, Entity, GlementFactory } from "../../common/entity";
 import { ISelectable } from "../../model/core";
 import { GridCoordinate, GridLocation, ICoordinate } from "../../model/space";
 import { IState } from "../../model/state";
@@ -7,8 +7,23 @@ import { Animatable, Animate, Animation, AnimationFn, BaseAnimationFn, build_bas
 import { GraphicsVector } from "../../view/core";
 import { _EntityDisplay, _EntityDisplay3D, AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D, ILocatable, IPathable, LinearVisual3D } from "../../view/display";
 import { ActiveRegion, DisplayBuilder, SmartDisplayHandler } from "../../view/display_handler";
-import { IView } from "../../view/rendering";
+import { IView, RenderObject, View2D } from "../../view/rendering";
 import { IView3D, View3D } from "../../view/rendering_three";
+
+
+function build_explode_animation(display_handler: EditorDisplayHandler, display: Animatable): AnimationFn {
+    var explode = display_handler.explode;
+    return function (f: number): GraphicsVector {
+        // @ts-ignore
+        var display_loc = new GraphicsVector(display._xOffset, display._yOffset, display._zOffset);
+        // TODO: Apply as curve. Enable the transition.
+        var f = 1; 
+        var x = explode.x > display_loc.x ? -1 * f : 0;
+        var y = explode.y > display_loc.y ? -1 * f : 0;
+        var z = explode.z > display_loc.z ? -1 * f : 0;
+        return new GraphicsVector(x, y, z);
+    }
+}
 
 export class EditorDisplayHandler extends SmartDisplayHandler {
     view: View3D;
@@ -20,6 +35,7 @@ export class EditorDisplayHandler extends SmartDisplayHandler {
         display_builder: DisplayBuilder,
     ){
         super(view, state, display_builder);
+        // TODO: More elegant way to add animations in to mixer.
         this.explode = new GraphicsVector(0, 0, 0);
         for (let display of this.display_map_manager.display_map.values()) {
             if (display instanceof EditableLocationDisplay) {
@@ -37,6 +53,46 @@ export class EditorDisplayHandler extends SmartDisplayHandler {
         this.active_region = {z: 0};
     }
 } 
+    
+export class EditorMenuDisplayHandler extends SmartDisplayHandler {
+    view: View2D;
+
+    constructor(
+        view: IView<ICoordinate>, 
+        state: IState,
+        display_builder: DisplayBuilder,
+    ){
+        super(view, state, display_builder);
+    }
+
+    refresh(){
+        this.display_map_manager.update();
+        this._refresh();
+        this.render_pending_inputs();
+        this.view.update();
+    }
+   
+    _refresh() {
+        this.view.clear();
+        delete this.render_object_map;
+        this.render_object_map = new Map<RenderObject, AbstractDisplay<ISelectable>>()
+        // Display Selectables
+        for (let selectable of this.state.get_extras()) {
+            var display = this.display_map.get(selectable);
+            if (display == undefined) {
+                continue;
+            }
+            var render_object = display.display(this.view, this.active_region);
+            if (render_object != null) { // Can only select rendered elements. 
+                this.render_object_map.set(render_object, display);
+            }
+        }
+        // Display Unattached visuals
+        for (let visual of this.visuals) {
+            visual.display(this.view);
+        }
+    }
+} 
 
 function space_builder(loc: GridLocation): AbstractDisplay<GridLocation> {
     return new GridLocationDisplay3D(loc);
@@ -51,7 +107,7 @@ function glement_builder(glement: Glement): AbstractDisplay<ISelectable> {
     }
 }
 
-export function display_builder(glement: ISelectable): AbstractDisplay<ISelectable> {
+export function canvas_display_builder(glement: ISelectable): AbstractDisplay<ISelectable> {
     if (glement instanceof GridLocation) {
         return new EditableLocationDisplay(glement);
     }
@@ -59,9 +115,19 @@ export function display_builder(glement: ISelectable): AbstractDisplay<ISelectab
         return new EntityDisplay3D(glement);
     }
     else {
-        throw new Error("Invalid selectable type");
+        throw new Error("Canvas Display builder cannot handle: " + glement);
     }
 }
+
+export function palette_display_builder(glement: ISelectable): AbstractDisplay<ISelectable> {
+    if (glement instanceof GlementFactory) {
+        return new PaletteDisplay(glement, glement.glement_class.name, {x: 0, y: 0, z: 0});
+    }
+    else {
+        throw new Error("Palette Display builder cannot handle: " + glement);
+    }
+}
+
 
 class _EditableLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatable, IPathable {
     selectable: GridLocation;
@@ -194,16 +260,48 @@ export class EditableLocationDisplay extends Animate(
     BaseAnimationFn,
 ) {};
 
-function build_explode_animation(display_handler: EditorDisplayHandler, display: Animatable): AnimationFn {
-    var explode = display_handler.explode;
-    return function (f: number): GraphicsVector {
-        // @ts-ignore
-        var display_loc = new GraphicsVector(display._xOffset, display._yOffset, display._zOffset);
-        // TODO: Apply as curve. Enable the transition.
-        var f = 1; 
-        var x = explode.x > display_loc.x ? -1 * f : 0;
-        var y = explode.y > display_loc.y ? -1 * f : 0;
-        var z = explode.z > display_loc.z ? -1 * f : 0;
-        return new GraphicsVector(x, y, z);
+// TODO: Sprite: https://github.com/2timesjay/omniboard/blob/pre-cull-milestone/src/examples/sliding_puzzle/sliding_puzzle_display.ts
+export class PaletteDisplay extends AbstractDisplay<GlementFactory> {
+    _co: GridCoordinate;
+    text: string;
+    size: number;
+    width: number;
+    height: number;
+
+    constructor(selectable: GlementFactory, text: string, co: GridCoordinate) {
+        super(selectable);
+        this.text = text;
+        this._co = co;
+        this.size = 0.4;
+        this.width = this.text.length * 0.5 * this.size + 0.2 * this.size,
+        this.height = this.size;
+    }
+
+    get xOffset() {
+        return this._co.x;
+    }
+
+    get yOffset() {
+        return this._co.y;
+    }
+
+    get zOffset() {
+        return this._co.z;
+    }
+
+    get co(): GridCoordinate {
+        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+    }
+
+    render(view: View2D, clr: string, lfa?: number): RenderObject {
+        var hit_co = this.co
+        var text_co = {x: this.co.x, y: this.co.y + this.height, z: this.co.z};
+        var text_size = 0.8 * this.size;
+        var render_object = view.drawRect(
+            hit_co, this.width, this.height, "white", 0.5
+        );
+        view.drawText(text_co, this.text, text_size, clr)
+        // TODO: Do all this in "view.drawText"
+        return render_object;
     }
 }

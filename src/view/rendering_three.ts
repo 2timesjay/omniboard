@@ -303,7 +303,6 @@ function _populateScene(scene: THREE.Scene) {
         blockMesh.position.x = co[0];
         blockMesh.position.y = co[1];
         blockMesh.position.z = co[2];
-        console.log(blockMesh);
         group.add(blockMesh);
     }
 

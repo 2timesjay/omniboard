@@ -28,6 +28,7 @@ export const DURATION_MS_NO_ANIM = 10;
 export interface IState {
     get_locations: () => Array<ILocation>;
     get_selectables: () => Array<ISelectable>;
+    get_extras: () => Array<ISelectable>;
     process?: (effects: Array<Effect>, display_handler: DisplayHandler) => Promise<IState>; 
 };
 
@@ -101,6 +102,10 @@ export class BaseState implements IState {
     }
 
     get_observers(): Array<Observer> {
+        return [];
+    }
+
+    get_extras(): Array<ISelectable> {
         return [];
     }
 };
