@@ -91,5 +91,11 @@ export function editor_setup() {
     
     // Start main game loop
     // @ts-ignore
-    controller.run(editor_phase, canvas_input_request, canvas_display_handler);
+    controller.run(
+        editor_phase, 
+        canvas_input_request,
+        canvas_display_handler,
+        palette_input_request,
+        palette_display_handler,
+    );
 }

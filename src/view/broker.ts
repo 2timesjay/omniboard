@@ -205,9 +205,7 @@ export function build_broker_callback<T extends ISelectable>(
 ): CallbackSelectionFn<T> {
     // Sets selection_broker's fanout to on_input_events of instances of T in Options.
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
-        // console.log("Setup Selection Callbacks on Canvas: ", options);
         var displays = options.map((o) => display_map.get(o));
-        // console.log("Display callback targets: ", displays);
         var onclicks = displays.map(
             (d) => d.createOnclick(canvas)
         );
