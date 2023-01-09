@@ -1,12 +1,12 @@
 import { Stack, ISelectable } from "../../model/core";
 import { Effect } from "../../model/effect";
-import { Entity } from "../../common/entity";
+import { Entity, EntityFactory } from "../../common/entity";
 import { IInputStep, IInputAcquirer, SimpleInputAcquirer, isInputSignal, InputStop, IInputNext, InputOptions, InputSelection, InputRequest } from "../../model/input";
 import { AbstractBasePhase, BaseInputs } from "../../model/phase";
 import { GridLocation } from "../../model/space";
 import { IState } from "../../model/state";
 import { BaseDisplayHandler } from "../../view/display_handler";
-import { ToggleLocationEffect } from "./editor_effect";
+import { EntityPlaceEffect, ToggleLocationEffect } from "./editor_effect";
 import { EditorState } from "./editor_state";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
@@ -14,6 +14,69 @@ const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 /**
  * Building Phase - pre-game creation of a level.
  */
+ export class PaletteSelectionStep implements IInputStep<EntityFactory, GridLocation> {
+    acquirer: IInputAcquirer<EntityFactory>;
+
+    constructor(state: EditorState, auto_select: boolean = true) {
+        // @ts-ignore get_extras is too broadly typed.
+        this.acquirer = new SimpleInputAcquirer(
+            () => state.get_extras(), false, auto_select,
+        ); 
+    }
+
+    get input(): EntityFactory {
+        var input_response = this.acquirer.current_input;
+        if (isInputSignal(input_response)) {
+            return null;
+        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
+            return input_response.value;
+        } else {
+            return input_response;
+        }
+    }
+
+    consume_children(next_step: IInputStep<GridLocation, null>): Array<Effect> {
+        // @ts-ignore Get InputSelection, require singleton.
+        return [new EntityPlaceEffect(this.input, next_step.input)];
+    }
+    
+    get_next_step(state: EditorState): IInputStep<GridLocation, null> {
+        return new AddToLocationStep(state);
+    }
+}
+
+export class AddToLocationStep implements IInputStep<GridLocation, null> {
+    acquirer: IInputAcquirer<GridLocation>;
+    occupied: Set<GridLocation>;
+    entities: Array<Entity>;
+
+    constructor(state: EditorState, auto_select: boolean = true) {
+        // TODO: Restrict to unoccupied
+        this.acquirer = new SimpleInputAcquirer(
+            () => state.space.to_array(), false, auto_select,
+        ); 
+    }
+
+    get input(): GridLocation {
+        var input_response = this.acquirer.current_input;
+        if (isInputSignal(input_response)) {
+            return null;
+        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
+            return input_response.value;
+        } else {
+            return input_response;
+        }
+    }
+
+    consume_children(next_step: InputStop): GridLocation {
+        return this.input;
+    }
+    
+    get_next_step(state: EditorState): InputStop {
+        return new InputStop();
+    }
+}
+
 export class ToggleLocationStep implements IInputStep<GridLocation, null> {
     acquirer: IInputAcquirer<GridLocation>;
     occupied: Set<GridLocation>;
@@ -45,7 +108,8 @@ export class ToggleLocationStep implements IInputStep<GridLocation, null> {
         return new InputStop();
     }
 }
- export class EditorPhase extends AbstractBasePhase {
+
+export class EditorPhase extends AbstractBasePhase {
     display_handlers: Array<BaseDisplayHandler>;
 
     constructor(state: EditorState) {

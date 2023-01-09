@@ -1,8 +1,12 @@
-import { Glement, Entity, GlementFactory } from "../../common/entity";
+import { Glement, Entity, GlementFactory, EntityFactory, EntityType } from "../../common/entity";
 import { BaseState } from "../../model/state";
 import { VolumeSpace } from "../../common/space";
 import { GridLocation } from "../../model/space";
 import { ISelectable } from "../../model/core";
+
+const UNIT_TYPE = new EntityType("UNIT");
+const BOX_TYPE = new EntityType("BOX");
+
 
 export class EditorState extends BaseState {
     glements: Array<Glement>;
@@ -11,8 +15,9 @@ export class EditorState extends BaseState {
 
     constructor() {
         super();
-        var factory = new GlementFactory(Entity);
-        this.extras = [factory];
+        var unit_factory = new EntityFactory(Entity, UNIT_TYPE);
+        var box_factory = new EntityFactory(Entity, BOX_TYPE);
+        this.extras = [unit_factory, box_factory];
     }
 
     add(glement: Glement, loc: GridLocation) {

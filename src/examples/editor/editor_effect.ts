@@ -1,8 +1,7 @@
 import { ISelectable } from "../../model/core";
 import { EffectKernel, AbstractEffect } from "../../model/effect";
-import { Glement } from "../../common/entity";
+import { EntityFactory, Entity } from "../../common/entity";
 import { GridLocation, Vector } from "../../model/space";
-import { ChainableMove } from "../../view/animation";
 import { ILocatable } from "../../view/display";
 import { DisplayHandler } from "../../view/display_handler";
 import { EditorState } from "./editor_state";
@@ -29,20 +28,22 @@ export class ToggleLocationEffect extends AbstractEffect {
     }
 }
 
-export class GlementPlaceEffect extends AbstractEffect {
-    glement: Glement
+export class EntityPlaceEffect extends AbstractEffect {
+    entity_factory: EntityFactory;
     loc: GridLocation;
     description: string;
 
-    constructor(glement: Glement, loc: GridLocation) {
+    constructor(entity_factory: EntityFactory, loc: GridLocation) {
         super();
         this.loc = loc;
-        this.glement = glement;
+        this.entity_factory = entity_factory;
         this.description = "Move Player to new Location";
     }
 
     execute(state: EditorState): EditorState {
-        state.add(this.glement, this.loc);
+        // TODO: Redundant loc here.
+        var entity = this.entity_factory.create_entity(this.loc);
+        state.add(entity, this.loc);
         return state;
     }
 
@@ -54,19 +55,19 @@ export class GlementPlaceEffect extends AbstractEffect {
 }
 
 
-export class GlementDeleteEffect extends AbstractEffect {
-    glement: Glement;
+export class EntityDeleteEffect extends AbstractEffect {
+    entity: Entity;
     description: string;
 
-    constructor(glement: Glement) {
+    constructor(entity: Entity) {
         super();
-        this.glement = glement;
+        this.entity = entity;
         this.description = "Move Player to new Location";
     }
 
     execute(state: EditorState): EditorState {
-        // Move the glement
-        state.remove(this.glement);
+        // Move the entity
+        state.remove(this.entity);
         return state;
     }
 
@@ -77,21 +78,21 @@ export class GlementDeleteEffect extends AbstractEffect {
     }
 }
 
-export class GlementMoveEffect extends AbstractEffect {
-    glement: Glement
+export class EntityMoveEffect extends AbstractEffect {
+    entity: Entity
     loc: GridLocation;
     description: string;
 
-    constructor(glement: Glement, loc: GridLocation) {
+    constructor(entity: Entity, loc: GridLocation) {
         super();
         this.loc = loc;
-        this.glement = glement;
+        this.entity = entity;
         this.description = "Move Player to new Location";
     }
 
     execute(state: EditorState): EditorState {
-        // Move the glement
-        this.glement.setLoc(this.loc);
+        // Move the entity
+        this.entity.setLoc(this.loc);
         return state;
     }
 

@@ -1,5 +1,5 @@
 import { clamp } from "three/src/math/MathUtils";
-import { Glement, Entity, GlementFactory } from "../../common/entity";
+import { Glement, Entity, GlementFactory, EntityFactory } from "../../common/entity";
 import { ISelectable } from "../../model/core";
 import { GridCoordinate, GridLocation, ICoordinate } from "../../model/space";
 import { IState } from "../../model/state";
@@ -120,8 +120,12 @@ export function canvas_display_builder(glement: ISelectable): AbstractDisplay<IS
 }
 
 export function palette_display_builder(glement: ISelectable): AbstractDisplay<ISelectable> {
-    if (glement instanceof GlementFactory) {
-        return new PaletteDisplay(glement, glement.glement_class.name, {x: 0, y: 0, z: 0});
+    if (glement instanceof EntityFactory) {
+        if (glement.entity_type.indicator == "Entity") {
+            return new PaletteDisplay(glement, {x: 0, y: 0, z: 0});
+        } else if (glement.entity_type.indicator == "Box") {
+            return new PaletteDisplay(glement, {x: 0, y: 1, z: 0});
+        }
     }
     else {
         throw new Error("Palette Display builder cannot handle: " + glement);
@@ -261,16 +265,16 @@ export class EditableLocationDisplay extends Animate(
 ) {};
 
 // TODO: Sprite: https://github.com/2timesjay/omniboard/blob/pre-cull-milestone/src/examples/sliding_puzzle/sliding_puzzle_display.ts
-export class PaletteDisplay extends AbstractDisplay<GlementFactory> {
+export class PaletteDisplay extends AbstractDisplay<EntityFactory> {
     _co: GridCoordinate;
     text: string;
     size: number;
     width: number;
     height: number;
 
-    constructor(selectable: GlementFactory, text: string, co: GridCoordinate) {
+    constructor(selectable: EntityFactory, co: GridCoordinate) {
         super(selectable);
-        this.text = text;
+        this.text = selectable.entity_type.text;
         this._co = co;
         this.size = 0.4;
         this.width = this.text.length * 0.5 * this.size + 0.2 * this.size,
