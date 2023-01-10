@@ -205,7 +205,8 @@ export function build_broker_callback<T extends ISelectable>(
 ): CallbackSelectionFn<T> {
     // Sets selection_broker's fanout to on_input_events of instances of T in Options.
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
-        var displays = options.map((o) => display_map.get(o));
+        // TODO: Have this filtering happen in a more legible place as part of refactor.
+        var displays = options.map((o) => display_map.get(o)).filter((d) => d != null);
         var onclicks = displays.map(
             (d) => d.createOnclick(canvas)
         );

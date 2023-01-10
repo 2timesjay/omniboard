@@ -121,9 +121,11 @@ export function canvas_display_builder(glement: ISelectable): AbstractDisplay<IS
 
 export function palette_display_builder(glement: ISelectable): AbstractDisplay<ISelectable> {
     if (glement instanceof EntityFactory) {
-        if (glement.entity_type.indicator == "Entity") {
+        console.log("Entity Factory: ", glement);
+        // TODO: Remove hardcoding
+        if (glement.entity_type.indicator == "UNIT") {
             return new PaletteDisplay(glement, {x: 0, y: 0, z: 0});
-        } else if (glement.entity_type.indicator == "Box") {
+        } else if (glement.entity_type.indicator == "BOX") {
             return new PaletteDisplay(glement, {x: 0, y: 1, z: 0});
         }
     }

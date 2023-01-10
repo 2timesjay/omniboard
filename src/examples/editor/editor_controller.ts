@@ -11,11 +11,46 @@ import { EditorState } from "./editor_state";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
+type MultiInput = GridLocation | EntityFactory;
+
+// TODO: Create UnionStep, which can take any two steps with disjoint inputs.
+export class MultiStep implements IInputStep<MultiInput, MultiInput> {
+    acquirer: IInputAcquirer<MultiInput>;
+
+    constructor(state: EditorState, auto_select: boolean = true) {
+        // @ts-ignore get_extras is too broadly typed.
+        this.acquirer = new SimpleInputAcquirer(
+            () => state.get_extras().concat(state.space.to_array()), false, auto_select,
+        ); 
+    }
+
+    get input(): MultiInput {
+        var input_response = this.acquirer.current_input;
+        if (isInputSignal(input_response)) {
+            return null;
+        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
+            return input_response.value;
+        } else {
+            return input_response;
+        }
+    }
+
+    consume_children(next_step: IInputStep<MultiStep, null>): Array<Effect> {
+        // @ts-ignore Get InputSelection, require singleton.
+        return [next_step.effects];
+    }
+    
+    get_next_step(state: EditorState): IInputStep<GridLocation, null> {
+        return new AddToLocationStep(state);
+    }
+}
+
 /**
  * Building Phase - pre-game creation of a level.
  */
  export class PaletteSelectionStep implements IInputStep<EntityFactory, GridLocation> {
     acquirer: IInputAcquirer<EntityFactory>;
+    effects: Array<Effect>;
 
     constructor(state: EditorState, auto_select: boolean = true) {
         // @ts-ignore get_extras is too broadly typed.
@@ -37,7 +72,8 @@ const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
     consume_children(next_step: IInputStep<GridLocation, null>): Array<Effect> {
         // @ts-ignore Get InputSelection, require singleton.
-        return [new EntityPlaceEffect(this.input, next_step.input)];
+        this.effects = [new EntityPlaceEffect(this.input, next_step.input)];
+        return this.effects;
     }
     
     get_next_step(state: EditorState): IInputStep<GridLocation, null> {
@@ -81,6 +117,7 @@ export class ToggleLocationStep implements IInputStep<GridLocation, null> {
     acquirer: IInputAcquirer<GridLocation>;
     occupied: Set<GridLocation>;
     entities: Array<Entity>;
+    effects: Array<Effect>;
 
     constructor(state: EditorState, auto_select: boolean = true) {
         // Restrict to unoccupied neighbors of source entity.
@@ -101,7 +138,8 @@ export class ToggleLocationStep implements IInputStep<GridLocation, null> {
     }
 
     consume_children(next_step: InputStop): Array<Effect> {
-        return [new ToggleLocationEffect(this.input)];
+        this.effects = [new ToggleLocationEffect(this.input)];
+        return this.effects;
     }
     
     get_next_step(state: EditorState): InputStop {
@@ -124,10 +162,10 @@ export class EditorPhase extends AbstractBasePhase {
     }
 
     get base_step_factory(): (state: IState) => IInputNext<ISelectable> {
-        return (state: EditorState) => new ToggleLocationStep(state);
+        return (state: EditorState) => new MultiStep(state);
     }
     
-    async * run_phase(
+    async *  run_phase(
         state: EditorState
     ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
         console.log("Running EditorPhase")
@@ -182,11 +220,11 @@ export class EditorPhase extends AbstractBasePhase {
             var input_options = await phase_runner.next();
             // TODO: So simple it was fine running only this internal subphase loop.
             while(input_options.value){
-                var canvas_input_selection = canvas_input_request(input_options.value);
-                // input_options = await phase_runner.next(canvas_input_selection);
-                // canvas_display_handler.on_selection(canvas_input_selection, phase);
+                var input_options_value = input_options.value;
+                // @ts-ignore we know it's an array
+                var canvas_input_selection = canvas_input_request(input_options_value);
                 // TODO: Fix hard-coded palette options.
-                var palette_input_selection = palette_input_request(this.state.get_extras());
+                var palette_input_selection = palette_input_request(input_options_value);
                 var input_selection = await Promise.race([canvas_input_selection, palette_input_selection]);
                 input_options = await phase_runner.next(input_selection);
                 canvas_display_handler.on_selection(input_selection, phase);
