@@ -44,6 +44,7 @@ export class EntityPlaceEffect extends AbstractEffect {
         // TODO: Redundant loc here.
         var entity = this.entity_factory.create_entity(this.loc);
         state.add(entity, this.loc);
+        console.log("EntityPlaceEffect Executed")
         return state;
     }
 

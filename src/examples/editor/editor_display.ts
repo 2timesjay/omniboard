@@ -66,7 +66,8 @@ export class EditorMenuDisplayHandler extends SmartDisplayHandler {
     }
 
     refresh(){
-        this.display_map_manager.update();
+        // TODO: Fix - get_selectables-based diffing doesn't work for menu items.
+        // this.display_map_manager.update();
         this._refresh();
         this.render_pending_inputs();
         this.view.update();

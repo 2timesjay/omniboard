@@ -37,11 +37,15 @@ export class MultiStep implements IInputStep<MultiInput, MultiInput> {
 
     consume_children(next_step: IInputStep<MultiStep, null>): Array<Effect> {
         // @ts-ignore Get InputSelection, require singleton.
-        return [next_step.effects];
+        return next_step.effects;
     }
     
-    get_next_step(state: EditorState): IInputStep<GridLocation, null> {
-        return new AddToLocationStep(state);
+    get_next_step(state: EditorState): IInputStep<MultiInput, null> {
+        if (this.input instanceof GridLocation) {
+            return new ToggleLocationStep(state, true, this.input); // "Accelerates" through step.
+        } else if (this.input instanceof EntityFactory) {
+            return new PaletteSelectionStep(state, true, this.input); // "Accelerates" through step.
+        }
     }
 }
 
@@ -52,10 +56,11 @@ export class MultiStep implements IInputStep<MultiInput, MultiInput> {
     acquirer: IInputAcquirer<EntityFactory>;
     effects: Array<Effect>;
 
-    constructor(state: EditorState, auto_select: boolean = true) {
+    constructor(state: EditorState, auto_select: boolean = true, pre_select: EntityFactory) {
+        var options = pre_select ? [pre_select] : state.get_extras();
         // @ts-ignore get_extras is too broadly typed.
         this.acquirer = new SimpleInputAcquirer(
-            () => state.get_extras(), false, auto_select,
+            () => options, false, auto_select,
         ); 
     }
 
@@ -119,10 +124,11 @@ export class ToggleLocationStep implements IInputStep<GridLocation, null> {
     entities: Array<Entity>;
     effects: Array<Effect>;
 
-    constructor(state: EditorState, auto_select: boolean = true) {
+    constructor(state: EditorState, auto_select: boolean = true, pre_select: GridLocation) {
         // Restrict to unoccupied neighbors of source entity.
+        var options = pre_select ? [pre_select] : state.space.to_array();
         this.acquirer = new SimpleInputAcquirer(
-            () => state.space.to_array(), false, auto_select,
+            () => options, false, auto_select,
         ); 
     }
 

@@ -23,6 +23,7 @@ export class EditorState extends BaseState {
     add(glement: Glement, loc: GridLocation) {
         glement.setLoc(loc);
         this.glements.push(glement);
+        console.log("Added Glement: " + glement.toString());
     }
 
     remove(glement: Glement) {

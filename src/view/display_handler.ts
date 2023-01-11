@@ -68,7 +68,9 @@ export class BaseDisplayHandler implements IDisplayHandler {
         for(let pending_selectable of pending_inputs) {
             // TODO: Whether to display as queued or not is context dependent
             var display = this.display_map.get(pending_selectable);
-            display.selection_state = DisplayState.Queue;
+            if (display != null) { // May be null if from different View
+                display.selection_state = DisplayState.Queue;
+            }
         }
     }
 
@@ -229,28 +231,30 @@ export type DisplayBuilder = (sel: ISelectable) => AbstractDisplay<ISelectable>;
 
 export class DisplayMapManager {
     display_map: DisplayMap;
+    display_builder: DisplayBuilder;
     state: IState;
 
     constructor(state: IState, display_builder: DisplayBuilder) {
         this.state = state;
+        this.display_builder = display_builder;
         this.display_map = new Map<ISelectable, AbstractDisplay<ISelectable>>();
         for (var loc of state.get_locations()) {
             try {
-               this.display_map.set(loc, display_builder(loc));
+               this.display_map.set(loc, this.display_builder(loc));
             } catch (error) {
                 console.log(error);
             }
         }
         for (var element of state.get_selectables()) {
             try {
-               this.display_map.set(element, display_builder(element));
+               this.display_map.set(element, this.display_builder(element));
             } catch (error) {
                 console.log(error);
             }
         }
         for (var element of state.get_extras()) {
             try {
-               var display = display_builder(element)
+               var display = this.display_builder(element)
                this.display_map.set(element, display);
                console.log(this.display_map);
             } catch (error) {
@@ -260,19 +264,20 @@ export class DisplayMapManager {
     }
 
     update() {
-        for (var added in this.get_added()) {
+        console.log(this.get_added().length);
+        for (var added of this.get_added()) {
             // @ts-ignore subtyping problem; Glement not of type T
-            this.display_map.set(added, display_builder(added));
+            this.display_map.set(added, this.display_builder(added));
         }
         for (var removed in this.get_removed()) {
             this.display_map.delete(removed);
         }
     }
 
-    get_added(): Set<ISelectable> {
+    get_added(): Array<ISelectable> {
         var state_elements = new Set<ISelectable>(this.state.get_selectables());
         var display_elements = new Set<ISelectable>(this.display_map.keys());
-        var added = new Set<ISelectable>([...state_elements].filter(x => !display_elements.has(x)));
+        var added = [...state_elements].filter(x => !display_elements.has(x));
         return added;
     }
 
