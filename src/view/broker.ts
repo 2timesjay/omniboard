@@ -20,7 +20,7 @@ export interface InputCoordinate {
 export type OnInputEvent<T extends ISelectable> = (sel: T, type: string) => T | null;
 export type inputEventToSelectable = (e: Event, display_handler: BaseDisplayHandler) => ISelectable | null;
 
-export function getMouseCo(canvasDom: HTMLElement, mouseEvent: MouseEvent): InputCoordinate {
+export function getMouseCo(canvasDom: HTMLCanvasElement, mouseEvent: MouseEvent): InputCoordinate {
     var rect = canvasDom.getBoundingClientRect();
     return {
         x: mouseEvent.clientX - rect.left,
@@ -28,7 +28,7 @@ export function getMouseCo(canvasDom: HTMLElement, mouseEvent: MouseEvent): Inpu
     };
 }
 
-export function getMouseCo3D(canvasDom: HTMLElement, mouseEvent: MouseEvent): InputCoordinate {
+export function getMouseCo3D(canvasDom: HTMLCanvasElement, mouseEvent: MouseEvent): InputCoordinate {
     var rect = canvasDom.getBoundingClientRect();
     return {
         x: ((mouseEvent.clientX - rect.left) / rect.width) * 2 - 1,
@@ -42,7 +42,7 @@ export function inputEventToSelectable2D(
     e: MouseEvent, display_handler: DisplayHandler,
 ): ISelectable | null {    
     // Pseudo-Raycast (2D) to check for hits.
-    var canvas = display_handler.view.context.canvas;
+    var canvas = display_handler.view.context.canvas as HTMLCanvasElement;
     // TODO: Resolve typeerror from making everything in Display IView.
     // @ts-ignore Has getHitObjects when it when it counts
     var hit_objects = display_handler.view.getHitObjects(
@@ -250,7 +250,7 @@ export class Canvas2DBroker implements IBroker {
         display_handler: DisplayHandler,
         view: IView<ICoordinate>,
     ) {
-        var canvas = view.context.canvas;
+        var canvas = view.context.canvas as HTMLCanvasElement;
         var selection_broker = new SelectionBroker(display_handler, null, inputEventToSelectable2D);
         // TODO: Error with unset handlers - dummies for now.
         selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
@@ -266,10 +266,12 @@ export class Canvas2DBroker implements IBroker {
         selection_broker: SelectionBroker,
         view: IView<ICoordinate>,
     ) {
-        view.context.canvas.onclick = function (event) {
+        // @ts-ignore No OffscreenCanvas
+        view.context.canvas.onclick = function (event: MouseEvent) {
             selection_broker.onMouseEvent(event);
         }
-        view.context.canvas.onmousemove = function (event) {
+        // @ts-ignore No OffscreenCanvas
+        view.context.canvas.onmousemove = function (event: MouseEvent) {
             selection_broker.onMouseEvent(event);
         }
         window.addEventListener(
@@ -325,10 +327,12 @@ export class Canvas2DBroker implements IBroker {
         selection_broker: SelectionBroker,
         view: IView3D, 
     ) {
-        view.context.canvas.onclick = function (event) {
+        // @ts-ignore No OffscreenCanvas
+        view.context.canvas.onclick = function (event: MouseEvent) {
             selection_broker.onMouseEvent(event);
         }
-        view.context.canvas.onmousemove = function (event) {
+        // @ts-ignore No OffscreenCanvas
+        view.context.canvas.onmousemove = function (event: MouseEvent) {
             selection_broker.onMouseEvent(event);
         }
         window.addEventListener(

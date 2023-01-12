@@ -264,7 +264,6 @@ export class DisplayMapManager {
     }
 
     update() {
-        console.log(this.get_added().length);
         for (var added of this.get_added()) {
             // @ts-ignore subtyping problem; Glement not of type T
             this.display_map.set(added, this.display_builder(added));

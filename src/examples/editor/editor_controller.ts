@@ -1,7 +1,7 @@
 import { Stack, ISelectable } from "../../model/core";
 import { Effect } from "../../model/effect";
 import { Entity, EntityFactory } from "../../common/entity";
-import { IInputStep, IInputAcquirer, SimpleInputAcquirer, isInputSignal, InputStop, IInputNext, InputOptions, InputSelection, InputRequest } from "../../model/input";
+import { IInputStep, IInputAcquirer, SimpleInputAcquirer, isInputSignal, InputStop, IInputNext, InputOptions, InputRequest, InputResponse, InputSignal } from "../../model/input";
 import { AbstractBasePhase, BaseInputs } from "../../model/phase";
 import { GridLocation } from "../../model/space";
 import { IState } from "../../model/state";
@@ -26,12 +26,10 @@ export class MultiStep implements IInputStep<MultiInput, MultiInput> {
         ); 
     }
 
-    get input(): MultiInput {
+    get input(): InputResponse<MultiInput> {
         var input_response = this.acquirer.current_input;
-        if (isInputSignal(input_response)) {
+        if (input_response.signal == InputSignal.Reject) {
             return null;
-        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
-            return input_response.value;
         } else {
             return input_response;
         }
@@ -43,12 +41,13 @@ export class MultiStep implements IInputStep<MultiInput, MultiInput> {
     }
     
     get_next_step(state: EditorState): IInputStep<MultiInput, null> {
-        if (this.input instanceof GridLocation) {
-            return new ToggleLocationStep(state, true, this.input); // "Accelerates" through step.
-        } else if (this.input instanceof EntityFactory) {
-            return new PaletteSelectionStep(state, true, this.input); // "Accelerates" through step.
-        } else if (this.input instanceof Entity) {
-            return new DeleteFromLocationStep(state, false, this.input); // Await confirmation for deletion.
+        var selection = this.input.selection;
+        if (selection instanceof GridLocation) {
+            return new ToggleLocationStep(state, true, selection); // "Accelerates" through step.
+        } else if (selection instanceof EntityFactory) {
+            return new PaletteSelectionStep(state, true, selection); // "Accelerates" through step.
+        } else if (selection instanceof Entity) {
+            return new DeleteFromLocationStep(state, false, selection); // Await confirmation for deletion.
         }
     }
 }
@@ -68,12 +67,10 @@ export class MultiStep implements IInputStep<MultiInput, MultiInput> {
         ); 
     }
 
-    get input(): EntityFactory {
+    get input(): InputResponse<EntityFactory> {
         var input_response = this.acquirer.current_input;
-        if (isInputSignal(input_response)) {
+        if (input_response.signal == InputSignal.Reject) {
             return null;
-        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
-            return input_response.value;
         } else {
             return input_response;
         }
@@ -81,7 +78,7 @@ export class MultiStep implements IInputStep<MultiInput, MultiInput> {
 
     consume_children(next_step: IInputStep<GridLocation, null>): Array<Effect> {
         // @ts-ignore Get InputSelection, require singleton.
-        this.effects = [new EntityPlaceEffect(this.input, next_step.input)];
+        this.effects = [new EntityPlaceEffect(this.input.selection, next_step.input.selection)];
         return this.effects;
     }
     
@@ -102,19 +99,17 @@ export class AddToLocationStep implements IInputStep<GridLocation, null> {
         ); 
     }
 
-    get input(): GridLocation {
+    get input(): InputResponse<GridLocation> {
         var input_response = this.acquirer.current_input;
-        if (isInputSignal(input_response)) {
+        if (input_response.signal == InputSignal.Reject) {
             return null;
-        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
-            return input_response.value;
         } else {
             return input_response;
         }
     }
 
     consume_children(next_step: InputStop): GridLocation {
-        return this.input;
+        return this.input.selection;
     }
     
     get_next_step(state: EditorState): InputStop {
@@ -136,19 +131,17 @@ export class ToggleLocationStep implements IInputStep<GridLocation, null> {
         ); 
     }
 
-    get input(): GridLocation {
+    get input(): InputResponse<GridLocation> {
         var input_response = this.acquirer.current_input;
-        if (isInputSignal(input_response)) {
+        if (input_response.signal == InputSignal.Reject) {
             return null;
-        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
-            return input_response.value;
         } else {
             return input_response;
         }
     }
 
     consume_children(next_step: InputStop): Array<Effect> {
-        this.effects = [new ToggleLocationEffect(this.input)];
+        this.effects = [new ToggleLocationEffect(this.input.selection)];
         return this.effects;
     }
     
@@ -171,19 +164,17 @@ export class DeleteFromLocationStep implements IInputStep<Entity, null> {
         ); 
     }
 
-    get input(): Entity {
+    get input(): InputResponse<Entity> {
         var input_response = this.acquirer.current_input;
-        if (isInputSignal(input_response)) {
+        if (input_response.signal == InputSignal.Reject) {
             return null;
-        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
-            return input_response.value;
         } else {
             return input_response;
         }
     }
 
     consume_children(next_step: InputStop): Array<Effect> {
-        this.effects = [new EntityDeleteEffect(this.input)];
+        this.effects = [new EntityDeleteEffect(this.input.selection)];
         return this.effects;
     }
     
@@ -212,7 +203,7 @@ export class EditorPhase extends AbstractBasePhase {
     
     async *  run_phase(
         state: EditorState
-    ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
+    ): AsyncGenerator<InputOptions<ISelectable>, void, ISelectable> {
         console.log("Running EditorPhase")
         // Make a single "move"
         var inputs: BaseInputs = yield *this.run_subphase(state); 

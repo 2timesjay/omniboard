@@ -1,12 +1,12 @@
 import { BaseDisplayHandler } from "../view/display_handler";
 import { ISelectable, Stack } from "./core";
 import { Effect } from "../model/effect";
-import { IInputAcquirer, IInputNext, IInputStep, InputOptions, InputSelection, isInputStep } from "./input";
+import { IInputAcquirer, IInputNext, IInputStep, InputOptions, InputSignal, isInputStep } from "./input";
 import { BaseState, IState } from "./state";
 
 export interface Inputs {
     input_steps: Stack<IInputNext<ISelectable>>;
-    push_input: (input_step: InputSelection<ISelectable>, state: IState) => void;
+    push_input: (input_step: ISelectable, state: IState) => void;
     // TODO: Standard meaning of "pop"
     pop_input: () => void;
     peek: () => IInputNext<ISelectable>;
@@ -29,7 +29,7 @@ export class BaseInputs implements Inputs {
     }
 
     // TODO: State needed for all next_steps; smuggle in more elegantly
-    push_input(input: InputSelection<ISelectable>, state: IState) {
+    push_input(input: ISelectable, state: IState) {
         var head = this.peek();
         if (isInputStep(head)) {
             // TODO: This should always be true already? Or acquirer should have it.
@@ -65,8 +65,8 @@ export type AnyGenerator<T, U, V> = Generator<T, U, V> | AsyncGenerator<T, U, V>
 
 export interface IPhase {
     current_inputs: Inputs;
-    pending_inputs: InputSelection<ISelectable>;
-    run_phase: (state: IState, cur_team: number) => AnyGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>>;
+    pending_inputs: ISelectable;
+    run_phase: (state: IState, cur_team: number) => AnyGenerator<InputOptions<ISelectable>, void, ISelectable>;
 }
 
 // TODO: Complicated state around class members, e.g. current_inputs is used several ways.
@@ -98,7 +98,7 @@ export class AbstractBasePhase implements IPhase {
     }
 
     // TODO: Maybe move into partial_inputs
-    get pending_inputs(): InputSelection<ISelectable> {
+    get pending_inputs(): ISelectable {
         if (this.current_acquirer == null) {
             return null;
         } else { 
@@ -108,7 +108,7 @@ export class AbstractBasePhase implements IPhase {
 
     async * run_phase(
         state: BaseState
-    ): AsyncGenerator<InputOptions<ISelectable>, void, InputSelection<ISelectable>> {
+    ): AsyncGenerator<InputOptions<ISelectable>, void, ISelectable> {
         console.log("Running Phase")
         while (this.phase_condition(state)) {
             var inputs: BaseInputs = yield *this.run_subphase(state); 
@@ -154,15 +154,15 @@ export class AbstractBasePhase implements IPhase {
     // TODO: Explicit and well-typed, but some generic patterns could be abstracted. 
     * run_subphase(
         state: BaseState
-    ): Generator<InputOptions<ISelectable>, BaseInputs, InputSelection<ISelectable>> {
+    ): Generator<InputOptions<ISelectable>, BaseInputs, ISelectable> {
         // TODO: Does it make more sense to reset/initialize in `run_phase`?
         this.current_inputs = new BaseInputs(this.base_step_factory);
         this.current_inputs.reset(state);
         while (!this.current_inputs.is_stopped()) {
             // @ts-ignore InputSignal not handled
-            var selection = yield *this.current_acquirer.input_option_generator();
-            if (selection != null) {
-                this.current_inputs.push_input(selection, state);
+            var input_response = yield *this.current_acquirer.input_option_generator();
+            if (input_response.signal != InputSignal.Reject) {
+                this.current_inputs.push_input(input_response, state);
             } else {
                 // TODO: Pop leaves item in queued state
                 this.current_inputs.pop_input();

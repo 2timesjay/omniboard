@@ -1,4 +1,4 @@
-import { InputResponse } from "./input";
+import { InputOptions, InputResponse } from "./input";
 
 export interface ISelectable {}
 
@@ -167,9 +167,9 @@ export class Tree<T> extends Stack<T> {
     }
 }
 
-export type OptionFn<T extends ISelectable> = (selection?: InputResponse<T>) => Array<T>;
+export type OptionFn<T extends ISelectable> = (selection?: T) => InputOptions<T>;
 
-export type IncrementFn<T extends ISelectable> = (selection?: Stack<T>) => Array<T>;
+export type IncrementFn<T extends ISelectable> = (selection?: Stack<T>) => InputOptions<T>;
 
 export type TerminationFn<T extends ISelectable> = (selection?: Stack<T>) => boolean;
 
