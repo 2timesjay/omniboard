@@ -92,25 +92,11 @@ export class SelectionBroker {
     mouseover_selection: ISelectable;
 
     constructor(
-        display_handler?: BaseDisplayHandler,
-        on_input_events?: Array<OnInputEvent<ISelectable>>, 
-        input_event_to_selectable?: inputEventToSelectable,
+        display_handler: BaseDisplayHandler,
+        input_event_to_selectable: inputEventToSelectable,
     ){
-        if (display_handler){
-            this.display_handler = display_handler;          
-        }
-        // TODO: Why are the args optional?
-        if (on_input_events){
-            this.setOnInputEvents(on_input_events);            
-        }
-        if (input_event_to_selectable){
-            this.input_event_to_selectable = input_event_to_selectable;          
-        }
-    }
-
-    // TODO: Why this special setter?
-    setOnInputEvents(on_input_events: Array<OnInputEvent<ISelectable>>) {
-        this.on_input_events = on_input_events;
+        this.display_handler = display_handler;          
+        this.input_event_to_selectable = input_event_to_selectable;          
     }
 
     setPromiseHandlers(resolve: Awaited<ISelectable>, reject: Rejection){
@@ -122,25 +108,21 @@ export class SelectionBroker {
         var hit_selectable = this.input_event_to_selectable(e, this.display_handler);
         this.mouseover_selection = hit_selectable;
 
+        // Fanout to display behavior of appropriate type.
         if (e.type == "click") {
-            // Fanout clicks to all on_input_events
-            var nohits = true;
-            for (let on_input_event of this.on_input_events) {
-                // Updates InputState display and returns selection if viable option (active).
-                var selection = on_input_event(hit_selectable, "click");
-                if (selection && nohits) {
-                    this.resolve(selection); 
-                    nohits = false;
-                }
+            let displays = this.display_handler.display_map.values();
+            for (let display of displays) {
+                display.onClick(hit_selectable, "click");
             }
-            if (nohits) {
+            if (hit_selectable != null) {
+                this.resolve(hit_selectable);
+            } else {
                 this.reject();
             }
         } else if (e.type == "mousemove") {
-            // Fanout mousemove to all on_input_events
-            for (let on_input_event of this.on_input_events) {
-                // Updates InputState display.
-                on_input_event(hit_selectable, "mousemove");
+            let displays = this.display_handler.display_map.values();
+            for (let display of displays) {
+                display.onMousemove(hit_selectable, "mousemove");
             }
         }        
     }
@@ -207,14 +189,7 @@ export function build_broker_callback<T extends ISelectable>(
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
         // TODO: Have this filtering happen in a more legible place as part of refactor.
         var displays = options.map((o) => display_map.get(o)).filter((d) => d != null);
-        var onclicks = displays.map(
-            (d) => d.createOnclick(canvas)
-        );
-        var onmousemoves =  displays.map(
-            (d) => d.createOnmousemove(canvas)
-        );
         setupOptions(displays);
-        selection_broker.setOnInputEvents([...onclicks, ...onmousemoves]);
         selection_broker.setPromiseHandlers(resolve, reject);
     }
 }
@@ -251,7 +226,7 @@ export class Canvas2DBroker implements IBroker {
         view: IView<ICoordinate>,
     ) {
         var canvas = view.context.canvas as HTMLCanvasElement;
-        var selection_broker = new SelectionBroker(display_handler, null, inputEventToSelectable2D);
+        var selection_broker = new SelectionBroker(display_handler, inputEventToSelectable2D);
         // TODO: Error with unset handlers - dummies for now.
         selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
         // TODO: Move function into broker.
@@ -310,7 +285,7 @@ export class Canvas2DBroker implements IBroker {
             broker_class = SelectionBroker
         }
         // @ts-ignore Incompatible RenderingCon
-        var selection_broker = new broker_class(display_handler, null, inputEventToSelectable3D);
+        var selection_broker = new broker_class(display_handler, inputEventToSelectable3D);
         var display_map = display_handler.display_map;
         // TODO: Error with unset handlers - dummies for now.
         selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
