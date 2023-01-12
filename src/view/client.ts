@@ -8,22 +8,10 @@ import { editor_setup } from "../examples/editor/editor_setup";
 export const TICK_DURATION_MS = 33
 
 enum GameType {
-    Tactics = 0,
-    Playground2D = 1,
-    Playground3D = 2,
-    Cars3D = 3,
-    SlidingPuzzle = 4,
-    Climber = 5,
-    Editor = 6,
+    Editor = 0,
 }
 
 var game_type = (
-    // GameType.Tactics
-    // GameType.Playground2D
-    // GameType.Playground3D
-    // GameType.Cars3D
-    // GameType.SlidingPuzzle
-    // GameType.Climber
     GameType.Editor
 )
 
@@ -35,11 +23,6 @@ function create_start_button(setup_fn: () => void) {
         setup_fn()
         start_button.remove()
     }, {once : true});
-}
-
-// Dummy code to avoid type errors in switch check.
-if (Math.random() > 1) {
-    game_type += 1;
 }
 
 if (game_type == GameType.Editor) {

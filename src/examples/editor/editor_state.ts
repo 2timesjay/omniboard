@@ -33,4 +33,8 @@ export class EditorState extends BaseState {
     get_extras(): Array<ISelectable> {
         return this.extras;
     }
+
+    get_entities(): Array<Entity> {
+        return this.glements.filter(e => e instanceof Entity) as Array<Entity>;
+    }
 }

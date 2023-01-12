@@ -6,12 +6,12 @@ import { AbstractBasePhase, BaseInputs } from "../../model/phase";
 import { GridLocation } from "../../model/space";
 import { IState } from "../../model/state";
 import { BaseDisplayHandler } from "../../view/display_handler";
-import { EntityPlaceEffect, ToggleLocationEffect } from "./editor_effect";
+import { EntityDeleteEffect, EntityPlaceEffect, ToggleLocationEffect } from "./editor_effect";
 import { EditorState } from "./editor_state";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
-type MultiInput = GridLocation | EntityFactory;
+type MultiInput = GridLocation | EntityFactory | Entity;
 
 // TODO: Create UnionStep, which can take any two steps with disjoint inputs.
 export class MultiStep implements IInputStep<MultiInput, MultiInput> {
@@ -20,7 +20,9 @@ export class MultiStep implements IInputStep<MultiInput, MultiInput> {
     constructor(state: EditorState, auto_select: boolean = true) {
         // @ts-ignore get_extras is too broadly typed.
         this.acquirer = new SimpleInputAcquirer(
-            () => state.get_extras().concat(state.space.to_array()), false, auto_select,
+            () => state.get_extras().concat(state.space.to_array()).concat(state.get_entities()), 
+            false, 
+            auto_select,
         ); 
     }
 
@@ -45,6 +47,8 @@ export class MultiStep implements IInputStep<MultiInput, MultiInput> {
             return new ToggleLocationStep(state, true, this.input); // "Accelerates" through step.
         } else if (this.input instanceof EntityFactory) {
             return new PaletteSelectionStep(state, true, this.input); // "Accelerates" through step.
+        } else if (this.input instanceof Entity) {
+            return new DeleteFromLocationStep(state, false, this.input); // Await confirmation for deletion.
         }
     }
 }
@@ -145,6 +149,41 @@ export class ToggleLocationStep implements IInputStep<GridLocation, null> {
 
     consume_children(next_step: InputStop): Array<Effect> {
         this.effects = [new ToggleLocationEffect(this.input)];
+        return this.effects;
+    }
+    
+    get_next_step(state: EditorState): InputStop {
+        return new InputStop();
+    }
+}
+
+export class DeleteFromLocationStep implements IInputStep<Entity, null> {
+    acquirer: IInputAcquirer<Entity>;
+    occupied: Set<GridLocation>;
+    entities: Array<Entity>;
+    effects: Array<Effect>;
+
+    constructor(state: EditorState, auto_select: boolean = true, pre_select: Entity) {
+        // Restrict to unoccupied neighbors of source entity.
+        var options = pre_select ? [pre_select] : state.get_entities();
+        this.acquirer = new SimpleInputAcquirer(
+            () => options, false, auto_select,
+        ); 
+    }
+
+    get input(): Entity {
+        var input_response = this.acquirer.current_input;
+        if (isInputSignal(input_response)) {
+            return null;
+        } else if (input_response instanceof Stack) { // TODO: shouldn't have to check this
+            return input_response.value;
+        } else {
+            return input_response;
+        }
+    }
+
+    consume_children(next_step: InputStop): Array<Effect> {
+        this.effects = [new EntityDeleteEffect(this.input)];
         return this.effects;
     }
     
