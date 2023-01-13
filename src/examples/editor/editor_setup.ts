@@ -1,12 +1,10 @@
 import { ISelectable } from "../../model/core";
-import { Entity, Glement } from "../../common/entity";
+import { Entity } from "../../common/entity";
 import { InputRequest } from "../../model/input";
-import { GridLocation, ILocation } from "../../model/space";
 import { VolumeSpace } from "../../common/space";
-import { Canvas2DBroker, DisplayMap, ThreeBroker } from "../../view/broker";
+import { Broker, DisplayDim } from "../../view/broker";
 import { TICK_DURATION_MS } from "../../view/client";
-import { AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D } from "../../view/display";
-import { DisplayHandler, SmartDisplayHandler } from "../../view/display_handler";
+import { DisplayHandler } from "../../view/display_handler";
 import { View3D } from "../../view/rendering_three";
 import { EditorController, EditorPhase } from "./editor_controller";
 import { EditorState } from "./editor_state";
@@ -19,7 +17,7 @@ function editor_state_setup(k: number): EditorState {
     var state = new EditorState();
 
     // Space Setup
-    const grid_space = new VolumeSpace(4, 4, 2);
+    const grid_space = new VolumeSpace(k, k, k/2);
     for (var loc of grid_space.to_array()) {
         if (loc.co.z > 0) { loc.traversable = false}
     }
@@ -41,7 +39,7 @@ function editor_state_setup(k: number): EditorState {
     state: EditorState, view: View3D,
 ): [DisplayHandler, InputRequest<ISelectable>] {
     var display_handler = new EditorDisplayHandler(view, state, canvas_display_builder);
-    var broker = new ThreeBroker(display_handler, view, EditorSelectionBroker);
+    var broker = new Broker(display_handler, view, DisplayDim.Three, EditorSelectionBroker);
     // Connect View (display) interactions with state through Broker
     
     // NOTE: Only one display
@@ -57,7 +55,7 @@ export function editor_menu_display_setup(
     state: EditorState, view: View2D,
 ): [DisplayHandler, InputRequest<ISelectable>] {
     var display_handler = new EditorMenuDisplayHandler(view, state, palette_display_builder);
-    var broker = new Canvas2DBroker(display_handler, view);
+    var broker = new Broker(display_handler, view, DisplayDim.Two);
     // Connect View (display) interactions with state through Broker
     
     // NOTE: Only one display
@@ -71,7 +69,7 @@ export function editor_menu_display_setup(
 
 export function editor_setup() {
     // State Setup
-    var k = 4;
+    var k = 8;
     var state = editor_state_setup(k)
     
     // Create Canvas

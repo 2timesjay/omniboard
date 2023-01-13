@@ -183,9 +183,22 @@ export class SelectionBroker {
     }
 }
 
-// CallbackSelectionFn
-export function build_broker_callback<T extends ISelectable>(
-    selection_broker: SelectionBroker, display_map: DisplayMap, canvas: HTMLCanvasElement
+/**
+ * Broker objects
+ */
+export interface IBroker {
+    input_request: InputRequest<ISelectable>;
+    // new(display_handler: IDisplayHandler, view: IInputView<ICoordinate>): IBroker; // TODO: Doesn't work?
+    addListeners: (selection_broker: SelectionBroker, view: IView<ICoordinate>) => void;
+};
+
+export enum DisplayDim {
+    Two = 2,
+    Three = 3,
+}
+
+function broker_selection_callback<T extends ISelectable>(
+    selection_broker: SelectionBroker, display_map: DisplayMap
 ): CallbackSelectionFn<T> {
     // Sets selection_broker's fanout to on_input_events of instances of T in Options.
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
@@ -196,23 +209,10 @@ export function build_broker_callback<T extends ISelectable>(
     }
 }
 
-/**
- * Broker objects
- */
-
-
-export interface IBroker {
-    input_request: InputRequest<ISelectable>;
-    // new(display_handler: IDisplayHandler, view: IInputView<ICoordinate>): IBroker; // TODO: Doesn't work?
-    addListeners: (selection_broker: SelectionBroker, view: IView<ICoordinate>) => void;
-};
-
-// TODO: Eliminate all generics in this class if possible
-// TODO: BoardState -> IState
+// TODO: Merge with SelectionBroker
 // TODO: Unify listener setup (since 3 steps here are about that).
-// TODO: Ensure this is robust to new Display creation. DisplayBrokerWrapper?
 /**
- * Canvas2DBroker does the following
+ * Broker does the following
  * 1) sets up event listeners.
  * 2) configures those listeners to resolve/reject promise states
  *      clicks on SelectableDisplays that are available resolve as
@@ -221,20 +221,31 @@ export interface IBroker {
  *      InputView and then listens for InputResponse.
  * 4) Wires the listeners to actual mouse events.
  */
-export class Canvas2DBroker implements IBroker {
+ export class Broker implements IBroker {
     input_request: InputRequest<ISelectable>;
 
     constructor(
         display_handler: DisplayHandler,
         view: IView<ICoordinate>,
+        display_dim: DisplayDim,
+        broker_class?: typeof SelectionBroker,
     ) {
-        var canvas = view.context.canvas as HTMLCanvasElement;
-        var selection_broker = new SelectionBroker(display_handler, inputEventToSelectable2D);
+        if (display_dim === DisplayDim.Two) {
+            var input_event_to_selectable = inputEventToSelectable2D;
+        } else {
+            var input_event_to_selectable = inputEventToSelectable3D;
+        }
+        if (broker_class === undefined) {
+            broker_class = SelectionBroker
+        }
+        // @ts-ignore Incompatible RenderingCon
+        var selection_broker = new broker_class(display_handler, input_event_to_selectable);
         // TODO: Error with unset handlers - dummies for now.
         selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
         // TODO: Move function into broker.
-        var brokered_selection_fn = build_broker_callback(selection_broker, display_handler.display_map, canvas);
-        var input_request = async_input_getter(brokered_selection_fn);
+        // @ts-ignore OK with 3d displays
+        var broker_selection_fn = broker_selection_callback(selection_broker, display_handler.display_map);
+        var input_request = async_input_getter(broker_selection_fn);
         this.input_request = input_request;
         
         this.addListeners(selection_broker, view);
@@ -243,66 +254,6 @@ export class Canvas2DBroker implements IBroker {
     addListeners(
         selection_broker: SelectionBroker,
         view: IView<ICoordinate>,
-    ) {
-        // @ts-ignore No OffscreenCanvas
-        view.context.canvas.onclick = function (event: MouseEvent) {
-            selection_broker.onClick(event);
-        }
-        // @ts-ignore No OffscreenCanvas
-        view.context.canvas.onmousemove = function (event: MouseEvent) {
-            selection_broker.onMousemove(event);
-        }
-        window.addEventListener(
-            "keydown", 
-            function (event) {
-                selection_broker.onKeyboardEvent(event);
-            }, 
-            false,
-        );
-    }
-}
-
-// TODO: Fold into SelectionBroker, unify with Canvas2DBroker
-// TODO: Unify listener setup (since 3 steps here are about that).
-// TODO: Ensure this is robust to new Display creation. DisplayBrokerWrapper?
-/**
- * ThreeBroker does the following
- * 1) sets up event listeners.
- * 2) configures those listeners to resolve/reject promise states
- *      clicks on SelectableDisplays that are available resolve as
- *      those selectables. Clicks on the unavailable reject.
- * 3) Creates the input_request that makes InputOptions available in 
- *      InputView and then listens for InputResponse.
- * 4) Wires the listeners to actual mouse events.
- */
- export class ThreeBroker implements IBroker {
-    input_request: InputRequest<ISelectable>;
-
-    constructor(
-        display_handler: DisplayHandler, 
-        view: IView3D,
-        broker_class?: typeof SelectionBroker,
-    ) {
-        if (broker_class === undefined) {
-            broker_class = SelectionBroker
-        }
-        // @ts-ignore Incompatible RenderingCon
-        var selection_broker = new broker_class(display_handler, inputEventToSelectable3D);
-        var display_map = display_handler.display_map;
-        // TODO: Error with unset handlers - dummies for now.
-        selection_broker.setPromiseHandlers(()=>{console.log("sres")}, ()=>{console.log("srej")});
-        // TODO: Move function into broker.
-        // @ts-ignore OK with 3d displays
-        var brokered_selection_fn = build_broker_callback(selection_broker, display_map, view.context.canvas);
-        var input_request = async_input_getter(brokered_selection_fn);
-        this.input_request = input_request;
-        
-        this.addListeners(selection_broker, view);
-    }
-    
-    addListeners(
-        selection_broker: SelectionBroker,
-        view: IView3D, 
     ) {
         // @ts-ignore No OffscreenCanvas
         view.context.canvas.onclick = function (event: MouseEvent) {

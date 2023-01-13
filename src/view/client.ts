@@ -1,8 +1,4 @@
 /* Imports */
-import { makeCanvas, View2D, View2DPseudoZ } from "./rendering";
-import { DisplayHandler } from "./display_handler";
-import { View3D } from "./rendering_three";
-import { Canvas2DBroker, ThreeBroker } from "./broker";
 import { editor_setup } from "../examples/editor/editor_setup";
 
 export const TICK_DURATION_MS = 33

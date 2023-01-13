@@ -5,7 +5,7 @@ import { GridCoordinate, GridLocation, ICoordinate } from "../../model/space";
 import { IState } from "../../model/state";
 import { Animatable, Animate, Animation, AnimationFn, BaseAnimationFn, build_base_mixer, CircleInPlaceAnimationFn } from "../../view/animation";
 import { GraphicsVector } from "../../view/core";
-import { _EntityDisplay, _EntityDisplay3D, AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D, ILocatable, IPathable, LinearVisual3D } from "../../view/display";
+import { _EntityDisplay, _EntityDisplay3D, AbstractDisplay, EntityDisplay3D, GridLocationDisplay3D, ILocatable, IPathable, LinearVisual3D, DisplayState } from "../../view/display";
 import { ActiveRegion, DisplayBuilder, SmartDisplayHandler } from "../../view/display_handler";
 import { IView, RenderObject, View2D } from "../../view/rendering";
 import { IView3D, View3D } from "../../view/rendering_three";
@@ -209,9 +209,11 @@ class _EditableLocationDisplay extends AbstractDisplay<GridLocation> implements 
         if (this.traversable && this.active) {
             var adj_lfa = lfa;
         } else if (this.traversable && !this.active) {
-            var adj_lfa = 0.8 * lfa;
+            var adj_lfa = 1.0 * lfa;
+        } else if (this.state == DisplayState.Preview && this.active) {
+            var adj_lfa = 1.0 * lfa;
         } else if (!this.traversable && this.active) {
-            var adj_lfa = 0.2 * lfa;
+            var adj_lfa = 0.0 * lfa;
         } else {
             var adj_lfa = 0;
         }
