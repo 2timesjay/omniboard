@@ -1,6 +1,6 @@
 import { Mesh, StaticReadUsage } from "three";
 import { ISelectable, Tree } from "../model/core";
-import { async_input_getter, CallbackSelectionFn, InputRequest, InputSignal, PreviewMap } from "../model/input";
+import { async_input_getter, CallbackSelectionFn, InputRequest, InputResponse, InputSignal, PreviewMap } from "../model/input";
 import { ICoordinate } from "../model/space";
 import { Awaited, Rejection } from "../model/utilities";
 import { AbstractDisplay, DisplayState } from "./display";
@@ -78,10 +78,6 @@ export function inputEventToSelectable3D(
     return null;
 }
 
-export function setupOptions(options: Array<AbstractDisplay<ISelectable>>) {
-    options.forEach((o) => o.state = DisplayState.Option);
-}
-
 export class SelectionBroker {
     resolve: Awaited<ISelectable>;
     reject: Rejection;
@@ -90,13 +86,15 @@ export class SelectionBroker {
     on_input_events: Array<OnInputEvent<ISelectable>>;
     input_event_to_selectable: inputEventToSelectable;
     mouseover_selection: ISelectable;
+    options: Array<AbstractDisplay<ISelectable>>;
 
     constructor(
         display_handler: BaseDisplayHandler,
         input_event_to_selectable: inputEventToSelectable,
     ){
         this.display_handler = display_handler;          
-        this.input_event_to_selectable = input_event_to_selectable;          
+        this.input_event_to_selectable = input_event_to_selectable;   
+        this.options = [];       
     }
 
     setPromiseHandlers(resolve: Awaited<ISelectable>, reject: Rejection){
@@ -104,27 +102,31 @@ export class SelectionBroker {
         this.reject = reject;
     }
 
-    onMouseEvent(e: MouseEvent) {
+    setOptions(options: Array<AbstractDisplay<ISelectable>>) {
+        console.log("Setting Options: " + options);
+        options.forEach((o) => o.state = DisplayState.Option);
+        this.options = options;
+    }
+
+    onClick(e: MouseEvent) {
         var hit_selectable = this.input_event_to_selectable(e, this.display_handler);
         this.mouseover_selection = hit_selectable;
+        for (let display of this.options) {
+            display.onClick(hit_selectable);
+        }
+        if (hit_selectable != null) {
+            this.resolve(hit_selectable);
+        } else {
+            this.reject();
+        }
+    }
 
-        // Fanout to display behavior of appropriate type.
-        if (e.type == "click") {
-            let displays = this.display_handler.display_map.values();
-            for (let display of displays) {
-                display.onClick(hit_selectable, "click");
-            }
-            if (hit_selectable != null) {
-                this.resolve(hit_selectable);
-            } else {
-                this.reject();
-            }
-        } else if (e.type == "mousemove") {
-            let displays = this.display_handler.display_map.values();
-            for (let display of displays) {
-                display.onMousemove(hit_selectable, "mousemove");
-            }
-        }        
+    onMousemove(e: MouseEvent) {
+        var hit_selectable = this.input_event_to_selectable(e, this.display_handler);
+        this.mouseover_selection = hit_selectable;
+        for (let display of this.options) {
+            display.onMousemove(hit_selectable);
+        }   
     }
 
     onKeyboardEvent (e: KeyboardEvent) {
@@ -148,20 +150,20 @@ export class SelectionBroker {
 
         // Confirm/Reject
         if (e.code == ENTER) {
-            this.resolve(InputSignal.Confirm);
+            this.resolve(new InputResponse(null, InputSignal.Confirm));
         }
         if (e.code == ESCAPE) {
-            this.resolve(InputSignal.Reject);
+            this.resolve(new InputResponse(null, InputSignal.Reject));
         }
 
         // Enter/Exit
         const E = "KeyE";
         const D = "KeyD";
         if (e.code == E) {
-            this.resolve(InputSignal.Enter);
+            this.resolve(new InputResponse(null, InputSignal.Enter));
         }
         if (e.code == D) {
-            this.resolve(InputSignal.Exit);
+            this.resolve(new InputResponse(null, InputSignal.Exit));
         }
         
         // View Controls
@@ -189,7 +191,7 @@ export function build_broker_callback<T extends ISelectable>(
     return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
         // TODO: Have this filtering happen in a more legible place as part of refactor.
         var displays = options.map((o) => display_map.get(o)).filter((d) => d != null);
-        setupOptions(displays);
+        selection_broker.setOptions(displays);
         selection_broker.setPromiseHandlers(resolve, reject);
     }
 }
@@ -202,6 +204,7 @@ export function build_broker_callback<T extends ISelectable>(
 export interface IBroker {
     input_request: InputRequest<ISelectable>;
     // new(display_handler: IDisplayHandler, view: IInputView<ICoordinate>): IBroker; // TODO: Doesn't work?
+    addListeners: (selection_broker: SelectionBroker, view: IView<ICoordinate>) => void;
 };
 
 // TODO: Eliminate all generics in this class if possible
@@ -234,20 +237,20 @@ export class Canvas2DBroker implements IBroker {
         var input_request = async_input_getter(brokered_selection_fn);
         this.input_request = input_request;
         
-        this.addCanvasListeners(selection_broker, view);
+        this.addListeners(selection_broker, view);
     }
     
-    addCanvasListeners(
+    addListeners(
         selection_broker: SelectionBroker,
         view: IView<ICoordinate>,
     ) {
         // @ts-ignore No OffscreenCanvas
         view.context.canvas.onclick = function (event: MouseEvent) {
-            selection_broker.onMouseEvent(event);
+            selection_broker.onClick(event);
         }
         // @ts-ignore No OffscreenCanvas
         view.context.canvas.onmousemove = function (event: MouseEvent) {
-            selection_broker.onMouseEvent(event);
+            selection_broker.onMousemove(event);
         }
         window.addEventListener(
             "keydown", 
@@ -259,8 +262,7 @@ export class Canvas2DBroker implements IBroker {
     }
 }
 
-
-// TODO: Fold into SelectionBroker
+// TODO: Fold into SelectionBroker, unify with Canvas2DBroker
 // TODO: Unify listener setup (since 3 steps here are about that).
 // TODO: Ensure this is robust to new Display creation. DisplayBrokerWrapper?
 /**
@@ -304,11 +306,11 @@ export class Canvas2DBroker implements IBroker {
     ) {
         // @ts-ignore No OffscreenCanvas
         view.context.canvas.onclick = function (event: MouseEvent) {
-            selection_broker.onMouseEvent(event);
+            selection_broker.onClick(event);
         }
         // @ts-ignore No OffscreenCanvas
         view.context.canvas.onmousemove = function (event: MouseEvent) {
-            selection_broker.onMouseEvent(event);
+            selection_broker.onMousemove(event);
         }
         window.addEventListener(
             "keydown", 

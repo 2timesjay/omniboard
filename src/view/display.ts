@@ -304,11 +304,8 @@ export class AbstractDisplay<T extends ISelectable> {
         return this.selectable == hit_selectable;
     }
 
-    onClick(hit_selectable: T | null, type: string): T | null {
+    onClick(hit_selectable: T | null): T | null {
         // TODO: Clean up this and `SelectionBroker` fanout
-        if (type != "click") {
-            return null;
-        }
         if (this.isHit(hit_selectable)) {
             // self.state = DisplayState.Select;
             return this.selectable;
@@ -318,10 +315,7 @@ export class AbstractDisplay<T extends ISelectable> {
         }
     }
 
-    onMousemove(hit_selectable: T | null, type: string): T | null {
-        if (type != "mousemove") {
-            return null;
-        }
+    onMousemove(hit_selectable: T | null): T | null {
         if (this.state != DisplayState.Select) {
             if (this.isHit(hit_selectable)) {
                 this.state = DisplayState.Preview;
