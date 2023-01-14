@@ -1,5 +1,6 @@
 /* Imports */
 import { editor_setup } from "../examples/editor/editor_setup";
+import { EditorState } from "../examples/editor/editor_state";
 import { save_editor_state, load_editor_state } from "../examples/editor/editor_utilities";
 
 export const TICK_DURATION_MS = 33
@@ -31,19 +32,27 @@ function create_save_button(save_fn: (window: Window) => void) {
     }, {once : true});
 }
 
-function create_load_button(load_fn: (window: Window) => void) {
+type StateLoadCallback = (editor_state: EditorState) => void;
+
+function create_load_button(
+    load_fn: (window: Window, onload_callback: StateLoadCallback) => void, 
+    onload_callback: StateLoadCallback
+) {
     var load_button = document.createElement("button")
     load_button.innerHTML = "Load"
     document.body.appendChild(load_button)
     load_button.addEventListener("click", function() {
-        load_fn(window)
+        load_fn(window, onload_callback)
     }, {once : true});
 }
 
 if (game_type == GameType.Editor) {
     // Set up some utility buttons
     create_save_button(save_editor_state);
-    create_load_button(load_editor_state);
+    var onload_callback = (editor_state: EditorState) => {
+        editor_setup(editor_state);
+    }
+    create_load_button(load_editor_state, onload_callback);
     // NOTE: Await first click to start.
     create_start_button(editor_setup);
 }

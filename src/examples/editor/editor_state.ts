@@ -20,6 +20,10 @@ export class EditorState extends BaseState {
         this.extras = [unit_factory, box_factory];
     }
 
+    static from_json(json: any): EditorState {
+        return new EditorState();
+    }
+
     add(glement: Glement, loc: GridLocation) {
         glement.setLoc(loc);
         this.glements.push(glement);

@@ -13,7 +13,8 @@ import { EditorSelectionBroker } from "./editor_broker";
 import { View2D } from "../../view/rendering";
 
 
-function editor_state_setup(k: number): EditorState {
+// TODO: Don't export
+export function editor_state_setup(k: number): EditorState {
     var state = new EditorState();
 
     // Space Setup
@@ -67,10 +68,14 @@ export function editor_menu_display_setup(
     return [display_handler, input_request];
 }
 
-export function editor_setup() {
+export function editor_setup(loaded_state?: EditorState) {
     // State Setup
-    var k = 8;
-    var state = editor_state_setup(k)
+    var k = 6;
+    if (loaded_state) {
+        var state = loaded_state;
+    } else {
+        var state = editor_state_setup(k)
+    }
     
     // Create Canvas
     const size = 100
