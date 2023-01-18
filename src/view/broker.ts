@@ -79,7 +79,7 @@ export function inputEventToSelectable3D(
 }
 
 export class SelectionBroker {
-    resolve: Awaited<ISelectable>;
+    resolve: Awaited<InputResponse<ISelectable>>;
     reject: Rejection;
     // Organize more efficiently; by input type?
     display_handler: BaseDisplayHandler;
@@ -97,15 +97,40 @@ export class SelectionBroker {
         this.options = [];       
     }
 
-    setPromiseHandlers(resolve: Awaited<ISelectable>, reject: Rejection){
+    setPromiseHandlers(resolve: Awaited<InputResponse<ISelectable>>, reject: Rejection){
         this.resolve = resolve;
         this.reject = reject;
     }
 
     setOptions(options: Array<AbstractDisplay<ISelectable>>) {
-        console.log("Setting Options: " + options);
         options.forEach((o) => o.state = DisplayState.Option);
         this.options = options;
+    }
+
+    onDragStart(e: MouseEvent) {
+        var hit_selectable = this.input_event_to_selectable(e, this.display_handler);
+        this.mouseover_selection = hit_selectable;
+        for (let display of this.options) {
+            display.onClick(hit_selectable);
+        }
+        if (hit_selectable != null) {
+            this.resolve(new InputResponse(hit_selectable, InputSignal.DragStart));
+        } else {
+            this.reject();
+        }
+    }
+
+    onDragEnd(e: MouseEvent) {
+        var hit_selectable = this.input_event_to_selectable(e, this.display_handler);
+        this.mouseover_selection = hit_selectable;
+        for (let display of this.options) {
+            display.onClick(hit_selectable);
+        }
+        if (hit_selectable != null) {
+            this.resolve(new InputResponse(hit_selectable, InputSignal.DragEnd));
+        } else {
+            this.reject();
+        }
     }
 
     onClick(e: MouseEvent) {
@@ -115,7 +140,7 @@ export class SelectionBroker {
             display.onClick(hit_selectable);
         }
         if (hit_selectable != null) {
-            this.resolve(hit_selectable);
+            this.resolve(new InputResponse(hit_selectable));
         } else {
             this.reject();
         }
@@ -141,7 +166,7 @@ export class SelectionBroker {
             (e.code == C) &&
             (this.mouseover_selection != null) 
         ) {
-            this.resolve(this.mouseover_selection);
+            this.resolve(new InputResponse(this.mouseover_selection, InputSignal.Confirm));
         }
         if (e.code == X) {
             // this.resolve(InputSignal.Reject);
@@ -201,7 +226,7 @@ function broker_selection_callback<T extends ISelectable>(
     selection_broker: SelectionBroker, display_map: DisplayMap
 ): CallbackSelectionFn<T> {
     // Sets selection_broker's fanout to on_input_events of instances of T in Options.
-    return (options: Array<T>, resolve: Awaited<T>, reject: Rejection) => {
+    return (options: Array<T>, resolve: Awaited<InputResponse<T>>, reject: Rejection) => {
         // TODO: Have this filtering happen in a more legible place as part of refactor.
         var displays = options.map((o) => display_map.get(o)).filter((d) => d != null);
         selection_broker.setOptions(displays);
@@ -223,6 +248,7 @@ function broker_selection_callback<T extends ISelectable>(
  */
  export class Broker implements IBroker {
     input_request: InputRequest<ISelectable>;
+    dragging: boolean;
 
     constructor(
         display_handler: DisplayHandler,
@@ -249,20 +275,39 @@ function broker_selection_callback<T extends ISelectable>(
         this.input_request = input_request;
         
         this.addListeners(selection_broker, view);
+        this.dragging = false;
     }
     
     addListeners(
         selection_broker: SelectionBroker,
         view: IView<ICoordinate>,
     ) {
+        var self = this;
         // @ts-ignore No OffscreenCanvas
         view.context.canvas.onclick = function (event: MouseEvent) {
-            selection_broker.onClick(event);
+            if (!self.dragging) {
+                selection_broker.onClick(event);
+            }
         }
         // @ts-ignore No OffscreenCanvas
         view.context.canvas.onmousemove = function (event: MouseEvent) {
             selection_broker.onMousemove(event);
         }
+        // @ts-ignore No OffscreenCanvas
+        view.context.canvas.onmousedown = function (event: MouseEvent) {
+            if (!self.dragging) {
+                selection_broker.onDragStart(event);
+                self.dragging = true;
+            }
+        }
+        // @ts-ignore No OffscreenCanvas
+        view.context.canvas.onmouseup = function (event: MouseEvent) {
+            if(self.dragging) {
+                selection_broker.onDragEnd(event);
+                setTimeout(() => {self.dragging = false}, 10);
+            }
+        }
+        // @ts-ignore No OffscreenCanvas
         window.addEventListener(
             "keydown", 
             function (event) {

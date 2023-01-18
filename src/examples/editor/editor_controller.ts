@@ -42,7 +42,11 @@ export class MultiStep implements IInputStep<MultiInput, MultiInput> {
     
     get_next_step(state: EditorState): IInputStep<MultiInput, null> {
         var selection = this.input.selection;
-        if (selection instanceof GridLocation) {
+        var signal = this.input.signal;
+        if (signal == InputSignal.DragStart && selection instanceof GridLocation) {
+            console.log("MultiStep Drag Placeholder");
+            return new ToggleLocationAreaStep(state, true, selection); // "Accelerates" through step.
+        } else if (selection instanceof GridLocation) {
             return new ToggleLocationStep(state, true, selection); // "Accelerates" through step.
         } else if (selection instanceof EntityFactory) {
             return new PaletteSelectionStep(state, true, selection); // "Accelerates" through step.
@@ -118,6 +122,40 @@ export class AddToLocationStep implements IInputStep<GridLocation, null> {
 }
 
 export class ToggleLocationStep implements IInputStep<GridLocation, null> {
+    acquirer: IInputAcquirer<GridLocation>;
+    occupied: Set<GridLocation>;
+    entities: Array<Entity>;
+    effects: Array<Effect>;
+
+    constructor(state: EditorState, auto_select: boolean = true, pre_select: GridLocation) {
+        // Restrict to unoccupied neighbors of source entity.
+        var options = pre_select ? [pre_select] : state.space.to_array();
+        this.acquirer = new SimpleInputAcquirer(
+            () => options, false, auto_select,
+        ); 
+    }
+
+    get input(): InputResponse<GridLocation> {
+        var input_response = this.acquirer.current_input;
+        if (input_response.signal == InputSignal.Reject) {
+            return null;
+        } else {
+            return input_response;
+        }
+    }
+
+    consume_children(next_step: InputStop): Array<Effect> {
+        this.effects = [new ToggleLocationEffect(this.input.selection)];
+        return this.effects;
+    }
+    
+    get_next_step(state: EditorState): InputStop {
+        return new InputStop();
+    }
+}
+
+
+export class ToggleLocationAreaStep implements IInputStep<GridLocation, null> {
     acquirer: IInputAcquirer<GridLocation>;
     occupied: Set<GridLocation>;
     entities: Array<Entity>;

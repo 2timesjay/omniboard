@@ -58,7 +58,7 @@ export type InputRequest<T extends ISelectable> = (
 export type SelectionFn<T extends ISelectable> = (options: InputOptions<T>) => InputResponse<T>
 // TODO: Pass preview_map directly instead of just options.
 export type CallbackSelectionFn<T extends ISelectable> = (
-    options: InputOptions<T>, resolve: Awaited<T>, reject: Rejection // Awaited from utilities. Replace in ts 4.5
+    options: InputOptions<T>, resolve: Awaited<InputResponse<T>>, reject: Rejection // Awaited from utilities. Replace in ts 4.5
 ) => void;
 
 /**
@@ -86,7 +86,7 @@ export function async_input_getter<T extends ISelectable>(
     ): Promise<InputResponse<T>> {
         // TS analog to type guarding kind of.
         // Manually specify type to remove errors
-        var selection_promise: Promise<T> = new Promise(
+        var selection_promise: Promise<InputResponse<T>> = new Promise(
             function(resolve, reject) {
                 selection_fn(input_options, resolve, reject)
             }
@@ -94,7 +94,7 @@ export function async_input_getter<T extends ISelectable>(
         return selection_promise.then(
             function(selection) { 
                 console.log("Resolve Selection: ", selection);
-                return new InputResponse(selection);
+                return selection;
             }
         ).catch(
             function() {
@@ -196,6 +196,81 @@ export class SimpleInputAcquirer<T> implements IInputAcquirer<T> {
 
     get_options(input: InputResponse<T>): InputOptions<T> {
         return this._option_fn(input.selection);
+    }
+
+    * input_option_generator(
+        base?: T
+    ): SelectionGen<T> {
+        // Handles cases where intermediate input is required by yielding it.
+        // Coroutine case.
+        var options = this.get_options(new InputResponse(base));
+
+        // auto_select case
+        if (options.length == 1 && this._auto_select) {
+            this.current_input = new InputResponse(options[0]);
+            return this.current_input;
+        }
+
+        var input_resp = yield options;
+        if (this.require_confirmation || isInputSignal(input_resp)) {
+            do {
+                var REJECT_CASE = !input_resp;
+                var CONFIRM_CASE = (input_resp != null && input_resp == this.current_input)
+                // TODO: Currently treats "null" response as special flag to pop.
+                if (REJECT_CASE) {
+                    // var input_resp = yield options;
+                    return null; // NOTE: Propagates POP Signal to subphase
+                } else if (CONFIRM_CASE){
+                    console.log("Confirm Simple InputResponse");
+                    break;
+                } else if (!isInputSignal(input_resp)) {
+                    console.log("InputResponse: ", input_resp);
+                    this.current_input = input_resp;
+                    yield options;
+                } else {
+                    console.log('Invalid Input, ', input_resp);
+                    yield options;
+                }
+            } while(true);
+        } else {
+            // TODO: Not set consistently across cases.
+            this.current_input = input_resp;
+        }
+        return this.current_input;
+    }
+}
+
+export class DragInputAcquirer<T> implements IInputAcquirer<T> {
+    // TODO: Cleanup - Simplify coupling with controller loop.
+    _option_fn: OptionFn<T>;
+    _current_inputs: Array<InputResponse<T>>;
+    current_input: InputResponse<T>;
+    require_confirmation: boolean;
+    _auto_select: boolean;
+    
+    constructor(
+        option_fn: OptionFn<T>,
+        require_confirmation: boolean = true,
+        auto_select: boolean = false
+    ) {
+        this._auto_select = auto_select;
+        this._option_fn = option_fn;
+        // NOTE: State has to return after any complete pop off the stack.
+        this._current_inputs = [];
+        this.current_input = null;
+        this.require_confirmation = require_confirmation;
+    }
+
+    get stage(): number {
+        return this._current_inputs.length;
+    }
+
+    get_options(input: InputResponse<T>): InputOptions<T> {
+        if (this.stage == 0) { // Drag Start
+            return this._option_fn(null);
+        } else {
+            return this._option_fn(input.selection);
+        }
     }
 
     * input_option_generator(
