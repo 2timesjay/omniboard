@@ -1,3 +1,4 @@
+import { ISerializable } from "../model/core";
 import { AbstractSpace, GridCoordinate, GridLocation, RelativeCoordinateOperator, RelativeGridCoordinate, Vector } from "../model/space";
 
 // RelativeNeighborhood - Any adjacent square, plus a jump or drop of up to 1.
@@ -16,7 +17,7 @@ export const VOLUME_ADJACENCY = [
     RelativeGridCoordinate.from_xyz(-1, 0, 1),
 ]
 
-export class VolumeSpace extends AbstractSpace<GridLocation> {
+export class VolumeSpace extends AbstractSpace<GridLocation> implements ISerializable {
     d: number;
     h: number;
     w: number;
@@ -52,6 +53,14 @@ export class VolumeSpace extends AbstractSpace<GridLocation> {
         } else {
             return null;
         }
+    }
+
+    static from_array(h: number, w: number, d: number, arr: Array<GridLocation>): VolumeSpace {
+        var space = new VolumeSpace(h, w, d);
+        for (var loc of arr) {
+            space.locs[loc.x][loc.y][loc.z] = loc;
+        }
+        return space;
     }
 
     getNaturalNeighborhood(loc: GridLocation): Array<GridLocation> {
@@ -102,5 +111,24 @@ export class VolumeSpace extends AbstractSpace<GridLocation> {
     // Toggle Whether a grid location is traversable or not.
     toggle(loc: GridLocation) {
         loc.traversable = !loc.traversable;
+    }
+
+    serialize(): string {
+        return JSON.stringify({
+            "class": "VolumeSpace",
+            "d": this.d,
+            "h": this.h,
+            "w": this.w,
+            "locs": this.to_array().map((loc) => loc.serialize()),
+        });
+    }
+
+    static deserialize(serialized: string): VolumeSpace {
+        var obj = JSON.parse(serialized);
+        return VolumeSpace.from_array(
+            obj.h, obj.w, obj.d, 
+            // @ts-ignore 'loc' will be of type string
+            obj.locs.map((loc) => GridLocation.deserialize(loc)),
+        );
     }
 }

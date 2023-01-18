@@ -2,13 +2,13 @@ import { Glement, Entity, GlementFactory, EntityFactory, EntityType } from "../.
 import { BaseState } from "../../model/state";
 import { VolumeSpace } from "../../common/space";
 import { GridLocation } from "../../model/space";
-import { ISelectable } from "../../model/core";
+import { ISelectable, ISerializable } from "../../model/core";
 
 const UNIT_TYPE = new EntityType("UNIT");
 const BOX_TYPE = new EntityType("BOX");
 
 
-export class EditorState extends BaseState {
+export class EditorState extends BaseState implements ISerializable {
     glements: Array<Glement>;
     space: VolumeSpace;
     extras: Array<ISelectable>;
@@ -18,10 +18,6 @@ export class EditorState extends BaseState {
         var unit_factory = new EntityFactory(Entity, UNIT_TYPE);
         var box_factory = new EntityFactory(Entity, BOX_TYPE);
         this.extras = [unit_factory, box_factory];
-    }
-
-    static from_json(json: any): EditorState {
-        return new EditorState();
     }
 
     add(glement: Glement, loc: GridLocation) {
@@ -40,5 +36,22 @@ export class EditorState extends BaseState {
 
     get_entities(): Array<Entity> {
         return this.glements.filter(e => e instanceof Entity) as Array<Entity>;
+    }
+
+    serialize(): string {
+        return JSON.stringify({
+            "class": "EditorState",
+            "space": this.space.serialize(),
+            "glements": this.glements.map((glement) => glement.serialize()),
+        });
+    }
+
+    static deserialize(serialized: string): EditorState {
+        var obj = JSON.parse(serialized);
+        var state = new EditorState();
+        state.space = VolumeSpace.deserialize(obj.space);
+        // @ts-ignore Need to specify that EditorState contains entities instead of Glements.
+        state.glements = obj.glements.map((glement) => Entity.deserialize(glement));
+        return state;
     }
 }

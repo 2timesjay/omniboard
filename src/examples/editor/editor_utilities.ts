@@ -31,10 +31,10 @@ async function saveFile(window: Window, blob: Blob) {
   await writableStream.close();
 }
 
-export function save_editor_state(window: Window) {
+export function save_editor_state(window: Window, editor_state_retriever: () => EditorState) {
   // Serialize the state of an EditorState object so it can be reloaded.
   // Open the user's file browser and save to a file.
-  var data = JSON.stringify({});
+  var data = editor_state_retriever().serialize();
   var blob = new Blob([data], {type: 'application/json'});
   saveFile(window, blob);
 }
@@ -44,8 +44,8 @@ export function load_editor_state(window: Window, onload_callback: (editor_state
   var loaded_data = getTheFile(window).then((fileData) => {
     console.log(fileData)
     console.log(onload_callback)
-    // var editor_state = EditorState.from_json(loaded_json)
-    var editor_state = editor_state_setup(6);
+    var editor_state = EditorState.deserialize(fileData);
+    // var editor_state = editor_state_setup(6);
     onload_callback(editor_state);
   });
 }

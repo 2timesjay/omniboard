@@ -1,3 +1,5 @@
+import { ISerializable } from "./core";
+
 export interface ICoordinate { }
 
 export interface DiscreteCoordinate extends ICoordinate { }
@@ -124,7 +126,7 @@ export interface Vector {
     z?: number;
 }
 
-export class GridLocation implements IDiscreteLocation {
+export class GridLocation implements IDiscreteLocation, ISerializable {
     co: GridCoordinate;
 
     traversable: boolean;
@@ -153,6 +155,20 @@ export class GridLocation implements IDiscreteLocation {
 
     get z(): number {
         return this.co.z;
+    }
+
+    serialize(): string {
+        return JSON.stringify({
+            "x": this.x, "y": this.y, "z": this.z,
+            "traversable": this.traversable,
+        });
+    }
+
+    static deserialize(serialized: string): GridLocation {
+        var obj = JSON.parse(serialized);
+        var loc = GridLocation.from_xyz(obj.x, obj.y, obj.z);
+        loc.traversable = obj.traversable;
+        return loc;
     }
 }
 

@@ -1,5 +1,10 @@
 import { InputOptions, InputResponse } from "./input";
 
+export interface ISerializable {
+    serialize(): string;
+    //static deserialize(serialized: string): ISerializable;
+}
+
 export interface ISelectable {}
 
 class StackIterator<T> implements Iterator<T> {

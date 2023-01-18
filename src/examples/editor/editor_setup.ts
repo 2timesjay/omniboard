@@ -68,13 +68,17 @@ export function editor_menu_display_setup(
     return [display_handler, input_request];
 }
 
-export function editor_setup(loaded_state?: EditorState) {
+export function editor_setup(loaded_state?: EditorState, editor_watcher?: object) {
     // State Setup
     var k = 6;
-    if (loaded_state) {
+    if (loaded_state !== undefined) {
         var state = loaded_state;
     } else {
         var state = editor_state_setup(k)
+    }
+    if (editor_watcher !== undefined) {
+        // @ts-ignore What???
+        editor_watcher.editor_state = state;
     }
     
     // Create Canvas
