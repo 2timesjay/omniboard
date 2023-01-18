@@ -43,9 +43,11 @@ export function load_editor_state(window: Window, onload_callback: (editor_state
   // Load a previously saved EditorState object.
   var loaded_data = getTheFile(window).then((fileData) => {
     console.log(fileData)
-    console.log(onload_callback)
-    var editor_state = EditorState.deserialize(fileData);
-    // var editor_state = editor_state_setup(6);
-    onload_callback(editor_state);
+    fileData.text().then((t: string) => {
+      console.log(onload_callback)
+      var editor_state = EditorState.deserialize(t);
+      // var editor_state = editor_state_setup(6);
+      onload_callback(editor_state);
+    });
   });
 }
