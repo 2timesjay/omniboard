@@ -1,13 +1,14 @@
 import { Stack, ISelectable } from "../../model/core";
 import { Effect } from "../../model/effect";
 import { Entity, EntityFactory } from "../../common/entity";
-import { IInputStep, IInputAcquirer, SimpleInputAcquirer, isInputSignal, InputStop, IInputNext, InputOptions, InputRequest, InputResponse, InputSignal } from "../../model/input";
+import { IInputStep, IInputAcquirer, SimpleInputAcquirer, isInputSignal, InputStop, IInputNext, InputOptions, InputRequest, InputResponse, InputSignal, DragInputAcquirer } from "../../model/input";
 import { AbstractBasePhase, BaseInputs } from "../../model/phase";
 import { GridLocation } from "../../model/space";
 import { IState } from "../../model/state";
 import { BaseDisplayHandler } from "../../view/display_handler";
 import { EntityDeleteEffect, EntityPlaceEffect, ToggleLocationEffect } from "./editor_effect";
 import { EditorState } from "./editor_state";
+import { VolumeSpace } from "../../common/space";
 
 const INPUT_OPTIONS_CLEAR: InputOptions<ISelectable> = [];
 
@@ -156,15 +157,17 @@ export class ToggleLocationStep implements IInputStep<GridLocation, null> {
 
 
 export class ToggleLocationAreaStep implements IInputStep<GridLocation, null> {
-    acquirer: IInputAcquirer<GridLocation>;
+    acquirer: DragInputAcquirer<GridLocation>;
     occupied: Set<GridLocation>;
+    space: VolumeSpace;
     entities: Array<Entity>;
     effects: Array<Effect>;
 
     constructor(state: EditorState, auto_select: boolean = true, pre_select: GridLocation) {
         // Restrict to unoccupied neighbors of source entity.
-        var options = pre_select ? [pre_select] : state.space.to_array();
-        this.acquirer = new SimpleInputAcquirer(
+        this.space = state.space;
+        var options = pre_select ? [pre_select] : this.space.to_array();
+        this.acquirer = new DragInputAcquirer(
             () => options, false, auto_select,
         ); 
     }
@@ -179,7 +182,24 @@ export class ToggleLocationAreaStep implements IInputStep<GridLocation, null> {
     }
 
     consume_children(next_step: InputStop): Array<Effect> {
-        this.effects = [new ToggleLocationEffect(this.input.selection)];
+        console.log("Drag input: ", this.acquirer);
+        var start = this.acquirer.start.selection;
+        var end = this.acquirer.end.selection;
+        var x_min = Math.min(start.x, end.x);
+        var x_max = Math.max(start.x, end.x);
+        var y_min = Math.min(start.y, end.y);
+        var y_max = Math.max(start.y, end.y);
+        var z_min = Math.min(start.z, end.z);
+        var z_max = Math.max(start.z, end.z);
+        this.effects = [];
+        for (var x = x_min; x <= x_max; x++) {
+            for (var y = y_min; y <= y_max; y++) {
+                for (var z = z_min; z <= z_max; z++) {
+                    var loc = this.space.locs[x][y][z];
+                    this.effects.push(new ToggleLocationEffect(loc));
+                }
+            }
+        }
         return this.effects;
     }
     

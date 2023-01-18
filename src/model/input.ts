@@ -244,7 +244,6 @@ export class DragInputAcquirer<T> implements IInputAcquirer<T> {
     // TODO: Cleanup - Simplify coupling with controller loop.
     _option_fn: OptionFn<T>;
     _current_inputs: Array<InputResponse<T>>;
-    current_input: InputResponse<T>;
     require_confirmation: boolean;
     _auto_select: boolean;
     
@@ -257,12 +256,27 @@ export class DragInputAcquirer<T> implements IInputAcquirer<T> {
         this._option_fn = option_fn;
         // NOTE: State has to return after any complete pop off the stack.
         this._current_inputs = [];
-        this.current_input = null;
         this.require_confirmation = require_confirmation;
     }
 
     get stage(): number {
-        return this._current_inputs.length;
+        return this._current_inputs.length - 1;
+    }
+
+    get start(): InputResponse<T> {
+        return this._current_inputs[0];
+    }
+
+    get end(): InputResponse<T> {
+        return this._current_inputs[this.stage];
+    }
+
+    get finished(): boolean {
+        return this.stage == 1;
+    }
+
+    get current_input(): InputResponse<T> {
+        return this._current_inputs.length > 0 ? this._current_inputs[this.stage] : null;
     }
 
     get_options(input: InputResponse<T>): InputOptions<T> {
@@ -280,10 +294,10 @@ export class DragInputAcquirer<T> implements IInputAcquirer<T> {
         // Coroutine case.
         var options = this.get_options(new InputResponse(base));
 
-        // auto_select case
+        // auto_select case - Doesn't complete for DragInputAcquirer
         if (options.length == 1 && this._auto_select) {
-            this.current_input = new InputResponse(options[0]);
-            return this.current_input;
+            this._current_inputs.push(new InputResponse(options[0]));
+            // return this.current_input;
         }
 
         var input_resp = yield options;
@@ -295,12 +309,12 @@ export class DragInputAcquirer<T> implements IInputAcquirer<T> {
                 if (REJECT_CASE) {
                     // var input_resp = yield options;
                     return null; // NOTE: Propagates POP Signal to subphase
-                } else if (CONFIRM_CASE){
-                    console.log("Confirm Simple InputResponse");
+                } else if (CONFIRM_CASE && this.stage == 1){
+                    console.log("Confirm Drag InputResponse");
                     break;
-                } else if (!isInputSignal(input_resp)) {
+                } else if (!isInputSignal(input_resp)) { // Received a new selection
+                    this._current_inputs.push(input_resp);
                     console.log("InputResponse: ", input_resp);
-                    this.current_input = input_resp;
                     yield options;
                 } else {
                     console.log('Invalid Input, ', input_resp);
@@ -309,7 +323,7 @@ export class DragInputAcquirer<T> implements IInputAcquirer<T> {
             } while(true);
         } else {
             // TODO: Not set consistently across cases.
-            this.current_input = input_resp;
+            this._current_inputs.push(input_resp);
         }
         return this.current_input;
     }
