@@ -1,16 +1,13 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
 import { IView, IView2D, RenderObject } from "./rendering";
-import { getMouseCo, InputCoordinate, OnInputEvent } from "./broker";
-import { Awaited } from "../model/utilities";
 import { GridCoordinate, GridLocation, ICoordinate, Vector } from "../model/space";
-import { createWatchCompilerHost } from "typescript";
 import { Entity } from "../common/entity";
-import { IView3D, View3D } from "./rendering_three";
-import { Event, Mesh, Object3D } from "three";
+import { IView3D } from "./rendering_three";
 import { ActiveRegion } from "./display_handler";
 import { View2DHudReadOnly } from "./hud_rendering";
-import { Animate, build_base_mixer, BaseAnimationFn, CircleInPlaceAnimationFn, JumpInPlaceAnimationFn } from "./animation";
+import { Animate, BaseAnimationFn } from "./animation";
+import {Vector3} from "../common/structures";
 
 export enum DisplayState {
     Neutral,
@@ -33,14 +30,10 @@ const k: number = 4; // TODO: un-hardcode.
 // TODO: ILocatable -> ILocatable<ICoordinate>
 // TODO: Add size, add center;
 export interface ILocatable {
-    _xOffset: number;
-    _yOffset: number;
-    _zOffset: number
+    _offset: Vector3;
     _size: number;
     children: Array<AbstractVisual>;
-    get xOffset(): number;
-    get yOffset(): number;
-    get zOffset(): number;
+    get offset(): Vector3;
     get size(): number;
 }
 
@@ -61,29 +54,17 @@ export interface IMenuable {// Action<ISelectable>, Confirmation
  */
 export class FixedLocatable implements ILocatable, ISelectable {
     // NOTE: A simple virtual location class to parent fixed-loc visuals.
-    _xOffset: number;
-    _yOffset: number;
-    _zOffset: number;
+    _offset: Vector3;
     _size: number;
     children: AbstractVisual[];
 
     constructor(co: GridCoordinate) {
-        this._xOffset = co.x;
-        this._yOffset = co.y;
-        this._zOffset = co.z;
+        this._offset = new Vector3(co.x, co.y, co.z);
         this.children = [];
     }
 
-    get xOffset(): number {
-        return this._xOffset;
-    }
-
-    get yOffset(): number {
-        return this._yOffset;
-    }
-
-    get zOffset(): number {
-        return this._zOffset;
+    get offset(): Vector3 {
+        return this._offset;
     }
 
     get size(): number {
@@ -118,10 +99,8 @@ export class UnitaryVisual extends AbstractVisual{
 
     // TODO: Add to AbstractVisual Interface
     // TODO: Add `co` to ILocatable
-    get co() {
-        return {
-            x: this.parent.xOffset, y: this.parent.yOffset, z: this.parent.zOffset
-        }
+    get offset(): Vector3 {
+        return this.parent.offset;
     }
 
     render(view: IView<ICoordinate>, clr: string) {
@@ -146,18 +125,12 @@ export class LinearVisual extends AbstractVisual {
     render(view: IView<ICoordinate>, clr: string) {
         var from = this.from;
         var to = this.to;
-        // @ts-ignore
         var adj_from = from.size * 0.5;
-        // @ts-ignore
         var adj_to = to.size * 0.5;
-        var x_from = from.xOffset + adj_from;
-        var y_from = from.yOffset + adj_from;
-        var x_to = to.xOffset + adj_to;
-        var y_to = to.yOffset + adj_to;
-        var co_from = {x: x_from, y: y_from};
-        var co_to = {x: x_to, y: y_to};
+        var from_offset = from.offset.add(new Vector3(adj_from, adj_from)); 
+        var to_offset = to.offset.add(new Vector3(adj_to, adj_to));
         view.drawLine(
-            co_from, co_to,
+            from_offset, to_offset,
             10, clr)
     }
 }
@@ -180,11 +153,15 @@ export class LinearVisual3D extends AbstractVisual {
 
     render(view: IView3D, clr: string) {
         // TODO: Fix arbitrary z offset determined by Unit sizing
-        var co_from = {x: this.from.xOffset, y: this.from.yOffset, z: this.from.zOffset + 0.7};
-        var co_to = {x: this.to.xOffset, y: this.to.yOffset, z: this.to.zOffset + 0.7};
+        var from = this.from;
+        var to = this.to;
+        var adj_from = from.size * 0.5;
+        var adj_to = to.size * 0.5;
+        var from_offset = from.offset.add(new Vector3(adj_from, adj_from, 0.7)); 
+        var to_offset = to.offset.add(new Vector3(adj_to, adj_to, 0.7));
         view.drawLine(
-            co_from, co_to, 10, clr,
-        )
+            from_offset, to_offset,
+            10, clr)
     }
 }
 
@@ -205,9 +182,10 @@ export class VictoryBannerVisual extends UnitaryVisual {
 
     render(view: IView2D, clr: string) {
         // NOTE: Font size multiplied by 100;
-        view.drawRect(this.co, 2.2, -0.5, 'white')
+        // TODO: drawGUI
+        view.drawRect(this.offset, 2.2, -0.5, 'white')
         view.drawText(
-            {x: this.co.x + 0.1, y: this.co.y - 0.05, z: this.co.z}, 
+            {x: this.offset.x + 0.1, y: this.offset.y - 0.05, z: this.offset.z}, 
             "VICTORY!", 
             0.5, 
             'green'
@@ -332,37 +310,24 @@ export class AbstractDisplay<T extends ISelectable> {
 
 export class GridLocationDisplay extends AbstractDisplay<GridLocation> implements ILocatable, IPathable {
     selectable: GridLocation;
-    _xOffset: number;
-    _yOffset: number;
-    _zOffset: number;
+    _offset: Vector3;
     _size: number;
     width: number;
     height: number;
 
     constructor(loc: GridLocation) {
         super(loc);
-        this._zOffset = this.selectable.z != null ? this.selectable.z: 0;
-        this._xOffset = this.selectable.x + 0.1;
-        this._yOffset = this.selectable.y + 0.1;
+        var z_offset = this.selectable.z != null ? this.selectable.z: 0;
+        var x_offset = this.selectable.x + 0.1;
+        var y_offset = this.selectable.y + 0.1;
+        this._offset = new Vector3(x_offset, y_offset, z_offset);
         this._size = 0.8;
         this.width = 0.8;
         this.height = 0.8;
     }
 
-    get xOffset(): number {
-        return this._xOffset;
-    }
-
-    get yOffset(): number {
-        return this._yOffset;
-    }
-
-    get zOffset(): number {
-        return this._zOffset;
-    }
-
-    get co(): GridCoordinate {
-        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+    get offset(): Vector3 {
+        return this._offset;
     }
 
     get size(): number {
@@ -370,11 +335,11 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
     }
 
     render(view: IView<ICoordinate>, clr: string, lfa?: number) {
-        return view.drawRect(this.co, this.size, this.size, clr, lfa);
+        return view.drawRect(this.offset, this.size, this.size, clr, lfa);
     }
 
     alt_render(view: IView<ICoordinate>, clr: string) {
-        return view.drawCircle(this.co, this.size, clr);
+        return view.drawCircle(this.offset, this.size, clr);
     }
 
     neutralDisplay(view: IView<ICoordinate>): RenderObject {
@@ -391,18 +356,17 @@ export class GridLocationDisplay extends AbstractDisplay<GridLocation> implement
 
 export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> implements ILocatable, IPathable {
     selectable: GridLocation;
-    _xOffset: number;
-    _yOffset: number;
-    _zOffset: number;
+    _offset: Vector3;
     _size: number;
     width: number;
     height: number;
 
     constructor(loc: GridLocation) {
         super(loc);
-        this._zOffset = this.selectable.z != null ? this.selectable.z: 0;
-        this._xOffset = this.selectable.x + 0.1;
-        this._yOffset = this.selectable.y + 0.1;
+        var z_offset = this.selectable.z != null ? this.selectable.z: 0;
+        var x_offset = this.selectable.x + 0.1;
+        var y_offset = this.selectable.y + 0.1;
+        this._offset = new Vector3(x_offset, y_offset, z_offset);
         this._size = 0.8;
         this.width = 0.8;
         this.height = 0.8;
@@ -430,20 +394,8 @@ export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> impleme
         return this.active;
     }
 
-    get xOffset(): number {
-        return this._xOffset;
-    }
-
-    get yOffset(): number {
-        return this._yOffset;
-    }
-
-    get zOffset(): number {
-        return this._zOffset;
-    }
-
-    get co(): GridCoordinate {
-        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+    get offset(): Vector3 {
+        return this._offset;
     }
 
     get size(): number {
@@ -455,9 +407,8 @@ export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> impleme
         // NOTE: Don't render if lfa = 0; rendering bug when inside transparent object.
         if (lfa == 0) return;
         var adj_lfa = this.active ? lfa: 0.2 * lfa
-        var co = {x: this.xOffset, y: this.yOffset};
         return view.drawRect(
-            {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
+            this.offset, 
             this.size, this.size, // TODO: Convert to Coord/ThreeVector
             clr, 
             adj_lfa,
@@ -466,8 +417,9 @@ export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> impleme
 
     alt_render(view: IView3D, clr: string): THREE.Object3D {
         // TODO: Fix arbitrary "hover"
+        var altered_offset = this.offset.add(new Vector3(0, 0, this.size*7/8))
         return view.drawCircle(
-            {x: this.xOffset, y: this.yOffset, z: this.zOffset + this.size*7/8},
+            altered_offset,
             this.size,
             clr,
         );
@@ -505,9 +457,7 @@ export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> impleme
 // Share code with _UnitDisplay
 export class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatable, IPathable {
     selectable: Entity;
-    _xOffset: number;
-    _yOffset: number;
-    _zOffset: number;
+    _offset: Vector3;
     _size: number;
     width: number;
     height: number;
@@ -517,20 +467,8 @@ export class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatabl
         this.update_pos();
     }
 
-    get xOffset(): number {
-        return this._xOffset;
-    }
-
-    get yOffset(): number {
-        return this._yOffset;
-    }
-
-    get zOffset(): number {
-        return this._zOffset;
-    }
-
-    get co(): GridCoordinate {
-        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+    get offset(): Vector3 {
+        return this._offset;
     }
 
     get size(): number {
@@ -554,13 +492,12 @@ export class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatabl
     }
 
     render(view: IView<ICoordinate>, clr: string): RenderObject {
-        return view.drawRect(this.co, this.size, this.size, clr);
+        return view.drawRect(this.offset, this.size, this.size, clr);
     }
 
     alt_render(view: IView<ICoordinate>, clr: string): RenderObject {
-        var offset = 0.2 * this.size;
-        var co = {x: this.co.x + offset, y: this.co.y + offset, z: this.co.z};
-        return view.drawRect(co, this.size*.6, this.size*.6, clr);
+        var altered_offset = this.offset.add(new Vector3(0.2*this.size, 0.2*this.size, 0));
+        return view.drawRect(altered_offset, this.size*.6, this.size*.6, clr);
     }
 
     neutralDisplay(view: IView<ICoordinate>): RenderObject {
@@ -583,9 +520,7 @@ export class EntityDisplay extends Animate(
 
 export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocatable, IPathable {
     selectable: Entity;
-    _xOffset: number;
-    _yOffset: number;
-    _zOffset: number;
+    _offset: Vector3;
     _size: number;
     width: number;
     height: number;
@@ -597,20 +532,14 @@ export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocata
         this.update_pos();
     }
 
-    get xOffset(): number {
-        return this._xOffset + this.additional_offsets.x;
-    }
-
-    get yOffset(): number {
-        return this._yOffset + this.additional_offsets.y;
-    }
-
-    get zOffset(): number {
-        return this._zOffset + this.additional_offsets.z;
-    }
-
-    get co(): GridCoordinate {
-        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+    get offset(): Vector3 {
+        return this._offset.add(
+            new Vector3(
+                this.additional_offsets.x, 
+                this.additional_offsets.y, 
+                this.additional_offsets.z
+            )
+        );
     }
 
     get size(): number {
@@ -625,16 +554,17 @@ export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocata
         // TODO: Fix to 0.2 * size after I fix offsets for gridLocations
         var margin = 0.1;
         // @ts-ignore Actually GridLocation
-        this._xOffset = this.selectable.loc.x + margin;
+        var x_offset = this.selectable.loc.x + margin;
         // @ts-ignore Actually GridLocation
-        this._yOffset = this.selectable.loc.y + margin;
-        this._zOffset = (
+        var y_offset = this.selectable.loc.y + margin;
+        var z_offset = (
             // @ts-ignore Actually GridLocation
             this.selectable.loc.z != null ? 
             // @ts-ignore Actually GridLocation
             (this.selectable.loc.z) + 0.6 + margin: 
             margin
         );
+        this._offset = new Vector3(x_offset, y_offset, z_offset);
         this._size = 0.6;
         this.width = 0.6;
         this.height = 0.6;
@@ -651,17 +581,17 @@ export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocata
         var lfa = 1.0;
         var adj_lfa = this.active ? lfa: 0.2 * lfa
         return view.drawRect(
-            {x: this.xOffset, y: this.yOffset, z: this.zOffset}, 
+            this.offset,
             this.size, this.size, // TODO: Fix 3d rect hack
             clr, adj_lfa,
         );
     }
 
     alt_render(view: IView3D, clr: string): THREE.Object3D {
-        var offset = 0.2 * this.size;
+        var altered_offset = this.offset.addScalar(0.2 * this.size);
         var reduced_size = 0.6 * this.size;
         return view.drawRect(
-            {x: this.xOffset + offset, y: this.yOffset + offset, z: this.zOffset + offset}, 
+            altered_offset,
             reduced_size, reduced_size, // TODO: Fix 3d rect hack
             clr,
         );
@@ -698,32 +628,19 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
         this.height = this.size;
     }
 
-    get xOffset() {
-        return this.parent._xOffset;
+    get offset(): Vector3 {
+        return this.parent.offset.add(new Vector3(0,  this.size * this.selectable.index, 0));
     }
-
-    get yOffset() {
-        return this.parent._yOffset + this.size * this.selectable.index;
-    }
-
-    get zOffset() {
-        return this.parent._zOffset;
-    }
-
-    get co(): GridCoordinate {
-        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
-    }
-
 
     render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
-        var hit_co = this.co
-        var text_co = {x: this.co.x, y: this.co.y + this.height, z: this.co.z};
+        var hit_co = this.offset;
+        // TODO: Calculate all this in "view.drawText"
+        var text_co = this.offset.add(new Vector3(0, this.height, 0));
         var text_size = 0.8 * this.size;
         var render_object = view.drawRect(
             hit_co, this.width, this.height, "white", 0.5
         );
         view.drawText(text_co, this.selectable.text, text_size, clr)
-        // TODO: Do all this in "view.drawText"
         return render_object;
     }
 
@@ -749,31 +666,18 @@ export class MenuElementDisplay3D extends AbstractDisplay<IMenuable> {
         this.height = this.size;
     }
 
-    get xOffset() {
-        return this.parent._xOffset;
-    }
-
-    get yOffset() {
-        return this.parent._yOffset;
-    }
-
-    get zOffset() {
-        return this.parent._zOffset + this.size * this.selectable.index;
-    }
-
-    get co(): GridCoordinate {
-        return {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+    get offset(): Vector3 {
+        return this.parent.offset.add(
+            new Vector3(0, 0,  this.size * this.selectable.index)
+        );
     }
 
     render(view: IView3D, clr: string, lfa?: number): RenderObject {
-        var hit_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
-        var text_co = {x: this.xOffset, y: this.yOffset, z: this.zOffset};
+        var hit_co = this.offset;
+        // TODO: Calculate all this in "view.drawText"
+        var text_co = this.offset;
         var text_size = 0.8 * this.size;
-        // var render_object = view.drawRect(
-        //     hit_co, this.width, this.height, "white", 0.5
-        // );
         var render_object = view.drawText(text_co, this.selectable.text, text_size, clr)
-        // TODO: Do all this in "view.drawText"
         return render_object;
     }
 
