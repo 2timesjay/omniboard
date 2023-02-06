@@ -1,3 +1,4 @@
+import { Vector3 } from "../common/structures";
 import { ISerializable } from "./core";
 
 export interface ICoordinate { }
@@ -119,13 +120,6 @@ export class AbstractSpace<T extends ILocation> implements ISpace {
     }
 }
 
-// TODO: Quick and dirty: expand use?
-export interface Vector {
-    x: number;
-    y?: number;
-    z?: number;
-}
-
 export class GridLocation implements IDiscreteLocation, ISerializable {
     co: GridCoordinate;
 
@@ -222,7 +216,7 @@ export class GridSpace implements ISpace {
     
     // TODO: Optional return
     // TODO: Less dumb name
-    getSimpleRelativeGridCoordinate(loc: GridLocation, vector: Vector): GridLocation {
+    getSimpleRelativeGridCoordinate(loc: GridLocation, vector: Vector3): GridLocation {
         var rel_co = new RelativeGridCoordinate(
             vector,
             RelativeCoordinateOperator.BASE,
@@ -243,8 +237,8 @@ export class GridSpace implements ISpace {
         return this.getNeighborhood(loc, GRID_ADJACENCY);
     }
 
-    getVector(loc: GridLocation, other_loc: GridLocation): Vector {
-        return {x: other_loc.x - loc.x, y: other_loc.y - loc.y};
+    getVector(loc: GridLocation, other_loc: GridLocation): Vector3 {
+        return new Vector3(other_loc.x - loc.x, other_loc.y - loc.y);
     }
 
     getDistance(loc: GridLocation, other_loc: GridLocation): number {

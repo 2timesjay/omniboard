@@ -1,5 +1,6 @@
 import { ISerializable } from "../model/core";
-import { AbstractSpace, GridCoordinate, GridLocation, RelativeCoordinateOperator, RelativeGridCoordinate, Vector } from "../model/space";
+import { AbstractSpace, GridCoordinate, GridLocation, RelativeCoordinateOperator, RelativeGridCoordinate } from "../model/space";
+import { Vector3 } from "./structures";
 
 // RelativeNeighborhood - Any adjacent square, plus a jump or drop of up to 1.
 export const VOLUME_ADJACENCY = [
@@ -67,8 +68,8 @@ export class VolumeSpace extends AbstractSpace<GridLocation> implements ISeriali
         return this.getNeighborhood(loc, VOLUME_ADJACENCY);
     }
 
-    getVector(loc: GridLocation, other_loc: GridLocation): Vector {
-        return {x: other_loc.x - loc.x, y: other_loc.y - loc.y, z: other_loc.z - loc.z};
+    getVector(loc: GridLocation, other_loc: GridLocation): Vector3 {
+        return new Vector3(other_loc.x - loc.x, other_loc.y - loc.y, other_loc.z - loc.z);
     }
 
     to_array(): Array<GridLocation> {
@@ -95,7 +96,7 @@ export class VolumeSpace extends AbstractSpace<GridLocation> implements ISeriali
     
     // TODO: Optional return
     // TODO: Less dumb name
-    getSimpleRelativeGridCoordinate(loc: GridLocation, vector: Vector): GridLocation {
+    getSimpleRelativeGridCoordinate(loc: GridLocation, vector: Vector3): GridLocation {
         var rel_co = new RelativeGridCoordinate(
             vector,
             RelativeCoordinateOperator.BASE,

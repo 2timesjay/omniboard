@@ -1,7 +1,7 @@
 // TODO: Consistent style
 import { ISelectable } from "../model/core";
 import { IView, IView2D, RenderObject } from "./rendering";
-import { GridCoordinate, GridLocation, ICoordinate, Vector } from "../model/space";
+import { GridCoordinate, GridLocation, ICoordinate } from "../model/space";
 import { Entity } from "../common/entity";
 import { IView3D } from "./rendering_three";
 import { ActiveRegion } from "./display_handler";
@@ -196,7 +196,7 @@ export class VictoryBannerVisual extends UnitaryVisual {
 /**
  * Displays
  */
-export class AbstractDisplay<T extends ISelectable> {
+export class AbstractDisplay<T extends ISelectable>{
     selectable: T;
     // TODO: Clean up this crazy state/selection_state
     state: DisplayState;
@@ -524,22 +524,16 @@ export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocata
     _size: number;
     width: number;
     height: number;
-    additional_offsets: Vector;
+    additional_offsets: Vector3;
 
-    constructor(entity: Entity, additional_offsets?: Vector) {
+    constructor(entity: Entity, additional_offsets?: Vector3) {
         super(entity);
-        this.additional_offsets = additional_offsets ? additional_offsets: {x: 0, y: 0, z: 0};
+        this.additional_offsets = additional_offsets ? additional_offsets: new Vector3(0, 0, 0);
         this.update_pos();
     }
 
     get offset(): Vector3 {
-        return this._offset.add(
-            new Vector3(
-                this.additional_offsets.x, 
-                this.additional_offsets.y, 
-                this.additional_offsets.z
-            )
-        );
+        return this._offset.add(this.additional_offsets);
     }
 
     get size(): number {
