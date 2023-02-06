@@ -1,8 +1,7 @@
 import { ISelectable } from "../model/core";
-import { GraphicsVector } from "./core";
-import { Vector} from "../model/space";
 import { AbstractDisplay, ILocatable } from "./display";
 import { BaseAutomation } from "../model/automation";
+import { Vector3 } from "../common/structures";
 
 
 
@@ -11,7 +10,7 @@ type ConstrainedMixinable<T = {}> = new (...args: any[]) => T;
 // NOTE: TS Mixins are some sicko stuff.
 export type Animatable = ConstrainedMixinable<ILocatable>;
 
-export type AnimationFn = (f: number) => GraphicsVector;
+export type AnimationFn = (f: number) => Vector3;
 
 // A Curve maps a number from 0 to 1 to a number from 0 to 1; used for animation easings.
 type CurveFn = (t: number) => number;
@@ -55,7 +54,7 @@ export class Animation {
         return this.start_time + this.duration;
     }
 
-    get offset(): GraphicsVector {
+    get offset(): Vector3 {
         var now = + new Date();
         var t = (now - this.start_time) / (this.duration);
         return this.fn(t);
@@ -137,10 +136,10 @@ export class Mixer {
         this.animations = [];
     }
     
-    get offset(): GraphicsVector {
+    get offset(): Vector3 {
         var now = + new Date();
         // TODO: Fix implicit assumption of 3D graphics here.
-        var base_offset = new GraphicsVector(0, 0, 0);
+        var base_offset = new Vector3(0, 0, 0);
         for (let animation of this.animations) {
             if (animation.is_running()) {
                 base_offset = base_offset.add(animation.offset);
@@ -163,21 +162,12 @@ export function Animate<TBase extends Animatable>(
         // @ts-ignore
         _mixer: Mixer = build_base_mixer(base_animation_fn, 1000);
         
-        get animation_offset(): GraphicsVector {
+        get animation_offset(): Vector3 {
             return this._mixer.offset;
         }
 
-        // TODO: Optimize. Make display use single GraphicsVector for offset.
-        get xOffset(): number {
-            return super.xOffset + this.animation_offset.x;
-        }
-
-        get yOffset(): number {
-            return super.yOffset + this.animation_offset.y;
-        }
-
-        get zOffset(): number {
-            return super.zOffset + this.animation_offset.z;
+        get offset(): Vector3 {
+            return super.offset.add(this.animation_offset);
         }
 
         get size(): number {
@@ -203,11 +193,11 @@ export function build_base_mixer(
     return new Mixer([build_base_animation(fn, duration)]);
 }
 
-export const BaseAnimationFn = (t: number) => new GraphicsVector(0, 0, 0);
+export const BaseAnimationFn = (t: number) => new Vector3(0, 0, 0);
 
-export const CircleInPlaceAnimationFn = (t: number) => new GraphicsVector(0.1*Math.cos(t/500), 0.1*Math.sin(t/500), 0);
+export const CircleInPlaceAnimationFn = (t: number) => new Vector3(0.1*Math.cos(t/500), 0.1*Math.sin(t/500), 0);
 
-export const JumpInPlaceAnimationFn = (t: number) => new GraphicsVector(0, -0.05*Math.abs(Math.sin(t)), 0);
+export const JumpInPlaceAnimationFn = (t: number) => new Vector3(0, -0.05*Math.abs(Math.sin(t)), 0);
 
 function shuffle(arr: Array<number>) {
     let currentIndex = arr.length,  randomIndex;
@@ -249,8 +239,8 @@ function buildWalk(steps: number, start: number, end: number, extra?: number): A
 
 function buildVectorWalk(
     steps: number, 
-    start: GraphicsVector, 
-    end: GraphicsVector, 
+    start: Vector3, 
+    end: Vector3, 
     extra?: number
 ): AnimationFn {
     var x_walk = buildWalk(steps, start.x, end.x, extra);
@@ -259,12 +249,12 @@ function buildVectorWalk(
     var l = x_walk.length;
     function walk_map(f: number){ 
         var walk_index = Math.round(f*(l-1));
-        return new GraphicsVector(x_walk[walk_index], y_walk[walk_index], z_walk[walk_index]);
+        return new Vector3(x_walk[walk_index], y_walk[walk_index], z_walk[walk_index]);
     }
     return walk_map;
 }
 
-const FlinchFn = buildVectorWalk(100, new GraphicsVector(0, 0, 0), new GraphicsVector(0, 0, 0), 100);
+const FlinchFn = buildVectorWalk(100, new Vector3(0, 0, 0), new Vector3(0, 0, 0), 100);
 
 // Both actually need a vector input.
 // const BumpFn

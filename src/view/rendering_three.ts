@@ -1,10 +1,11 @@
 import * as THREE from 'three';
+import { InstancedMesh } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 // @ts-ignore has no exported member 'helvetiker_reg'
 import helvetiker_reg from '../../assets/fonts/helvetiker_regular.typeface.json'
 import { GridCoordinate } from '../model/space';
-import { InputCoordinate, ThreeBroker } from './broker';
+import { InputCoordinate } from './broker';
 import { IInputView, IView, makeCanvas, makeRect, RenderObject } from './rendering';
 
 
@@ -311,6 +312,24 @@ function _populateScene(scene: THREE.Scene) {
     return scene;
 }
 
+type TerrainBlock = THREE.Mesh;
+
+class OmniboardScene extends THREE.Scene {
+    _terrain_mesh: THREE.InstancedMesh;
+    _cached_meshes: Map<string, THREE.Mesh>;
+
+    constructor(terrain_block: TerrainBlock, terrain_block_count: number) {
+        super();
+        this._terrain_mesh = new InstancedMesh(
+            terrain_block.geometry, 
+            terrain_block.material, 
+            terrain_block_count
+        );
+        this._cached_meshes = new Map<string, THREE.Mesh>();
+        super();
+    }
+}
+
 function makeScene(): THREE.Scene {
     const material = new THREE.MeshNormalMaterial();
     let scene = new THREE.Scene();
@@ -445,7 +464,6 @@ export class View3D implements IView3D {
     drawRect(
         co: GridCoordinate, width: number, height: number, clr?: string, lfa?: number
     ): THREE.Object3D {
-        // TODO: Get rid of egregious hack for type purposes.
         var depth = height;
         return makeRect3D(co, this.scene, width, height, depth, clr, lfa);
     }
@@ -461,6 +479,7 @@ export class View3D implements IView3D {
     }
 
     // TODO: Improve Menu rendering and colors for visibility
+    // TODO: Replace with Three GUI
     drawText(
         co: GridCoordinate,
         text: string, 
