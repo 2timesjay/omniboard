@@ -200,7 +200,12 @@ class _EditableLocationDisplay extends GridLocationDisplay3D implements ILocatab
         } else {
             var adj_lfa = 0;
         }
-        return super.render(view, clr, adj_lfa);
+        return view.drawRect(
+            this.offset, 
+            this.size, this.size, // TODO: Convert to Coord/ThreeVector
+            clr, 
+            adj_lfa,
+        );
     }
 }
 
@@ -233,12 +238,12 @@ export class PaletteDisplay extends AbstractDisplay<EntityFactory> {
     render(view: View2D, clr: string, lfa?: number): RenderObject {
         var hit_co = this.offset;
         // TODO: Calculate all this in "view.drawText"
-        var text_co = this.offset;
+        var text_co = this.offset.clone().add(new Vector3(0, this.height, 0));
         var text_size = 0.8 * this.size;
         var render_object = view.drawRect(
             hit_co, this.width, this.height, "white", 0.5
         );
-        var render_object = view.drawText(
+        view.drawText(
             text_co, this.text, text_size, clr
         );
         return render_object;

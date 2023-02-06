@@ -127,8 +127,8 @@ export class LinearVisual extends AbstractVisual {
         var to = this.to;
         var adj_from = from.size * 0.5;
         var adj_to = to.size * 0.5;
-        var from_offset = from.offset.add(new Vector3(adj_from, adj_from)); 
-        var to_offset = to.offset.add(new Vector3(adj_to, adj_to));
+        var from_offset = from.offset.clone().add(new Vector3(adj_from, adj_from)); 
+        var to_offset = to.offset.clone().add(new Vector3(adj_to, adj_to));
         view.drawLine(
             from_offset, to_offset,
             10, clr)
@@ -157,8 +157,8 @@ export class LinearVisual3D extends AbstractVisual {
         var to = this.to;
         var adj_from = from.size * 0.5;
         var adj_to = to.size * 0.5;
-        var from_offset = from.offset.add(new Vector3(adj_from, adj_from, 0.7)); 
-        var to_offset = to.offset.add(new Vector3(adj_to, adj_to, 0.7));
+        var from_offset = from.offset.clone().add(new Vector3(adj_from, adj_from, 0.7)); 
+        var to_offset = to.offset.clone().add(new Vector3(adj_to, adj_to, 0.7));
         view.drawLine(
             from_offset, to_offset,
             10, clr)
@@ -417,7 +417,7 @@ export class GridLocationDisplay3D extends AbstractDisplay<GridLocation> impleme
 
     alt_render(view: IView3D, clr: string): THREE.Object3D {
         // TODO: Fix arbitrary "hover"
-        var altered_offset = this.offset.add(new Vector3(0, 0, this.size*7/8))
+        var altered_offset = this.offset.clone().add(new Vector3(0, 0, this.size*7/8))
         return view.drawCircle(
             altered_offset,
             this.size,
@@ -496,7 +496,7 @@ export class _EntityDisplay extends AbstractDisplay<Entity> implements ILocatabl
     }
 
     alt_render(view: IView<ICoordinate>, clr: string): RenderObject {
-        var altered_offset = this.offset.add(new Vector3(0.2*this.size, 0.2*this.size, 0));
+        var altered_offset = this.offset.clone().add(new Vector3(0.2*this.size, 0.2*this.size, 0));
         return view.drawRect(altered_offset, this.size*.6, this.size*.6, clr);
     }
 
@@ -533,7 +533,7 @@ export class _EntityDisplay3D extends AbstractDisplay<Entity> implements ILocata
     }
 
     get offset(): Vector3 {
-        return this._offset.add(this.additional_offsets);
+        return this._offset.clone().add(this.additional_offsets);
     }
 
     get size(): number {
@@ -623,13 +623,13 @@ export class MenuElementDisplay extends AbstractDisplay<IMenuable> {
     }
 
     get offset(): Vector3 {
-        return this.parent.offset.add(new Vector3(0,  this.size * this.selectable.index, 0));
+        return this.parent.offset.clone().add(new Vector3(0,  this.size * this.selectable.index, 0));
     }
 
     render(view: IView<ICoordinate>, clr: string, lfa?: number): RenderObject {
         var hit_co = this.offset;
         // TODO: Calculate all this in "view.drawText"
-        var text_co = this.offset.add(new Vector3(0, this.height, 0));
+        var text_co = this.offset.clone().add(new Vector3(0, this.height, 0));
         var text_size = 0.8 * this.size;
         var render_object = view.drawRect(
             hit_co, this.width, this.height, "white", 0.5
@@ -661,7 +661,7 @@ export class MenuElementDisplay3D extends AbstractDisplay<IMenuable> {
     }
 
     get offset(): Vector3 {
-        return this.parent.offset.add(
+        return this.parent.offset.clone().add(
             new Vector3(0, 0,  this.size * this.selectable.index)
         );
     }

@@ -142,7 +142,7 @@ export class Mixer {
         var base_offset = new Vector3(0, 0, 0);
         for (let animation of this.animations) {
             if (animation.is_running()) {
-                base_offset = base_offset.add(animation.offset);
+                base_offset = base_offset.clone().add(animation.offset);
             }
         }
         return base_offset;
@@ -167,7 +167,7 @@ export function Animate<TBase extends Animatable>(
         }
 
         get offset(): Vector3 {
-            return super.offset.add(this.animation_offset);
+            return super.offset.clone().add(this.animation_offset);
         }
 
         get size(): number {
